@@ -16,6 +16,7 @@
         stats.Add("confronta", New Tuple(Of String, ULong)("Confronti eseguiti", 0))
         stats.Add("craft", New Tuple(Of String, ULong)("Liste Craft inviate", 0))
         stats.Add("base", New Tuple(Of String, ULong)("Liste oggetti base inviate", 0))
+        stats.Add("vendi", New Tuple(Of String, ULong)("Liste oggetti non necessari", 0))
         stats.Add("totale", New Tuple(Of String, ULong)("Totale comandi processati", 0))
         stats.Add("zaini", New Tuple(Of String, ULong)("Zaini attualmente salvati", 0))
 

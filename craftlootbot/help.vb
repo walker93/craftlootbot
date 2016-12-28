@@ -12,6 +12,7 @@ Module help
     Public confronta_builder As New StringBuilder
     Public craft_builder As New StringBuilder
     Public base_builder As New StringBuilder
+    Public vendi_bilder As New StringBuilder
 
     Function process_help(text As String) As String
         Dim builder As New StringBuilder
@@ -34,6 +35,8 @@ Module help
                 builder.Append(help_builder.ToString)
             Case "base"
                 builder.Append(base_builder.ToString)
+            Case "vendi"
+                builder.Append(vendi_bilder.toString)
             Case Else
                 builder.Append("Comando non riconosciuto.")
         End Select
@@ -52,6 +55,7 @@ Module help
             .AppendLine("Usa '/craft <nome oggetto>' per ricevere un file di testo contenente stringhe da copiare e incollare, per craftare tutti gli oggetti necessari fino all'oggetto inserito.")
             .AppendLine("Usa '/base <rarità>' per ricevere un elenco di tutti gli oggetti base per la rarità inserita, per ogni oggetto è indicata la quantità che possiedi.")
             .AppendLine("Usa '@craftlootbot <nome oggetto>' in qualsiasi chat o gruppo per inviare rapidamente la lista dei materiali che stai cercando.")
+            .AppendLine("Usa '/vendi <oggetto>' per ottenere una lista di oggetti che puoi vendere in quanto non necessari per craftare l'oggettto specificato.")
             .AppendLine("Premi sui bottoni qui sotto per vedere maggiori informazioni su uno specifico comando.")
             .AppendLine()
             .AppendLine("Segui il canale @CraftLootBotNews per le news e aggiornamenti, contatta @AlexCortinovis per malfunzionamenti o dubbi")
@@ -115,6 +119,13 @@ Module help
             .AppendLine()
             .AppendLine("Per utilizzare questa funzione devi aver salvato lo zaino, in qualsiasi momento il bot avrà sopra ai risultati una scorciatoia per aggiornarlo rapidamente.")
         End With
+        With vendi_bilder
+            .AppendLine("*Lista oggetti non necessari:*")
+            .AppendLine("Permette di ricevere una lista di oggetti contenuti nel proprio zaino che non sono richiesti per il crafting dell'oggetto specificato.")
+            .AppendLine("Risulta particolarmente utile per sapere immediatamente cosa è possibile vendere perchè non necessario oppure perchè posseduto in abbondanza.")
+            .AppendLine("Per utilizzare questa funzione devi avere lo zaino salvato.")
+        End With
+
         With base_builder
             .AppendLine("*Lista oggetti base:*")
             .AppendLine("Con questo comando verrà mostrata una lista di tutti gli oggetti base per la rarità inserita.")
@@ -134,6 +145,7 @@ Module help
         Dim craft_button As New InlineKeyboardButton("🛠 Craft 🛠", "craft")
         Dim confronta_button As New InlineKeyboardButton("📊 Confronta 📊", "confronta")
         Dim base_button As New InlineKeyboardButton("🔤 Base 🔤", "base")
+        Dim vendi_button As New InlineKeyboardButton(" Vendi ", "vendi")
         Dim riepilogo_button As New InlineKeyboardButton("⬅️ Riepilogo ⬅️", "riepilogo")
         Dim row1() As InlineKeyboardButton
         Dim row2() As InlineKeyboardButton
@@ -153,6 +165,7 @@ Module help
         row4.Add(inline_button)
         row4.Add(base_button)
 
+        row5.Add(vendi_button)
         row5.Add(riepilogo_button)
 
         keyboardbuttons.Add(row1)

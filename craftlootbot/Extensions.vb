@@ -115,13 +115,13 @@ Public Module MyExtensions
         Dim button1 As New KeyboardButton("Annulla")
         Dim row1() As KeyboardButton
         row1.Add(button1)
-        keyboardbuttons.Add(row1)
         If withzaino Then
             Dim button2 As New KeyboardButton("Utilizza il mio zaino")
             Dim row2() As KeyboardButton
             row2.Add(button2)
             keyboardbuttons.Add(row2)
         End If
+        keyboardbuttons.Add(row1)
         keyboard.Keyboard = keyboardbuttons
         keyboard.OneTimeKeyboard = True
         keyboard.ResizeKeyboard = True
@@ -188,6 +188,21 @@ Public Module MyExtensions
         For Each it In cerco
             If zaino.ContainsKey(it.Key) Then
                 res.Add(it.Key, zaino.Item(it.Key))
+            End If
+        Next
+        Return res
+    End Function
+
+    Function SottrazioneDizionariItem(Dic1 As Dictionary(Of Item, Integer), Dic2 As Dictionary(Of Item, Integer)) As Dictionary(Of Item, Integer)
+        Dim res As New Dictionary(Of Item, Integer)
+        For Each it In Dic1
+            If Dic2.ContainsKey(it.Key) Then
+                Dim diff = Dic1(it.Key) - Dic2(it.Key)
+                If diff > 0 Then
+                    res.Add(it.Key, diff)
+                End If
+            Else
+                res.Add(it.Key, Dic1(it.Key))
             End If
         Next
         Return res

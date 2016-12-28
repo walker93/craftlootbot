@@ -130,6 +130,8 @@ Module Module1
             Console.WriteLine(e.InnerException.Message)
         Catch e As Exception
             Console.WriteLine(e.Message)
+        Finally
+            Dim a = api.AnswerCallbackQueryAsync(callback.Id).Result
         End Try
     End Sub
 #End Region
@@ -401,7 +403,7 @@ Module Module1
                     stati.Remove(message.From.Id)
                     confronti.Remove(message.From.Id)
                 Else
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Non stai effettuando il confronto.").Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Non stai effettuando il confronto.",,,, New ReplyMarkups.ReplyKeyboardHide).Result
                 End If
             Else
                 Console.WriteLine("{0} {1} {2} from: {3}", Now.ToShortDateString, Now.ToShortTimeString, message.Text, message.From.Username)
@@ -568,7 +570,48 @@ Module Module1
                     a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
                 End If
 #End Region
+            ElseIf message.Text.ToLower.StartsWith("/vendi") Then
+#Region "vendi"
+                item = message.Text.Replace("/vendi", "").Trim
+                If item = "" Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto che vuoi ottenere").Result
+                    Exit Sub
+                End If
+                id = getItemId(item)
+                ItemIds.TryGetValue(id, it)
+                Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
+                Dim zaino As String = ""
+                If IO.File.Exists(path) Then
+                    zaino = IO.File.ReadAllText(path)
+                Else
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Per utilizzare questa funzione devi prima salvare il tuo zaino.").Result
+                    Exit Sub
+                End If
+                If id <> -1 Then
+                    If Not isCraftable(id) Then
+                        Dim e = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è craftabile").Result
+                        Exit Sub
+                    End If
+                    api.SendChatActionAsync(message.Chat.Id, ChatAction.Typing)
+                    zainoDic = parseZaino(zaino)
+                    Dim zainoDic_copy = zainoDic
+                    getNeededItemsList(id, CraftList, zainoDic_copy, gia_possiedi, spesa)
+                    Dim res = SottrazioneDizionariItem(zainoDic_copy, createCraftCountList(CraftList))
+                    Dim result As String = getVendiText(res, zainoDic, it.name)
+                    If result.Length > 4096 Then
+                        Dim valid_substring
+                        Do
+                            Dim substring = result.Substring(0, If(result.Length > 4096, 4096, result.Length))
+                            valid_substring = substring.Substring(0, substring.LastIndexOf(Environment.NewLine))
+                            result = result.Substring(substring.LastIndexOf(Environment.NewLine))
+                            a = api.SendTextMessageAsync(message.Chat.Id, valid_substring,,, message.MessageId).Result
+                        Loop Until valid_substring <> ""
+                    End If
+                    a = api.SendTextMessageAsync(message.Chat.Id, result,,, message.MessageId).Result
+                End If
+#End Region
             ElseIf message.Text.ToLower.StartsWith("/svuota") Then
+#Region "Svuota"
                 Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
                 If IO.File.Exists(path) Then
                     IO.File.Delete(path)
@@ -576,6 +619,7 @@ Module Module1
                 Else
                     a = api.SendTextMessageAsync(message.Chat.Id, "Il tuo zaino non è salvato",,, message.MessageId).Result
                 End If
+#End Region
             ElseIf message.Text.ToLower.StartsWith("/rinascita") Then
 #Region "rinascita"
                 Dim args() As String = message.Text.Split(" ")
@@ -670,7 +714,7 @@ Module Module1
                 Console.WriteLine(e.Message)
                 Dim a
                 sendReport(e, message)
-                a = api.SendTextMessageAsync(message.Chat.Id, "Si è verificato un errore, riprova tra qualche istante." + vbCrLf + "Una segnalazione è stata inviata automaticamente allo sviluppatore, potrebbe contattarti per avere più informazioni.").Result
+                a = api.SendTextMessageAsync(message.Chat.Id, "Si è verificato un errore, riprova tra qualche istante." + vbCrLf + "Una segnalazione è stata inviata automaticamente allo sviluppatore, potrebbe contattarti per avere più informazioni.",,,, New ReplyMarkups.ReplyKeyboardHide).Result
             Catch
             End Try
         End Try
@@ -936,6 +980,32 @@ Module Module1
         Return builder.ToString
     End Function
 
+    Function getVendiText(vendi As Dictionary(Of Item, Integer), zaino As Dictionary(Of Item, Integer), oggetto As String) As String
+        Dim builder As New Text.StringBuilder()
+        Dim sor As New SortedDictionary(Of Item, Integer)(New Item.ItemComparer)
+        For Each pair In vendi
+            sor.Add(pair.Key, pair.Value)
+        Next
+        Dim sortedDictionary As Dictionary(Of Item, Integer) = sor.Reverse.ToDictionary(Function(p) p.Key, Function(p) p.Value)
+        If sortedDictionary.Count > 0 Then
+            builder.AppendLine(String.Format("Ecco la lista degli oggetti non necessari per craftare {0}:", oggetto))
+            For Each it In sortedDictionary
+                With builder
+                    .Append("> ")
+                    .Append(vendi.Item(it.Key))
+                    .Append(" su ")
+                    .Append(zaino.Item(it.Key))
+                    .Append(" di ")
+                    .Append(it.Key.name)
+                    .Append(" (" + it.Key.rarity + ")") 'Rarità
+                    .AppendLine()
+                End With
+            Next
+        Else
+            builder.AppendLine("Non puoi vendere alcun oggetto. Ti servono tutti per craftare l'oggetto specificato.")
+        End If
+        Return builder.ToString
+    End Function
 #End Region
 
     'controllo se l'item è craftabile
