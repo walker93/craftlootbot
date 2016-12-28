@@ -109,13 +109,19 @@ Public Module MyExtensions
     End Function
 
     'Crea tastiera per salvataggio zaino
-    Function creaConfrontaKeyboard() As ReplyMarkups.ReplyKeyboardMarkup
+    Function creaConfrontaKeyboard(Optional withzaino As Boolean = False) As ReplyMarkups.ReplyKeyboardMarkup
         Dim keyboard As New ReplyMarkups.ReplyKeyboardMarkup
         Dim keyboardbuttons()() As KeyboardButton
         Dim button1 As New KeyboardButton("Annulla")
         Dim row1() As KeyboardButton
         row1.Add(button1)
         keyboardbuttons.Add(row1)
+        If withzaino Then
+            Dim button2 As New KeyboardButton("Utilizza il mio zaino")
+            Dim row2() As KeyboardButton
+            row2.Add(button2)
+            keyboardbuttons.Add(row2)
+        End If
         keyboard.Keyboard = keyboardbuttons
         keyboard.OneTimeKeyboard = True
         keyboard.ResizeKeyboard = True

@@ -94,6 +94,7 @@ Module help
             .AppendLine("Torna molto utile quando qualcuno invia lo zaino perchè vende tutto (ad esempio in vista della rinascita), e tu puoi subito sapere quali oggetti nel suo zaino sono nel tuo elenco 'Cerco:'.")
             .AppendLine("Torna utile anche quando tu invii l'elenco 'Cerco:' dal comando inline in un gruppo permettendo alle persone di confrontare immediatamente il loro zaino con il tuo elenco e dirti cosa possiedono.")
             .AppendLine("Dopo aver inviato '/confronta', invia l'elenco 'Cerco:' e infine lo zaino nel quale cercare gli oggetti.")
+            .AppendLine("Se hai uno zaino salvato, puoi toccare il pulsante 'Utilizza il mio zaino' per utilizzarlo.")
             .AppendLine("In qualsiasi momento puoi premere annulla per annullare il confronto, gli zaini inviati tramite questo comando non sono salvati.")
         End With
         With craft_builder

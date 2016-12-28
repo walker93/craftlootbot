@@ -382,7 +382,26 @@ Module Module1
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 100)) Then
                     confronti.Item(message.From.Id) = message.Text
                     stati.Item(message.From.Id) = 110
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Invia ora lo zaino nel quale cercare gli oggetti che stai cercando.").Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Invia ora lo zaino nel quale cercare gli oggetti che stai cercando." + vbCrLf + "Se ne hai uno salvato, puoi toccare 'Utilizza il mio zaino' per utilizzarlo.",,,, creaConfrontaKeyboard(True)).Result
+                End If
+            ElseIf message.Text.ToLower.Trim.Equals("utilizza il mio zaino") Then
+                If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) Then
+                    Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
+                    Dim zaino As String = ""
+                    If IO.File.Exists(path) Then
+                        zaino = IO.File.ReadAllText(path)
+                    Else
+                        a = api.SendTextMessageAsync(message.Chat.Id, "Per utilizzare il tuo zaino, devi averne uno salvato." + vbCrLf + "Inoltra il tuo zaino di seguito.").Result
+                        Exit Sub
+                    End If
+                    zainoDic = parseZaino(zaino)
+                    Dim cercotext = parseCerca(confronti.Item(message.From.Id))
+                    Dim result = ConfrontaDizionariItem(zainoDic, cercotext)
+                    a = api.SendTextMessageAsync(message.Chat.Id, getConfrontoText(cercotext, result),,,, New ReplyMarkups.ReplyKeyboardHide).Result
+                    stati.Remove(message.From.Id)
+                    confronti.Remove(message.From.Id)
+                Else
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Non stai effettuando il confronto.").Result
                 End If
             Else
                 Console.WriteLine("{0} {1} {2} from: {3}", Now.ToShortDateString, Now.ToShortTimeString, message.Text, message.From.Username)

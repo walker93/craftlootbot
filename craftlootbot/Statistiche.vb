@@ -8,6 +8,7 @@
     'Inizializzo statistiche a 0, prima di leggerle dal file.
     'per ora delta stat ha lo stesso messaggio delle stat normali, si può cambiare
     Sub init_stats()
+        If Not IO.File.Exists(stats_file) Then IO.File.WriteAllText(stats_file, "")
         stats.Add("lista", New Tuple(Of String, ULong)("Liste inviate", 0))
         stats.Add("albero", New Tuple(Of String, ULong)("Alberi generati", 0))
         stats.Add("rinascita", New Tuple(Of String, ULong)("Liste scambi rinascita effettuate", 0))
