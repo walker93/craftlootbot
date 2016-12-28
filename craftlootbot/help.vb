@@ -145,7 +145,7 @@ Module help
         Dim craft_button As New InlineKeyboardButton("🛠 Craft 🛠", "craft")
         Dim confronta_button As New InlineKeyboardButton("📊 Confronta 📊", "confronta")
         Dim base_button As New InlineKeyboardButton("🔤 Base 🔤", "base")
-        Dim vendi_button As New InlineKeyboardButton(" Vendi ", "vendi")
+        Dim vendi_button As New InlineKeyboardButton("🏪 Vendi 🏪", "vendi")
         Dim riepilogo_button As New InlineKeyboardButton("⬅️ Riepilogo ⬅️", "riepilogo")
         Dim row1() As InlineKeyboardButton
         Dim row2() As InlineKeyboardButton

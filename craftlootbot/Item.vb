@@ -1,7 +1,6 @@
 ﻿Imports System.Text
 
 Public Class Item
-
     Public Property id As Integer
     Public Property name As String
     Public Property rarity As String
