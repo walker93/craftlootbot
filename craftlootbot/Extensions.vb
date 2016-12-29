@@ -108,7 +108,7 @@ Public Module MyExtensions
         Return keyboard
     End Function
 
-    'Crea tastiera per salvataggio zaino
+    'Crea tastiera per confronta
     Function creaConfrontaKeyboard(Optional withzaino As Boolean = False) As ReplyMarkups.ReplyKeyboardMarkup
         Dim keyboard As New ReplyMarkups.ReplyKeyboardMarkup
         Dim keyboardbuttons()() As KeyboardButton

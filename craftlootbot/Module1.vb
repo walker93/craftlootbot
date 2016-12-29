@@ -17,7 +17,6 @@ Module Module1
     Dim thread_inline As New Dictionary(Of Integer, Threading.CancellationTokenSource)
     Dim from_inline_query As New Dictionary(Of ULong, String) 'ID_utente, Query
 
-#Region "stati"
     'STATI:
     '0: Di default
 
@@ -28,7 +27,6 @@ Module Module1
     '---->Ricevo lista vado a 110
     '110: attendo zaino dopo aver ricevuto lista cerca
     '---->Ricevo zaino, mostro risultato torno a 0
-#End Region
 
     Sub Main(ByVal args() As String)
         initializeVariables()
