@@ -20,7 +20,7 @@ Module Module1
     'STATI:
     '0: Di default
 
-    '10: Attendo messaggi zaino dopo comando /zaino
+    '10: Attendo messaggi zaino dopo comando /salvazaino
     '---->Ricevo salva o annulla, torno a 0
 
     '100: Attendo lista cerca dopo comando /confronta
@@ -384,7 +384,7 @@ Module Module1
                         a = api.SendTextMessageAsync(message.Chat.Id, "Il tuo zaino è stato salvato!").Result
                     Catch e As IO.IOException
                         If e.Message.ToLower.StartsWith("sharing violation") Then
-                            a = api.SendTextMessageAsync(message.Chat.Id, "Per inviare lo zaino diviso in più messaggi devi utilizzare il comando '/zaino'.").Result
+                            a = api.SendTextMessageAsync(message.Chat.Id, "Per inviare lo zaino diviso in più messaggi devi utilizzare il comando '/salvazaino'.").Result
                         End If
                     End Try
                 End If
@@ -416,13 +416,13 @@ Module Module1
             Else
                 Console.WriteLine("{0} {1} {2} from: {3}", Now.ToShortDateString, Now.ToShortTimeString, message.Text, message.From.Username)
             End If
-            If message.Text.ToLower.StartsWith("/zaino") Then
+            If message.Text.ToLower.StartsWith("/salvazaino") Then
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Stai già salvando lo zaino, inoltralo di seguito.").Result
                     Exit Sub
                 End If
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 100)) Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Stai già usando /confronta, annulla prima di eseguire /zaino.").Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Stai già usando /confronta, annulla prima di eseguire /salvazaino.").Result
                     Exit Sub
                 End If
                 stati.Add(message.From.Id, 10) 'entro nello stato 10, ovvero salvataggio zaino
@@ -438,11 +438,12 @@ Module Module1
                     zaini.Remove(message.From.Id)
                     If from_inline_query.ContainsKey(message.From.Id) Then
                         a = api.SendTextMessageAsync(message.Chat.Id, "Il tuo zaino è stato salvato!",,,, creaInlineKeyboard(from_inline_query.Item(message.From.Id))).Result
+                        from_inline_query.Remove(message.From.Id)
                     Else
                         a = api.SendTextMessageAsync(message.Chat.Id, "Il tuo zaino è stato salvato!",,,, creaNULLKeyboard).Result
                     End If
                 Else
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Non stai salvando uno zaino, utilizza /zaino per iniziare il salvataggio.",,,, creaNULLKeyboard).Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Non stai salvando uno zaino, utilizza /salvazaino per iniziare il salvataggio.",,,, creaNULLKeyboard).Result
                 End If
             ElseIf message.Text.ToLower.Equals("annulla") Then
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) AndAlso zaini.ContainsKey(message.From.Id) Then
@@ -479,7 +480,7 @@ Module Module1
                     Exit Sub
                 End If
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Stai già usando /zaino, salva o annulla prima di eseguire il confronto.").Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Stai già usando /salvazaino, salva o annulla prima di eseguire il confronto.").Result
                     Exit Sub
                 End If
                 'entro nello stato di confronto
@@ -685,6 +686,8 @@ Module Module1
                     End If
                     If Not from_inline_query.ContainsKey(message.From.Id) Then
                         from_inline_query.Add(message.From.Id, message.Text.ToLower.Trim.Replace("/start inline_", ""))
+                    Else
+                        from_inline_query(message.From.Id) = message.Text.ToLower.Trim.Replace("/start inline_", "")
                     End If
                     a = api.SendTextMessageAsync(message.From.Id, "Inoltra o incolla di seguito il tuo zaino, può essere in più messaggi." + vbCrLf + "Premi 'Salva' quando hai terminato, o 'Annulla' per non salvare.",,,, creaZainoKeyboard).Result
                 Else

@@ -49,7 +49,7 @@ Module help
             .AppendLine("*GUIDA:*")
             .AppendLine("Usa '/lista <nome oggetto>' per ricevere la lista dei materiali base necessari al craft dell'oggetto inserito.")
             .AppendLine("Usa '/albero <nome oggetto>' per ricevere un file di testo contenente l'albero dei craft dell'oggetto inserito.")
-            .AppendLine("Usa '/zaino' per salvare lo zaino diviso in più messaggi, copia o inoltralo senza nessun comando se è un singolo messaggio.")
+            .AppendLine("Usa '/salvazaino' per salvare lo zaino diviso in più messaggi, copia o inoltralo senza nessun comando se è un singolo messaggio.")
             .AppendLine("Usa '/rinascita <Username> <oggetto>' per ricevere un file di testo con le stringhe scambio da copiare e incollare in lootbot.")
             .AppendLine("Usa '/confronta' per ricevere un elenco di oggetti in comune tra uno zaino e un elenco 'Cerco:' dal comando inline.")
             .AppendLine("Usa '/craft <nome oggetto>' per ricevere un file di testo contenente stringhe da copiare e incollare, per craftare tutti gli oggetti necessari fino all'oggetto inserito.")
@@ -79,7 +79,7 @@ Module help
         With Zaino_builder
             .AppendLine("*Zaino:*")
             .AppendLine("Puoi salvare il tuo zaino nel bot in modo da escludere gli oggetti che già possiedi dalla lista o per mostrarli nell'albero.")
-            .AppendLine("Se lo zaino è un singolo messaggio copia o inoltra lo zaino, se invece è diviso in più messaggi perchè troppo lungo usa '/zaino' per iniziare a salvarlo.")
+            .AppendLine("Se lo zaino è un singolo messaggio copia o inoltra lo zaino, se invece è diviso in più messaggi perchè troppo lungo usa '/salvazaino' per iniziare a salvarlo.")
             .AppendLine("Per aggiornare lo zaino salvato, basta ripetere la procedura, quello precedente verrà sovrascritto.")
             .AppendLine("Usa '/svuota' per eliminare il tuo zaino se lo desideri.")
         End With
