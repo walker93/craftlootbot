@@ -59,11 +59,21 @@ Module Module1
         client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate")
         Dim res = client.GetStringAsync(ITEM_URL).Result
         Dim jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
+
         items = jsonres.res
         Console.WriteLine("Numero di oggetti: " + items.Length.ToString)
         ItemIds.Clear()
         For Each it As Item In items
             ItemIds.Add(it.id, it)
+        Next
+
+        'aggiungo rifugi
+        res = getRifugiItemsJSON()
+        jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
+        Dim rif() As Item = jsonres.res
+        For Each it As Item In rif
+            ItemIds.Add(it.id, it)
+            items.Add(it)
         Next
         Console.WriteLine("Terminato aggiornamento")
     End Sub
@@ -123,13 +133,13 @@ Module Module1
         Try
             Dim result As String = process_help(callback.Data)
             Dim e = api.EditMessageTextAsync(callback.Message.Chat.Id, callback.Message.MessageId, result, ParseMode.Markdown,, creaHelpKeyboard()).Result
-            Dim a = api.AnswerCallbackQueryAsync(callback.Id).Result
+            Dim a = api.AnswerCallbackQueryAsync(callback.Id,,,, 0).Result
         Catch e As AggregateException
             Console.WriteLine(e.InnerException.Message)
         Catch e As Exception
             Console.WriteLine(e.Message)
         Finally
-            Dim a = api.AnswerCallbackQueryAsync(callback.Id).Result
+            Dim a = api.AnswerCallbackQueryAsync(callback.Id,,,, 0).Result
         End Try
     End Sub
 #End Region
@@ -363,7 +373,7 @@ Module Module1
                     Dim zaino = parseZaino(message.Text)
                     Dim cercotext = parseCerca(confronti.Item(message.From.Id))
                     Dim result = ConfrontaDizionariItem(zaino, cercotext)
-                    a = api.SendTextMessageAsync(message.Chat.Id, getConfrontoText(cercotext, result),,,, New ReplyMarkups.ReplyKeyboardHide).Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, getConfrontoText(cercotext, result),,,, creaNULLKeyboard).Result
                     stati.Remove(message.From.Id)
                     confronti.Remove(message.From.Id)
                 Else
@@ -397,11 +407,11 @@ Module Module1
                     zainoDic = parseZaino(zaino)
                     Dim cercotext = parseCerca(confronti.Item(message.From.Id))
                     Dim result = ConfrontaDizionariItem(zainoDic, cercotext)
-                    a = api.SendTextMessageAsync(message.Chat.Id, getConfrontoText(cercotext, result),,,, New ReplyMarkups.ReplyKeyboardHide).Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, getConfrontoText(cercotext, result),,,, creaNULLKeyboard).Result
                     stati.Remove(message.From.Id)
                     confronti.Remove(message.From.Id)
                 Else
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Non stai effettuando il confronto.",,,, New ReplyMarkups.ReplyKeyboardHide).Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Non stai effettuando il confronto.",,,, creaNULLKeyboard).Result
                 End If
             Else
                 Console.WriteLine("{0} {1} {2} from: {3}", Now.ToShortDateString, Now.ToShortTimeString, message.Text, message.From.Username)
@@ -409,6 +419,10 @@ Module Module1
             If message.Text.ToLower.StartsWith("/zaino") Then
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Stai già salvando lo zaino, inoltralo di seguito.").Result
+                    Exit Sub
+                End If
+                If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 100)) Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Stai già usando /confronta, annulla prima di eseguire /zaino.").Result
                     Exit Sub
                 End If
                 stati.Add(message.From.Id, 10) 'entro nello stato 10, ovvero salvataggio zaino
@@ -425,22 +439,22 @@ Module Module1
                     If from_inline_query.ContainsKey(message.From.Id) Then
                         a = api.SendTextMessageAsync(message.Chat.Id, "Il tuo zaino è stato salvato!",,,, creaInlineKeyboard(from_inline_query.Item(message.From.Id))).Result
                     Else
-                        a = api.SendTextMessageAsync(message.Chat.Id, "Il tuo zaino è stato salvato!",,,, New ReplyMarkups.ReplyKeyboardHide).Result
+                        a = api.SendTextMessageAsync(message.Chat.Id, "Il tuo zaino è stato salvato!",,,, creaNULLKeyboard).Result
                     End If
                 Else
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Non stai salvando uno zaino, utilizza /zaino per iniziare il salvataggio.",,,, New ReplyMarkups.ReplyKeyboardHide).Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Non stai salvando uno zaino, utilizza /zaino per iniziare il salvataggio.",,,, creaNULLKeyboard).Result
                 End If
             ElseIf message.Text.ToLower.Equals("annulla") Then
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) AndAlso zaini.ContainsKey(message.From.Id) Then
                     stati.Remove(message.From.Id)
                     zaini.Remove(message.From.Id)
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Hai annullato il salvataggio dello zaino",,,, New ReplyMarkups.ReplyKeyboardHide).Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Hai annullato il salvataggio dello zaino",,,, creaNULLKeyboard).Result
                 ElseIf stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 100)) Or stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) Then
                     stati.Remove(message.From.Id)
                     confronti.Remove(message.From.Id)
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Hai annullato il confronto.",,,, New ReplyMarkups.ReplyKeyboardHide).Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Hai annullato il confronto.",,,, creaNULLKeyboard).Result
                 Else
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Non hai azioni in sospeso.",,,, New ReplyMarkups.ReplyKeyboardHide).Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Non hai azioni in sospeso.",,,, creaNULLKeyboard).Result
                 End If
             ElseIf message.Text.ToLower.StartsWith("/base") Then
 #Region "Base"
@@ -462,6 +476,10 @@ Module Module1
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 100)) _
                     Or stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Hai già usato '/confronta'.").Result
+                    Exit Sub
+                End If
+                If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Stai già usando /zaino, salva o annulla prima di eseguire il confronto.").Result
                     Exit Sub
                 End If
                 'entro nello stato di confronto
@@ -712,7 +730,7 @@ Module Module1
                 Console.WriteLine(e.Message)
                 Dim a
                 sendReport(e, message)
-                a = api.SendTextMessageAsync(message.Chat.Id, "Si è verificato un errore, riprova tra qualche istante." + vbCrLf + "Una segnalazione è stata inviata automaticamente allo sviluppatore, potrebbe contattarti per avere più informazioni.",,,, New ReplyMarkups.ReplyKeyboardHide).Result
+                a = api.SendTextMessageAsync(message.Chat.Id, "Si è verificato un errore, riprova tra qualche istante." + vbCrLf + "Una segnalazione è stata inviata automaticamente allo sviluppatore, potrebbe contattarti per avere più informazioni.",,,, creaNULLKeyboard).Result
             Catch
             End Try
         End Try

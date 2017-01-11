@@ -52,40 +52,62 @@ Public Module MyExtensions
 
     'Invia richiesta API e ottiene oggetti necessari al craft
     Function requestCraft(id As Integer) As Row()
-        Dim handler As New Http.HttpClientHandler
-        If handler.SupportsAutomaticDecompression() Then
-            handler.AutomaticDecompression = DecompressionMethods.Deflate Or DecompressionMethods.GZip
+        Dim res
+        If id > 1000 Then
+            If IO.File.Exists("rifugi/" + id.ToString + ".json") Then
+                res = IO.File.ReadAllText("rifugi/" + id.ToString + ".json")
+            End If
+        Else
+            Dim handler As New Http.HttpClientHandler
+            If handler.SupportsAutomaticDecompression() Then
+                handler.AutomaticDecompression = DecompressionMethods.Deflate Or DecompressionMethods.GZip
+            End If
+            Dim client As New Http.HttpClient(handler)
+            client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json")
+            client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate")
+            res = client.GetStringAsync(getCraftUrl(id)).Result
         End If
-        Dim client As New Http.HttpClient(handler)
-        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json")
-        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate")
-        Dim res = client.GetStringAsync(getCraftUrl(id)).Result
         Dim jres = Json.JsonConvert.DeserializeObject(Of CraftResponse)(res)
         Return jres.rows
     End Function
 
     'Invia richiesta API e ottiene info oggetti
     Function requestItems(name As String) As Item()
-        Dim handler As New Http.HttpClientHandler
-        If handler.SupportsAutomaticDecompression() Then
-            handler.AutomaticDecompression = DecompressionMethods.Deflate Or DecompressionMethods.GZip
-        End If
-        Dim client As New Http.HttpClient(handler)
-        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json")
-        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate")
+        Dim res
+        Dim arr As New List(Of Item)
 
-        Dim res = client.GetStringAsync(getItemUrl(name)).Result
-        Dim arr() As Item
+        If rifugiMatch.Contains(name.ToLower) Then
+            Dim allrifugi() = Json.JsonConvert.DeserializeObject(Of ItemResponse)(getRifugiItemsJSON()).res
+            For Each rif In allrifugi
+                arr.Add(rif)
+                If rif.name.ToLower.Equals(name.ToLower.Trim) Then
+                    arr.Clear()
+                    arr.Add(rif)
+                    Return arr.ToArray
+                End If
+            Next
+            Return arr.ToArray
+        Else
+            Dim handler As New Http.HttpClientHandler
+            If handler.SupportsAutomaticDecompression() Then
+                handler.AutomaticDecompression = DecompressionMethods.Deflate Or DecompressionMethods.GZip
+            End If
+            Dim client As New Http.HttpClient(handler)
+            client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json")
+            client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate")
+            res = client.GetStringAsync(getItemUrl(name)).Result
+        End If
+
         Try
             Dim jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
             If jsonres.code = 200 Then
-                arr = jsonres.res
+                arr.AddRange(jsonres.res)
             End If
         Catch
             Dim jsonres = Json.JsonConvert.DeserializeObject(Of SingleItemResponse)(res)
             arr.Add(jsonres.res)
         End Try
-        Return arr
+        Return arr.ToArray
     End Function
 
     'Crea tastiera per salvataggio zaino
@@ -140,6 +162,13 @@ Public Module MyExtensions
         row1.Add(button1)
         keyboardbuttons.Add(row1)
         keyboard.InlineKeyboard = keyboardbuttons
+        Return keyboard
+    End Function
+
+    Function creaNULLKeyboard() As ReplyMarkups.ReplyKeyboardRemove
+        Dim keyboard As New ReplyMarkups.ReplyKeyboardRemove
+        keyboard.RemoveKeyboard = True
+        keyboard.Selective = True
         Return keyboard
     End Function
 
@@ -206,5 +235,10 @@ Public Module MyExtensions
             End If
         Next
         Return res
+    End Function
+
+    Function getRifugiItemsJSON() As String
+        If Not IO.File.Exists("rifugi/items.json") Then Return ""
+        Return IO.File.ReadAllText("rifugi/items.json")
     End Function
 End Module

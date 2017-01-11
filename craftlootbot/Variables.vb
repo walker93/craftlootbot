@@ -8,7 +8,7 @@
     Public debug As Boolean
     Public update_db_timeout As Integer = 3 'ore
     Public inline_message_row_limit As Integer = 15 'righe massime messaggio risposta query inline
-
+    Public rifugiMatch() As String
     'Legge da file impostazioni e inizializza variabili
     Sub initializeVariables()
         If Not IO.File.Exists(settings_file) Then
@@ -40,6 +40,7 @@
         init_stats()
         read_stats()
 
+        init_rifugiMatch()
     End Sub
 
     'Inizializza valori craft rarità
@@ -54,6 +55,25 @@
         rarity_value.Add("S", 0)
         rarity_value.Add("U", 0)
         rarity_value.Add("X", 100000)
+        rarity_value.Add("RF2", 1500)
+        rarity_value.Add("RF3", 3000)
+        rarity_value.Add("RF4", 4500)
+        rarity_value.Add("RF5", 7000)
+        rarity_value.Add("RF6", 10000)
+    End Sub
+
+    Sub init_rifugiMatch()
+        rifugiMatch.Add("rif")
+        rifugiMatch.Add("rifu")
+        rifugiMatch.Add("rifug")
+        rifugiMatch.Add("rifugi")
+        rifugiMatch.Add("rifugio")
+        rifugiMatch.Add("rifugio ")
+        rifugiMatch.Add("rifugio 2")
+        rifugiMatch.Add("rifugio 3")
+        rifugiMatch.Add("rifugio 4")
+        rifugiMatch.Add("rifugio 5")
+        rifugiMatch.Add("rifugio 6")
     End Sub
 
     'restituisce url craft per un determinato ID
