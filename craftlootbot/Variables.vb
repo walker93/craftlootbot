@@ -9,6 +9,7 @@
     Public update_db_timeout As Integer = 3 'ore
     Public inline_message_row_limit As Integer = 15 'righe massime messaggio risposta query inline
     Public rifugiMatch() As String
+    Public prezzoScrigni As New Dictionary(Of String, Integer)
     'Legge da file impostazioni e inizializza variabili
     Sub initializeVariables()
         If Not IO.File.Exists(settings_file) Then
@@ -41,6 +42,16 @@
         read_stats()
 
         init_rifugiMatch()
+        init_prezzoscrigni()
+    End Sub
+
+    Sub init_prezzoscrigni()
+        prezzoScrigni.Add("C", 450)
+        prezzoScrigni.Add("NC", 750)
+        prezzoScrigni.Add("R", 1500)
+        prezzoScrigni.Add("UR", 2500)
+        prezzoScrigni.Add("L", 5000)
+        prezzoScrigni.Add("E", 10000)
     End Sub
 
     'Inizializza valori craft rarità

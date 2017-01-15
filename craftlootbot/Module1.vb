@@ -676,6 +676,23 @@ Module Module1
                 a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, creaScambi(zainoDic, oggetto, user), "Lista Scambi"),,, message.MessageId).Result
                 IO.File.Delete(name)
 #End Region
+            ElseIf message.Text.ToLower.StartsWith("/creanegozi") Then
+#Region "creanegozio"
+                Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
+                Dim zaino As String = ""
+                If IO.File.Exists(path) Then
+                    zaino = IO.File.ReadAllText(path)
+                End If
+                If zaino = "" Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Devi salvare lo zaino prima di usare questa funzione.").Result
+                    Exit Sub
+                End If
+                zainoDic = parseZaino(zaino)
+                Dim negozi = getNegoziText(zainoDic)
+                For Each negozio In negozi
+                    a = api.SendTextMessageAsync(message.Chat.Id, negozio).Result
+                Next
+#End Region
             ElseIf message.Text.ToLower.StartsWith("/start") Then
 #Region "start"
                 If message.Text.Contains("inline_") Then
@@ -817,14 +834,22 @@ Module Module1
         Dim builder As New Text.StringBuilder
         Dim sorted = From pair In zaino
                      Order By pair.Value Descending
-        Dim zainolist = sorted.ToList
+        Dim comparer As New Item.ZainoComparer
 
+        Dim zainolist = zaino.OrderByDescending(Function(p) p.Value).ThenByDescending(Function(p) p, comparer).ToList 'sorted.ToList
+        Dim prev_count
         Dim totbuilder As New Text.StringBuilder
+        Dim item, next_item
+        Dim diff = 0
         For x = zainolist.Count - 1 To 1 Step -1
-            x = zainolist.Count - 1
-            Dim item = zainolist(x)
-            Dim next_item = zainolist(x - 1)
+            x = zainolist.Count - 1 - diff
+            diff = 0
+            'If zainolist(x).Value <> zainolist(x - 1).Value Then diff = 1
+            item = zainolist(x - diff)
+            next_item = zainolist(x - 1 - diff)
+
             For i = 1 To If(item.Value > next_item.Value, next_item.Value, item.Value)
+                prev_count = zainolist.Count
                 builder = New Text.StringBuilder
                 With builder
                     .Append("Scambia ")
@@ -837,9 +862,10 @@ Module Module1
                     .Append(vbCrLf)
                 End With
                 totbuilder.Append(builder.ToString)
-                zainolist(x) = New KeyValuePair(Of Item, Integer)(item.Key, zainolist(x).Value - 1)
-                zainolist(x - 1) = New KeyValuePair(Of Item, Integer)(next_item.Key, zainolist(x - 1).Value - 1)
+                zainolist(x - diff) = New KeyValuePair(Of Item, Integer)(item.Key, zainolist(x - diff).Value - 1)
+                zainolist(x - 1 - diff) = New KeyValuePair(Of Item, Integer)(next_item.Key, zainolist(x - 1 - diff).Value - 1)
                 zainolist.RemoveAll(New Predicate(Of KeyValuePair(Of Item, Integer))(Function(a) a.Value = 0))
+                'If zainolist.Count < prev_count Then zainolist = zainolist.OrderByDescending(Of Integer)(Function(p) p.Value).ToList '.ThenByDescending(Of KeyValuePair(Of Item, Integer))(Function(p) p, comparer).ToList
             Next
         Next
         Return totbuilder.ToString
@@ -955,8 +981,10 @@ Module Module1
     End Function
 
     Function getConfrontoText(cerco As Dictionary(Of Item, Integer), presenti As Dictionary(Of Item, Integer)) As String
-        Dim builder As New Text.StringBuilder("Nello zaino sono presenti questi oggetti che cerchi:")
-        builder.AppendLine()
+        Dim builder As New Text.StringBuilder()
+        Dim intestazione As String = "Nello zaino sono presenti questi oggetti che cerchi:"
+        builder.AppendLine(intestazione)
+
         For Each row In presenti
             With builder
                 .Append("> ")
@@ -969,6 +997,7 @@ Module Module1
                 .AppendLine()
             End With
         Next
+        If builder.ToString = intestazione + Environment.NewLine Then builder.Clear.AppendLine("Non sono presenti oggetti che cerchi nello zaino.")
         Return builder.ToString
     End Function
 
@@ -1024,6 +1053,38 @@ Module Module1
             builder.AppendLine("Non puoi vendere alcun oggetto. Ti servono tutti per craftare l'oggetto specificato.")
         End If
         Return builder.ToString
+    End Function
+
+    Function getNegoziText(zaino As Dictionary(Of Item, Integer)) As List(Of String)
+        Dim res As New List(Of String)
+        Dim builder As New Text.StringBuilder
+        Dim i_counter = 1
+        Dim Filtro_zaino = zaino.Where(Function(p) prezzoScrigni.ContainsKey(p.Key.rarity) AndAlso Not isCraftable(p.Key.id))
+        Dim prev_rarity As String = Filtro_zaino.First.Key.rarity
+        For Each it In Filtro_zaino
+            If it.Key.rarity <> prev_rarity Then
+                i_counter = 1
+                builder.Append(" #")
+                res.Add(builder.ToString)
+                builder.Clear()
+            ElseIf i_counter > 10 Then
+                i_counter = 1
+                builder.Append(it.Key.name).Append(":")
+                builder.Append(prezzoScrigni(it.Key.rarity)).Append(":")
+                builder.Append(it.Value)
+                builder.Append(" #")
+                res.Add(builder.ToString)
+                builder.Clear()
+            Else
+                builder.Append(it.Key.name).Append(":")
+                builder.Append(prezzoScrigni(it.Key.rarity)).Append(":")
+                builder.Append(it.Value)
+                builder.Append(",")
+            End If
+            i_counter += 1
+            prev_rarity = it.Key.rarity
+        Next
+        Return res
     End Function
 #End Region
 

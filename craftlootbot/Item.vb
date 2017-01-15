@@ -1,4 +1,5 @@
 ﻿Imports System.Text
+Imports craftlootbot
 
 Public Class Item
     Public Property id As Integer
@@ -38,6 +39,12 @@ Public Class Item
             Return 0
         End Function
     End Class
+
+    Public Class ZainoComparer
+        Implements IComparer(Of KeyValuePair(Of Item, Integer))
+        Dim itemcomparer As New ItemComparer
+        Public Function Compare(x As KeyValuePair(Of Item, Integer), y As KeyValuePair(Of Item, Integer)) As Integer Implements IComparer(Of KeyValuePair(Of Item, Integer)).Compare
+            Return itemcomparer.Compare(x.Key, y.Key)
+        End Function
+    End Class
 End Class
-
-
