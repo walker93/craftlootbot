@@ -95,7 +95,11 @@ Public Module MyExtensions
             Dim client As New Http.HttpClient(handler)
             client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json")
             client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate")
-            res = client.GetStringAsync(getItemUrl(name)).Result
+            Try
+                res = client.GetStringAsync(getItemUrl(name)).Result
+            Catch ex As Exception
+                Return arr.ToArray()
+            End Try
         End If
 
         Try
@@ -105,7 +109,7 @@ Public Module MyExtensions
             End If
         Catch
             Dim jsonres = Json.JsonConvert.DeserializeObject(Of SingleItemResponse)(res)
-            arr.Add(jsonres.res)
+            If jsonres.res IsNot Nothing Then arr.Add(jsonres.res)
         End Try
         Return arr.ToArray
     End Function
@@ -201,7 +205,7 @@ Public Module MyExtensions
 
     'controllo se il testo matcha uno zaino
     Function isZaino(text As String) As Boolean
-        Dim rex As New Regex("\> ([A-z òàèéìù'-]+)\(([0-9]+)\)")
+        Dim rex As New Regex("\> ([A-z 0-9òàèéìù'-]+)\(([0-9]+)\)")
         Return rex.IsMatch(text)
     End Function
 

@@ -367,7 +367,7 @@ Module Module1
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) Then
                     'sta inviando più parti di zaino
                     zaini.Item(message.From.Id) += message.Text
-
+                    StampaDebug("Zaino diviso ricevuto.")
                 ElseIf stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) Then
                     'sta inviando zaino per confronto
                     Dim zaino = parseZaino(message.Text)
@@ -678,6 +678,11 @@ Module Module1
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/creanegozi") Then
 #Region "creanegozio"
+                'Dim prezzo = message.Text.Replace("/creanegozi", "").Trim
+                'If prezzo = "" Then
+                '    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto che vuoi ottenere").Result
+                '    Exit Sub
+                'End If
                 Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
                 Dim zaino As String = ""
                 If IO.File.Exists(path) Then
@@ -696,11 +701,18 @@ Module Module1
             ElseIf message.Text.ToLower.StartsWith("/start") Then
 #Region "start"
                 If message.Text.Contains("inline_") Then
+                    If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 100)) _
+                    Or stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) Then
+                        stati.Remove(message.From.Id)  'entro nello stato 10, ovvero salvataggio zaino
+                        confronti.Remove(message.From.Id)
+                    End If
                     'Proviene da inline propongo zaino
                     If Not stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) Then
                         stati.Add(message.From.Id, 10) 'entro nello stato 10, ovvero salvataggio zaino
                         zaini.Add(message.From.Id, "")
                     End If
+
+
                     If Not from_inline_query.ContainsKey(message.From.Id) Then
                         from_inline_query.Add(message.From.Id, message.Text.ToLower.Trim.Replace("/start inline_", ""))
                     Else
@@ -711,8 +723,8 @@ Module Module1
                     'Avvio normale
                     Dim builder As New Text.StringBuilder()
                     builder.AppendLine("Benvenuto in Craft Lootbot!")
-                    builder.AppendLine("Questo bot permette di riceve la lista dei materiali necessari al craft oppure l'albero dei craft di un oggetto.")
-                    builder.AppendLine("Usa /help per la guida ai comandi")
+                    builder.AppendLine("Questo bot permette di riceve la lista dei materiali necessari al craft, l'albero dei craft di un oggetto e molto altro.")
+                    builder.AppendLine("Usa /help per la guida ai comandi.")
                     builder.AppendLine("Provami! Non ti deluderò!")
                     a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString).Result
                 End If
@@ -810,12 +822,13 @@ Module Module1
         Dim item As Item
         For Each row In rows
             item = RowToItem(row)
-            If Not possiedi.ContainsKey(item) And zaino.ContainsKey(item) Then possiedi.Add(item, zaino.Item(item))
+            'If Not possiedi.ContainsKey(item) And zaino.ContainsKey(item) Then possiedi.Add(item, zaino.Item(item))
             If isCraftable(row.id) Then
                 If Not zaino.ContainsKey(item) Then
                     getCraftItemsTree(row.id, prof, CraftTree, zaino, possiedi)
                     prof -= 1
                 Else
+                    StampaDebug(item.name + " presente nello zaino")
                     zaino.Item(item) -= 1
                     If zaino.Item(item) = 0 Then zaino.Remove(item)
                     If Not possiedi.ContainsKey(item) Then
@@ -971,11 +984,14 @@ Module Module1
         Dim sortedDictionary = sorted.ToList()
         For Each craft In sortedDictionary
             If isCraftable(craft.Key.id) Then
-                If Not possiedi.ContainsKey(craft.Key) Then
-                    builder.Append("Crea " + craft.Key.name)
+                'If Not possiedi.ContainsKey(craft.Key) Then
+                builder.Append("Crea " + craft.Key.name)
                     builder.Append(vbCrLf)
+                    'Else
+                    '    possiedi(craft.Key) -= 1
+                    '    If possiedi(craft.Key) = 0 Then possiedi.Remove(craft.Key)
+                    'End If
                 End If
-            End If
         Next
         Return builder.ToString
     End Function
@@ -1057,7 +1073,7 @@ Module Module1
 
     Function getNegoziText(zaino As Dictionary(Of Item, Integer)) As List(Of String)
         Dim res As New List(Of String)
-        Dim builder As New Text.StringBuilder
+        Dim builder As New Text.StringBuilder("/negozio ")
         Dim i_counter = 1
         Dim Filtro_zaino = zaino.Where(Function(p) prezzoScrigni.ContainsKey(p.Key.rarity) AndAlso Not isCraftable(p.Key.id))
         Dim prev_rarity As String = Filtro_zaino.First.Key.rarity
@@ -1066,7 +1082,7 @@ Module Module1
                 i_counter = 1
                 builder.Append(" #")
                 res.Add(builder.ToString)
-                builder.Clear()
+                builder.Clear().Append("/negozio ")
             ElseIf i_counter > 10 Then
                 i_counter = 1
                 builder.Append(it.Key.name).Append(":")
@@ -1074,7 +1090,7 @@ Module Module1
                 builder.Append(it.Value)
                 builder.Append(" #")
                 res.Add(builder.ToString)
-                builder.Clear()
+                builder.Clear().Append("/negozio ")
             Else
                 builder.Append(it.Key.name).Append(":")
                 builder.Append(prezzoScrigni(it.Key.rarity)).Append(":")
@@ -1121,7 +1137,7 @@ Module Module1
     'Dato uno zaino in stringa restituisco dizionario(oggetto, quantità)
     Function parseZaino(text As String) As Dictionary(Of Item, Integer)
         Dim quantità As New Dictionary(Of Item, Integer)
-        Dim rex As New Regex("\> ([A-z òàèéìù'-]+)\(([0-9]+)\)")
+        Dim rex As New Regex("\> ([A-z 0-9òàèéìù'-]+)\(([0-9]+)\)")
         Dim matches As MatchCollection = rex.Matches(text)
         For Each match As Match In matches
             Try
