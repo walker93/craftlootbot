@@ -26,15 +26,17 @@ Public Class Nickname
     Public Property nickname As String
 End Class
 
-Public Class CraftResponse
-    Public Property code As Integer
-    Public Property item As String
-    Public Property rows As Row()
-End Class
-
-Public Class Row
+Public Class row
     Public Property id As Integer
     Public Property name As String
     Public Property rarity As String
     Public Property craftable As Integer
 End Class
+
+Public Class CraftResponse
+    Public Property code As Integer
+    Public Property item As String
+    Public Property res As row()
+End Class
+
+

@@ -21,15 +21,6 @@
         stats.Add("zaini", New Tuple(Of String, ULong)("Zaini attualmente salvati", 0))
 
         delta_stats = stats.ToList.ToDictionary(Function(p) p.Key, Function(p) New Tuple(Of String, Integer)(p.Value.Item1, p.Value.Item2))
-        'delta_stats.Add("lista", New Tuple(Of String, Integer)("Liste inviate", 0))
-        'delta_stats.Add("albero", New Tuple(Of String, Integer)("Alberi generati", 0))
-        'delta_stats.Add("rinascita", New Tuple(Of String, Integer)("Liste scambi rinascita effettuate", 0))
-        'delta_stats.Add("inline", New Tuple(Of String, Integer)("Comandi inline inviati", 0))
-        'delta_stats.Add("confronta", New Tuple(Of String, Integer)("Confronti eseguiti", 0))
-        'delta_stats.Add("craft", New Tuple(Of String, Integer)("Liste Craft inviate", 0))
-        'delta_stats.Add("base", New Tuple(Of String, Integer)("Liste oggetti base inviate", 0))
-        'delta_stats.Add("vendi", New Tuple(Of String, Integer)("Liste oggetti non necessari", 0))
-        'delta_stats.Add("totale", New Tuple(Of String, Integer)("Totale comandi processati", 0))
         delta_stats("zaini") = New Tuple(Of String, Integer)("Nuovi zaini salvati", 0)
     End Sub
 

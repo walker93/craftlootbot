@@ -68,7 +68,7 @@
         rarity_value.Add("E", 1000)
         rarity_value.Add("UE", 10000)
         rarity_value.Add("S", 0)
-        rarity_value.Add("U", 0)
+        rarity_value.Add("U", 50000)
         rarity_value.Add("X", 100000)
         rarity_value.Add("RF2", 1500)
         rarity_value.Add("RF3", 3000)

@@ -51,7 +51,7 @@ Public Module MyExtensions
     End Function
 
     'Invia richiesta API e ottiene oggetti necessari al craft
-    Function requestCraft(id As Integer) As Row()
+    Function requestCraft(id As Integer) As row()
         Dim res
         If id > 1000 Then
             If IO.File.Exists("rifugi/" + id.ToString + ".json") Then
@@ -68,7 +68,7 @@ Public Module MyExtensions
             res = client.GetStringAsync(getCraftUrl(id)).Result
         End If
         Dim jres = Json.JsonConvert.DeserializeObject(Of CraftResponse)(res)
-        Return jres.rows
+        Return jres.res
     End Function
 
     'Invia richiesta API e ottiene info oggetti

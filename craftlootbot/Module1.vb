@@ -71,7 +71,8 @@ Module Module1
 
         res = client.GetStringAsync(ITEM_URL).Result
         jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
-        For Each it As Item In items
+        Dim res_items = jsonres.res
+        For Each it As Item In res_items
             ItemIds.Add(it.id, it)
             items.Add(it)
         Next
@@ -84,9 +85,13 @@ Module Module1
             Try
                 aggiorno_dictionary()
                 Threading.Thread.Sleep(update_db_timeout * 60 * 60 * 1000) 'aggiorno ogni 12 ore
-            Catch
-                Console.WriteLine("Errori durante l'aggiornamento")
+            Catch e As AggregateException
+                Console.WriteLine("Errori durante l'aggiornamento: " + e.InnerException.Message)
+                Threading.Thread.Sleep(60 * 1000) 'Aggiorno ogni minuto         
+            Catch e As Exception
+                Console.WriteLine("Errori durante l'aggiornamento: " + e.Message)
                 Threading.Thread.Sleep(60 * 1000) 'Aggiorno ogni minuto
+
             End Try
         End While
     End Sub
