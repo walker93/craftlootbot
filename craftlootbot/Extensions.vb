@@ -169,6 +169,7 @@ Public Module MyExtensions
         Return keyboard
     End Function
 
+    'Crea tastiera vuota
     Function creaNULLKeyboard() As ReplyMarkups.ReplyKeyboardRemove
         Dim keyboard As New ReplyMarkups.ReplyKeyboardRemove
         keyboard.RemoveKeyboard = True

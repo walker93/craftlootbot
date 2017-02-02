@@ -7,7 +7,7 @@ Imports System.Text.RegularExpressions
 
 Module Module1
     Dim WithEvents api As TelegramBotClient
-    Dim flush As Boolean = False
+
     Dim time_start As Date = Date.UtcNow
     Dim ItemIds As New Dictionary(Of Integer, Item)
     Dim items() As Item
@@ -28,15 +28,14 @@ Module Module1
     '110: attendo zaino dopo aver ricevuto lista cerca
     '---->Ricevo zaino, mostro risultato torno a 0
 
-    Sub Main(ByVal args() As String)
+    Sub Main()
         initializeVariables()
-        If args.Length > 0 Then
-            flush = args(0).Contains("flush")
-        End If
         api = New TelegramBotClient(token.token)
         Try
             Dim bot = api.GetMeAsync.Result
             Console.WriteLine(bot.Username & ": " & bot.Id)
+        Catch ex As AggregateException
+            Console.WriteLine("{0} {1} Error: {2}", Now.ToShortDateString, Now.ToShortTimeString, ex.InnerException.Message)
         Catch ex As Exception
             Console.WriteLine("{0} {1} Error: {2}", Now.ToShortDateString, Now.ToShortTimeString, ex.Message)
         End Try
@@ -57,24 +56,26 @@ Module Module1
         Dim client As New Http.HttpClient(handler)
         client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json")
         client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate")
-        Dim res = client.GetStringAsync(ITEM_URL).Result
-        Dim jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
-
-        items = jsonres.res
-        Console.WriteLine("Numero di oggetti: " + items.Length.ToString)
-        ItemIds.Clear()
-        For Each it As Item In items
-            ItemIds.Add(it.id, it)
-        Next
-
+        Dim res
+        Dim jsonres
         'aggiungo rifugi
         res = getRifugiItemsJSON()
         jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
+        ItemIds.Clear()
+        items = {}
         Dim rif() As Item = jsonres.res
         For Each it As Item In rif
             ItemIds.Add(it.id, it)
             items.Add(it)
         Next
+
+        res = client.GetStringAsync(ITEM_URL).Result
+        jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
+        For Each it As Item In items
+            ItemIds.Add(it.id, it)
+            items.Add(it)
+        Next
+        Console.WriteLine("Numero di oggetti: " + items.Length.ToString)
         Console.WriteLine("Terminato aggiornamento")
     End Sub
 
@@ -83,7 +84,6 @@ Module Module1
             Try
                 aggiorno_dictionary()
                 Threading.Thread.Sleep(update_db_timeout * 60 * 60 * 1000) 'aggiorno ogni 12 ore
-
             Catch
                 Console.WriteLine("Errori durante l'aggiornamento")
                 Threading.Thread.Sleep(60 * 1000) 'Aggiorno ogni minuto
@@ -677,14 +677,11 @@ Module Module1
                 IO.File.Delete(name)
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/creanegozi") Then
-#Region "creanegozio"
-                'Dim prezzo = message.Text.Replace("/creanegozi", "").Trim
-                'If prezzo = "" Then
-                '    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto che vuoi ottenere").Result
-                '    Exit Sub
-                'End If
+#Region "creanegozi"
+                item = message.Text.Replace("/creanegozi", "").Trim
                 Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
                 Dim zaino As String = ""
+                Dim result As New Dictionary(Of Item, Integer)
                 If IO.File.Exists(path) Then
                     zaino = IO.File.ReadAllText(path)
                 End If
@@ -693,7 +690,25 @@ Module Module1
                     Exit Sub
                 End If
                 zainoDic = parseZaino(zaino)
-                Dim negozi = getNegoziText(zainoDic)
+                If item = "" Then
+                    'Uso lo zaino per creare i negozi
+                    result = zainoDic
+                ElseIf Item <> "@craftlootbot" Then
+                    'Uso il /vendi per creare i negozi
+                    id = getItemId(item)
+                    ItemIds.TryGetValue(id, it)
+                    If id <> -1 Then
+                        If Not isCraftable(id) Then
+                            Dim e = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è craftabile").Result
+                            Exit Sub
+                        End If
+                        api.SendChatActionAsync(message.Chat.Id, ChatAction.Typing)
+                        Dim zainoDic_copy = zainoDic
+                        getNeededItemsList(id, CraftList, zainoDic_copy, gia_possiedi, spesa)
+                        result = SottrazioneDizionariItem(zainoDic_copy, createCraftCountList(CraftList))
+                    End If
+                End If
+                Dim negozi = getNegoziText(result)
                 For Each negozio In negozi
                     a = api.SendTextMessageAsync(message.Chat.Id, negozio).Result
                 Next
@@ -711,8 +726,6 @@ Module Module1
                         stati.Add(message.From.Id, 10) 'entro nello stato 10, ovvero salvataggio zaino
                         zaini.Add(message.From.Id, "")
                     End If
-
-
                     If Not from_inline_query.ContainsKey(message.From.Id) Then
                         from_inline_query.Add(message.From.Id, message.Text.ToLower.Trim.Replace("/start inline_", ""))
                     Else
@@ -756,7 +769,12 @@ Module Module1
                 Throw New Exception("PROCESSO TERMINATO SU RICHIESTA")
             End If
             If TypeOf e Is KeyNotFoundException Then
-                aggiorno_dictionary()
+                Try
+                    aggiorno_dictionary()
+                Catch
+                    Console.WriteLine("Impossibile aggiornare dizionario")
+                    Exit Sub
+                End Try
             End If
             Try
                 Console.WriteLine(e.Message)
@@ -1083,7 +1101,7 @@ Module Module1
                 builder.Append(" #")
                 res.Add(builder.ToString)
                 builder.Clear().Append("/negozio ")
-            ElseIf i_counter > 10 Then
+            ElseIf i_counter >= 10 Then
                 i_counter = 1
                 builder.Append(it.Key.name).Append(":")
                 builder.Append(prezzoScrigni(it.Key.rarity)).Append(":")
@@ -1100,6 +1118,10 @@ Module Module1
             i_counter += 1
             prev_rarity = it.Key.rarity
         Next
+        builder.Remove(builder.Length - 1, 1)
+        builder.Append(" #")
+        res.Add(builder.ToString)
+
         Return res
     End Function
 #End Region
@@ -1129,7 +1151,11 @@ Module Module1
                 If it.name.ToLower = name.ToLower.Trim Then Return it.id
             Next
         Catch ex As Exception
-            aggiorno_dictionary()
+            Try
+                aggiorno_dictionary()
+            Catch e As Exception
+                Console.WriteLine("Impossibile ottenere l'ID per " + name)
+            End Try
         End Try
         Return -1
     End Function

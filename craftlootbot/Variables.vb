@@ -10,6 +10,8 @@
     Public inline_message_row_limit As Integer = 15 'righe massime messaggio risposta query inline
     Public rifugiMatch() As String
     Public prezzoScrigni As New Dictionary(Of String, Integer)
+    Public flush As Boolean = True
+
     'Legge da file impostazioni e inizializza variabili
     Sub initializeVariables()
         If Not IO.File.Exists(settings_file) Then
@@ -29,6 +31,8 @@
                     update_db_timeout = split(1)
                 Case "inline_message_row_limit"
                     inline_message_row_limit = split(1)
+                Case "flush"
+                    flush = If(split(1) = 1, True, False)
             End Select
         Next
         ITEM_URL = BASE_URL + "items/"
