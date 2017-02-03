@@ -189,8 +189,8 @@ Public Module MyExtensions
         Dim res = client.GetStringAsync(getPlayerUrl(User)).Result
         Dim jres = Json.JsonConvert.DeserializeObject(Of PlayerResponse)(res)
 
-        If jres.rows.Length > 0 Then
-            For Each nick In jres.rows
+        If jres.res.Length > 0 Then
+            For Each nick In jres.res
                 If nick.nickname.ToLower = User.Trim.ToLower Then Return True
             Next
         End If

@@ -19,7 +19,7 @@ End Class
 
 Public Class PlayerResponse
     Public Property code As Integer
-    Public Property rows As Nickname()
+    Public Property res As Nickname()
 End Class
 
 Public Class Nickname
