@@ -216,6 +216,13 @@ Public Module MyExtensions
         Return rex.IsMatch(text)
     End Function
 
+    'controllo se il testo match un elenco prezzi negozio
+    Function isPrezziNegozi(text As String) As Boolean
+        Dim rex As New Regex("([A-z 0-9òàèéìù'-]+):([0-9]+)")
+        Dim matches As MatchCollection = rex.Matches(text)
+        Return rex.IsMatch(text)
+    End Function
+
     'dati due dizionari(item, quantità) restituisce un nuovo dizionario contenente gli oggetti del secondo che sono contenuti nel primo
     Function ConfrontaDizionariItem(zaino As Dictionary(Of Item, Integer), cerco As Dictionary(Of Item, Integer)) As Dictionary(Of Item, Integer)
         Dim res As New Dictionary(Of Item, Integer)

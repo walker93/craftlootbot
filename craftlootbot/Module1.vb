@@ -399,6 +399,11 @@ Module Module1
                     stati.Item(message.From.Id) = 110
                     a = api.SendTextMessageAsync(message.Chat.Id, "Invia ora lo zaino nel quale cercare gli oggetti che stai cercando." + vbCrLf + "Se ne hai uno salvato, puoi toccare 'Utilizza il mio zaino' per utilizzarlo.",,,, creaConfrontaKeyboard(True)).Result
                 End If
+            ElseIf isPrezziNegozi(message.Text) Then
+                IO.Directory.CreateDirectory("prezzi")
+                IO.File.WriteAllText("prezzi/" + message.From.Id.ToString + ".txt", message.Text)
+                Console.WriteLine("Salvati prezzi di ID: " + message.From.Id.ToString)
+                a = api.SendTextMessageAsync(message.Chat.Id, "I tuoi prezzi sono stati salvati!").Result
             ElseIf message.Text.ToLower.Trim.Equals("utilizza il mio zaino") Then
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) Then
                     Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
@@ -713,16 +718,31 @@ Module Module1
                         result = SottrazioneDizionariItem(zainoDic_copy, createCraftCountList(CraftList))
                     End If
                 End If
-                Dim negozi = getNegoziText(result)
+                Dim prezzi_dic As Dictionary(Of Item, Integer)
+                Dim prezzi As String
+                If IO.File.Exists("prezzi/" + message.From.Id.ToString + ".txt") Then
+                    prezzi = IO.File.ReadAllText("prezzi/" + message.From.Id.ToString + ".txt")
+                    prezzi_dic = parsePrezzoNegozi(prezzi)
+                End If
+                Dim negozi = getNegoziText(result, prezzi_dic)
                 For Each negozio In negozi
                     a = api.SendTextMessageAsync(message.Chat.Id, negozio).Result
                 Next
+#End Region
+            ElseIf message.Text.ToLower.StartsWith("/ottieniprezzi") Then
+#Region "ottieniprezzi"
+                If IO.File.Exists("prezzi/" + message.From.Id.ToString + ".txt") Then
+                    Dim prezzi_text = IO.File.ReadAllText("prezzi/" + message.From.Id.ToString + ".txt")
+                    a = api.SendTextMessageAsync(message.Chat.Id, prezzi_text).Result
+                Else
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Non hai prezzi salvati al momento").Result
+                End If
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/start") Then
 #Region "start"
                 If message.Text.Contains("inline_") Then
                     If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 100)) _
-                    Or stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) Then
+                        Or stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) Then
                         stati.Remove(message.From.Id)  'entro nello stato 10, ovvero salvataggio zaino
                         confronti.Remove(message.From.Id)
                     End If
@@ -866,6 +886,7 @@ Module Module1
         Next
     End Sub
 
+    'Creazione testi
     Function creaScambi(zaino As Dictionary(Of Item, Integer), oggetto_scambio As String, user As String) As String
         Dim builder As New Text.StringBuilder
         Dim sorted = From pair In zaino
@@ -907,7 +928,6 @@ Module Module1
         Return totbuilder.ToString
     End Function
 
-    'Creo testo con lista
     Function getCraftListText(dic As Dictionary(Of Item, Integer), oggetto As String, zaino As Dictionary(Of Item, Integer), ByRef gia_possiedi As Dictionary(Of Item, Integer), spesa As Integer) As String
 
         Dim sor As New SortedDictionary(Of Item, Integer)(New Item.ItemComparer)
@@ -976,7 +996,6 @@ Module Module1
         Return result
     End Function
 
-    'Creo testo albero
     Function getCraftTreeText(list As List(Of KeyValuePair(Of Item, Integer)), ByRef possiedi As Dictionary(Of Item, Integer), ByRef spesa As Integer) As String
         Dim builder As New Text.StringBuilder("Albero craft per:  " + list(0).Key.name)
         For Each pos In possiedi
@@ -1094,29 +1113,37 @@ Module Module1
         Return builder.ToString
     End Function
 
-    Function getNegoziText(zaino As Dictionary(Of Item, Integer)) As List(Of String)
+    Function getNegoziText(zaino As Dictionary(Of Item, Integer), prezzi As Dictionary(Of Item, Integer)) As List(Of String)
         Dim res As New List(Of String)
         Dim builder As New Text.StringBuilder("/negozio ")
         Dim i_counter = 1
         Dim Filtro_zaino = zaino.Where(Function(p) prezzoScrigni.ContainsKey(p.Key.rarity) AndAlso Not isCraftable(p.Key.id))
         Dim prev_rarity As String = Filtro_zaino.First.Key.rarity
+        Dim prezzo = ""
         For Each it In Filtro_zaino
+            prezzo = ""
+            If prezzi IsNot Nothing AndAlso prezzi.ContainsKey(it.Key) Then prezzo = prezzi(it.Key).ToString
             If it.Key.rarity <> prev_rarity Then
                 i_counter = 1
+                If builder(builder.Length - 1) = "," Then builder.Remove(builder.Length - 1, 1)
                 builder.Append(" #")
                 res.Add(builder.ToString)
                 builder.Clear().Append("/negozio ")
+                builder.Append(it.Key.name).Append(":")
+                builder.Append(prezzo).Append(":")
+                builder.Append(it.Value)
+                builder.Append(",")
             ElseIf i_counter >= 10 Then
                 i_counter = 1
                 builder.Append(it.Key.name).Append(":")
-                builder.Append(prezzoScrigni(it.Key.rarity)).Append(":")
+                builder.Append(prezzo).Append(":")
                 builder.Append(it.Value)
                 builder.Append(" #")
                 res.Add(builder.ToString)
                 builder.Clear().Append("/negozio ")
             Else
                 builder.Append(it.Key.name).Append(":")
-                builder.Append(prezzoScrigni(it.Key.rarity)).Append(":")
+                builder.Append(prezzo).Append(":")
                 builder.Append(it.Value)
                 builder.Append(",")
             End If
@@ -1126,7 +1153,6 @@ Module Module1
         builder.Remove(builder.Length - 1, 1)
         builder.Append(" #")
         res.Add(builder.ToString)
-
         Return res
     End Function
 #End Region
@@ -1193,6 +1219,22 @@ Module Module1
             End Try
         Next
         Return cercodic
+    End Function
+
+    'Date le impostazioni prezzi per i negozi, restituisco un dizionario(Oggetto, prezzo)
+    Function parsePrezzoNegozi(text As String) As Dictionary(Of Item, Integer)
+        Dim prezzo_dic As New Dictionary(Of Item, Integer)
+        Dim rex As New Regex("([A-z 0-9òàèéìù'-]+)\:([0-9]+)")
+        Dim matches As MatchCollection = rex.Matches(text)
+        For Each match As Match In matches
+            Try
+                prezzo_dic.Add(ItemIds.Item(getItemId(match.Groups(1).Value)), (Integer.Parse(match.Groups(2).Value)))
+            Catch ex As Exception
+                StampaDebug("Oggetto " + match.Groups(1).Value + " Saltato!")
+                Continue For
+            End Try
+        Next
+        Return prezzo_dic
     End Function
 
     'Converto oggetto craft a oggetto normale
