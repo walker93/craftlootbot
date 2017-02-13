@@ -99,6 +99,7 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="database.vb" />
     <Compile Include="Extensions.vb" />
     <Compile Include="help.vb" />
     <Compile Include="Item.vb" />

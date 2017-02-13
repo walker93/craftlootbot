@@ -1,0 +1,103 @@
+﻿Imports System.Net
+Imports Newtonsoft
+Module Database
+    Sub initialize_Dictionary()
+        While True
+            Try
+                download_items()
+                download_crafts()
+            Catch e As AggregateException
+                Console.WriteLine("Errori durante l'aggiornamento: " + e.InnerException.Message)
+            Catch e As Exception
+                Console.WriteLine("Errori durante l'aggiornamento: " + e.Message)
+            End Try
+            Try
+                Leggo_Items()
+                Leggo_Crafts()
+                Threading.Thread.Sleep(update_db_timeout * 60 * 60 * 1000)
+            Catch e As AggregateException
+                Console.WriteLine("Errori durante l'aggiornamento: " + e.InnerException.Message)
+                Threading.Thread.Sleep(60 * 1000)
+            Catch e As Exception
+                Console.WriteLine("Errori durante l'aggiornamento: " + e.Message)
+                Threading.Thread.Sleep(60 * 1000)
+            End Try
+        End While
+    End Sub
+
+    Sub download_items()
+        Dim handler As New Http.HttpClientHandler
+        If handler.SupportsAutomaticDecompression() Then
+            handler.AutomaticDecompression = DecompressionMethods.Deflate Or DecompressionMethods.GZip
+        End If
+        Dim client As New Http.HttpClient(handler)
+        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json")
+        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate")
+        Dim res
+        res = client.GetStringAsync(ITEM_URL).Result
+        IO.File.WriteAllText("items.json", res)
+    End Sub
+    Sub download_crafts()
+        Dim handler As New Http.HttpClientHandler
+        If handler.SupportsAutomaticDecompression() Then
+            handler.AutomaticDecompression = DecompressionMethods.Deflate Or DecompressionMethods.GZip
+        End If
+        Dim client As New Http.HttpClient(handler)
+        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json")
+        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate")
+        Dim res
+        res = client.GetStringAsync(CRAFT_URL + "id").Result
+        IO.File.WriteAllText("crafts.json", res)
+    End Sub
+
+    Sub Leggo_Items()
+        Console.WriteLine("Aggiorno Items")
+        Dim res
+        Dim jsonres
+        ItemIds.Clear()
+        'aggiungo rifugi
+        res = getRifugiItemsJSON()
+        jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
+        Dim rif() As Item = jsonres.res
+        For Each it As Item In rif
+            ItemIds.Add(it.id, it)
+        Next
+        'Aggiorno items
+        res = IO.File.ReadAllText("items.json")
+        jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
+        Dim res_items = jsonres.res
+        For Each it As Item In res_items
+            ItemIds.Add(it.id, it)
+        Next
+        Console.WriteLine("Numero di oggetti: " + ItemIds.Count.ToString)
+        Console.WriteLine("Terminato aggiornamento")
+    End Sub
+    Sub Leggo_Crafts()
+        Console.WriteLine("Aggiorno Crats")
+        Dim res
+        Dim jsonres
+        CraftIds.Clear()
+        'aggiungo rifugi
+        res = getRifugiCraftsJSON()
+        jsonres = Json.JsonConvert.DeserializeObject(Of CraftTable)(res)
+        Dim rif() As IDCraft = jsonres.res
+        For Each it As IDCraft In rif
+            CraftIds.Add(it.id, it)
+        Next
+        'Aggiorno crafts
+        res = IO.File.ReadAllText("crafts.json")
+        jsonres = Json.JsonConvert.DeserializeObject(Of CraftTable)(res)
+        Dim res_items = jsonres.res
+        For Each it As IDCraft In res_items
+            CraftIds.Add(it.material_result, it)
+        Next
+        Console.WriteLine("Numero di crafts: " + CraftIds.Count.ToString)
+        Console.WriteLine("Terminato aggiornamento")
+    End Sub
+
+    Sub Salvo_Crafts()
+        Dim table As New CraftTable With {.code = 200, .res = CraftIds.Values.ToArray}
+        Dim j = Json.JsonConvert.SerializeObject(table)
+        IO.File.WriteAllText("crafts.json", j)
+    End Sub
+End Module

@@ -11,6 +11,7 @@
     Public rifugiMatch() As String
     Public prezzoScrigni As New Dictionary(Of String, Integer)
     Public flush As Boolean = True
+    Public CraftIds As New Dictionary(Of Integer, IDCraft)
 
     'Legge da file impostazioni e inizializza variabili
     Sub initializeVariables()

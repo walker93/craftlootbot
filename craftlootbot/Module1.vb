@@ -39,7 +39,7 @@ Module Module1
         Catch ex As Exception
             Console.WriteLine("{0} {1} Error: {2}", Now.ToShortDateString, Now.ToShortTimeString, ex.Message)
         End Try
-        Dim t As New Threading.Thread(New Threading.ThreadStart(AddressOf initialize_Dictionary))
+        Dim t As New Threading.Thread(New Threading.ThreadStart(AddressOf Database.initialize_Dictionary))
         t.Start()
         Dim thread As New Threading.Thread(New Threading.ThreadStart(AddressOf run))
         thread.Start()
@@ -47,53 +47,53 @@ Module Module1
         stats_thread.Start()
     End Sub
 
-    Sub aggiorno_dictionary()
-        Console.WriteLine("Aggiorno database")
-        Dim handler As New Http.HttpClientHandler
-        If handler.SupportsAutomaticDecompression() Then
-            handler.AutomaticDecompression = DecompressionMethods.Deflate Or DecompressionMethods.GZip
-        End If
-        Dim client As New Http.HttpClient(handler)
-        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json")
-        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate")
-        Dim res
-        Dim jsonres
-        'aggiungo rifugi
-        res = getRifugiItemsJSON()
-        jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
-        ItemIds.Clear()
-        items = {}
-        Dim rif() As Item = jsonres.res
-        For Each it As Item In rif
-            ItemIds.Add(it.id, it)
-            items.Add(it)
-        Next
+    'Sub aggiorno_dictionary()
+    '    Console.WriteLine("Aggiorno database")
+    '    Dim handler As New Http.HttpClientHandler
+    '    If handler.SupportsAutomaticDecompression() Then
+    '        handler.AutomaticDecompression = DecompressionMethods.Deflate Or DecompressionMethods.GZip
+    '    End If
+    '    Dim client As New Http.HttpClient(handler)
+    '    client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json")
+    '    client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate")
+    '    Dim res
+    '    Dim jsonres
+    '    'aggiungo rifugi
+    '    res = getRifugiItemsJSON()
+    '    jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
+    '    ItemIds.Clear()
+    '    items = {}
+    '    Dim rif() As Item = jsonres.res
+    '    For Each it As Item In rif
+    '        ItemIds.Add(it.id, it)
+    '        items.Add(it)
+    '    Next
 
-        res = client.GetStringAsync(ITEM_URL).Result
-        jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
-        Dim res_items = jsonres.res
-        For Each it As Item In res_items
-            ItemIds.Add(it.id, it)
-            items.Add(it)
-        Next
-        Console.WriteLine("Numero di oggetti: " + items.Length.ToString)
-        Console.WriteLine("Terminato aggiornamento")
-    End Sub
+    '    res = client.GetStringAsync(ITEM_URL).Result
+    '    jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
+    '    Dim res_items = jsonres.res
+    '    For Each it As Item In res_items
+    '        ItemIds.Add(it.id, it)
+    '        items.Add(it)
+    '    Next
+    '    Console.WriteLine("Numero di oggetti: " + items.Length.ToString)
+    '    Console.WriteLine("Terminato aggiornamento")
+    'End Sub
 
-    Sub initialize_Dictionary()
-        While True
-            Try
-                aggiorno_dictionary()
-                Threading.Thread.Sleep(update_db_timeout * 60 * 60 * 1000) 'aggiorno ogni 12 ore
-            Catch e As AggregateException
-                Console.WriteLine("Errori durante l'aggiornamento: " + e.InnerException.Message)
-                Threading.Thread.Sleep(60 * 1000) 'Aggiorno ogni minuto         
-            Catch e As Exception
-                Console.WriteLine("Errori durante l'aggiornamento: " + e.Message)
-                Threading.Thread.Sleep(60 * 1000) 'Aggiorno ogni minuto
-            End Try
-        End While
-    End Sub
+    'Sub initialize_Dictionary()
+    '    While True
+    '        Try
+    '            aggiorno_dictionary()
+    '            Threading.Thread.Sleep(update_db_timeout * 60 * 60 * 1000) 'aggiorno ogni 12 ore
+    '        Catch e As AggregateException
+    '            Console.WriteLine("Errori durante l'aggiornamento: " + e.InnerException.Message)
+    '            Threading.Thread.Sleep(60 * 1000) 'Aggiorno ogni minuto         
+    '        Catch e As Exception
+    '            Console.WriteLine("Errori durante l'aggiornamento: " + e.Message)
+    '            Threading.Thread.Sleep(60 * 1000) 'Aggiorno ogni minuto
+    '        End Try
+    '    End While
+    'End Sub
 
     Sub run()
         Dim updates() As Update
@@ -319,15 +319,15 @@ Module Module1
                 Exit Sub
             End Try
         End If
-        Dim rows As Row() = requestCraft(id)
+        Dim rows As Integer() = requestCraft(id)
         'StampaDebug("Craft oggetto: " + ItemIds.Item(id).name)
         If rows Is Nothing Then Exit Sub
         Dim item As Item
         For Each row In rows
-            item = RowToItem(row)
-            If isCraftable(row.id) Then
+            item = ItemIds(row)
+            If isCraftable(item.id) Then
                 If Not zaino.ContainsKey(item) Then
-                    task_getNeededItemsList(row.id, CraftList, zaino, possiedi, ct)
+                    task_getNeededItemsList(item.id, CraftList, zaino, possiedi, ct)
                 Else
                     zaino.Item(item) -= 1
                     If zaino.Item(item) = 0 Then zaino.Remove(item)
@@ -338,7 +338,7 @@ Module Module1
                     End If
                 End If
             Else
-                CraftList.Add(ItemIds.Item(row.id))
+                CraftList.Add(item)
             End If
         Next
     End Sub
@@ -803,7 +803,10 @@ Module Module1
             End If
             If TypeOf e Is KeyNotFoundException Then
                 Try
-                    aggiorno_dictionary()
+                    download_items()
+                    download_crafts()
+                    Leggo_Items()
+                    Leggo_Crafts()
                 Catch
                     Console.WriteLine("Impossibile aggiornare dizionario")
                     Exit Sub
@@ -820,16 +823,16 @@ Module Module1
     End Sub
 
     Sub getNeededItemsList(id As Integer, ByRef CraftList As List(Of Item), ByRef zaino As Dictionary(Of Item, Integer), ByRef possiedi As Dictionary(Of Item, Integer), ByRef spesa As Integer)
-        Dim rows As Row() = requestCraft(id)
+        Dim rows As Integer() = requestCraft(id)
         If rows Is Nothing Then Exit Sub
         Dim item As Item
-        For Each row In rows
-            item = RowToItem(row)
-            If isCraftable(row.id) Then
+        For Each ids In rows
+            item = ItemIds(ids)
+            If isCraftable(item.id) Then
                 If rarity_value.ContainsKey(item.rarity) Then spesa += rarity_value.Item(item.rarity)
                 StampaDebug(String.Format("Oggetto: {0}, +{1}={2}", item.name, If(rarity_value.ContainsKey(item.rarity), rarity_value.Item(item.rarity).ToString, "0"), spesa.ToString))
                 If Not zaino.ContainsKey(item) Then
-                    getNeededItemsList(row.id, CraftList, zaino, possiedi, spesa)
+                    getNeededItemsList(item.id, CraftList, zaino, possiedi, spesa)
                 Else
                     zaino.Item(item) -= 1
                     If zaino.Item(item) = 0 Then zaino.Remove(item)
@@ -840,43 +843,43 @@ Module Module1
                     End If
                 End If
             Else
-                CraftList.Add(ItemIds.Item(row.id))
+                CraftList.Add(item)
             End If
         Next
     End Sub
 
     Sub getNeededItemsTree(id As Integer, ByRef prof As Integer, ByRef CraftTree As List(Of KeyValuePair(Of Item, Integer)), ByRef zaino As Dictionary(Of Item, Integer), ByRef possiedi As Dictionary(Of Item, Integer), ByRef spesa As Integer)
-        Dim rows As Row() = requestCraft(id)
+        Dim rows As Integer() = requestCraft(id)
         prof += 1
         If rows Is Nothing Then Exit Sub
         CraftTree.Add(New KeyValuePair(Of Item, Integer)(ItemIds.Item(id), prof))
         Dim item As Item
         For Each row In rows
-            item = RowToItem(row)
+            item = ItemIds(row)
             If Not possiedi.ContainsKey(item) And zaino.ContainsKey(item) Then possiedi.Add(item, zaino.Item(item))
-            If isCraftable(row.id) Then
+            If isCraftable(item.id) Then
                 Dim prev_spesa = spesa
                 If rarity_value.ContainsKey(item.rarity) Then spesa += rarity_value.Item(item.rarity)
-                getNeededItemsTree(row.id, prof, CraftTree, zaino, possiedi, spesa)
+                getNeededItemsTree(item.id, prof, CraftTree, zaino, possiedi, spesa)
                 prof -= 1
             Else
-                CraftTree.Add(New KeyValuePair(Of Item, Integer)(ItemIds.Item(row.id), prof + 1))
+                CraftTree.Add(New KeyValuePair(Of Item, Integer)(ItemIds.Item(item.id), prof + 1))
             End If
         Next
     End Sub
 
     Sub getCraftItemsTree(id As Integer, ByRef prof As Integer, ByRef CraftTree As List(Of KeyValuePair(Of Item, Integer)), ByRef zaino As Dictionary(Of Item, Integer), ByRef possiedi As Dictionary(Of Item, Integer))
-        Dim rows As Row() = requestCraft(id)
+        Dim rows As Integer() = requestCraft(id)
         prof += 1
         If rows Is Nothing Then Exit Sub
         CraftTree.Add(New KeyValuePair(Of Item, Integer)(ItemIds.Item(id), prof))
         Dim item As Item
         For Each row In rows
-            item = RowToItem(row)
+            item = ItemIds(row)
             'If Not possiedi.ContainsKey(item) And zaino.ContainsKey(item) Then possiedi.Add(item, zaino.Item(item))
-            If isCraftable(row.id) Then
+            If isCraftable(item.id) Then
                 If Not zaino.ContainsKey(item) Then
-                    getCraftItemsTree(row.id, prof, CraftTree, zaino, possiedi)
+                    getCraftItemsTree(item.id, prof, CraftTree, zaino, possiedi)
                     prof -= 1
                 Else
                     StampaDebug(item.name + " presente nello zaino")
@@ -889,7 +892,7 @@ Module Module1
                     End If
                 End If
             Else
-                CraftTree.Add(New KeyValuePair(Of Item, Integer)(ItemIds.Item(row.id), prof + 1))
+                CraftTree.Add(New KeyValuePair(Of Item, Integer)(ItemIds.Item(item.id), prof + 1))
             End If
         Next
     End Sub
@@ -1205,15 +1208,15 @@ Module Module1
     'Dato il nome ottengo l'id
     Function getItemId(ByVal name As String) As Integer
         Try
-            For Each it In items
-                If it.name.ToLower = name.ToLower.Trim Then Return it.id
+            For Each it In ItemIds
+                If it.Value.name.ToLower = name.ToLower.Trim Then Return it.Key
             Next
         Catch ex As Exception
-            Try
-                aggiorno_dictionary()
-            Catch e As Exception
-                Console.WriteLine("Impossibile ottenere l'ID per " + name)
-            End Try
+            download_crafts()
+            download_items()
+            Leggo_Crafts()
+            Leggo_Items()
+            Console.WriteLine("Impossibile ottenere l'ID per " + name + ". Riscaricati Item e craft")
         End Try
         Return -1
     End Function
@@ -1265,11 +1268,11 @@ Module Module1
     End Function
 
     'Converto oggetto craft a oggetto normale
-    Public Function RowToItem(row As Row) As Item
-        Dim it As New Item
-        ItemIds.TryGetValue(row.id, it)
-        Return it
-    End Function
+    'Public Function RowToItem(row As Row) As Item
+    '    Dim it As New Item
+    '    ItemIds.TryGetValue(row.id, it)
+    '    Return it
+    'End Function
 
     'invio report di errore allo sviluppatore
     Sub sendReport(ex As Exception, message As Message)

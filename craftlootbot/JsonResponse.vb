@@ -39,4 +39,15 @@ Public Class CraftResponse
     Public Property res As row()
 End Class
 
+Public Class CraftTable
+    Public code As Integer
+    Public res() As IDCraft
+End Class
 
+Public Class IDCraft
+    Public Property id As Integer
+    Public Property material_1 As Integer
+    Public Property material_2 As Integer
+    Public Property material_3 As Integer
+    Public Property material_result As Integer
+End Class
