@@ -218,7 +218,7 @@ Public Module MyExtensions
 
     'controllo se il testo match un elenco prezzi negozio
     Function isPrezziNegozi(text As String) As Boolean
-        Dim rex As New Regex("([A-z 0-9òàèéìù'-]+):([0-9]+)")
+        Dim rex As New Regex("^([A-z 0-9òàèéìù'-]+):([0-9]+)")
         Dim matches As MatchCollection = rex.Matches(text)
         Return rex.IsMatch(text)
     End Function

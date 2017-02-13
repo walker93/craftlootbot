@@ -13,7 +13,7 @@ Module help
     Public craft_builder As New StringBuilder
     Public base_builder As New StringBuilder
     Public vendi_bilder As New StringBuilder
-
+    Public creanegozi_builder As New StringBuilder
     Function process_help(text As String) As String
         Dim builder As New StringBuilder
         Select Case text.ToLower.Trim
@@ -36,7 +36,9 @@ Module help
             Case "base"
                 builder.Append(base_builder.ToString)
             Case "vendi"
-                builder.Append(vendi_bilder.toString)
+                builder.Append(vendi_bilder.ToString)
+            Case "creanegozi"
+                builder.Append(creanegozi_builder.ToString)
             Case Else
                 builder.Append("Comando non riconosciuto.")
         End Select
@@ -54,8 +56,10 @@ Module help
             .AppendLine("Usa '/confronta' per ricevere un elenco di oggetti in comune tra uno zaino e un elenco 'Cerco:' dal comando inline.")
             .AppendLine("Usa '/craft <nome oggetto>' per ricevere un file di testo contenente stringhe da copiare e incollare, per craftare tutti gli oggetti necessari fino all'oggetto inserito.")
             .AppendLine("Usa '/base <rarità>' per ricevere un elenco di tutti gli oggetti base per la rarità inserita, per ogni oggetto è indicata la quantità che possiedi.")
-            .AppendLine("Usa '@craftlootbot <nome oggetto>' in qualsiasi chat o gruppo per inviare rapidamente la lista dei materiali che stai cercando.")
             .AppendLine("Usa '/vendi <oggetto>' per ottenere una lista di oggetti che puoi vendere in quanto non necessari per craftare l'oggettto specificato.")
+            .AppendLine("Usa '/creanegozi' o '/creanegozi <oggetto>' per ricevere dei comandi /negozio da inoltrare a @lootbotplus")
+            .AppendLine("Usa '@craftlootbot <nome oggetto>' in qualsiasi chat o gruppo per inviare rapidamente la lista dei materiali che stai cercando.")
+
             .AppendLine("Premi sui bottoni qui sotto per vedere maggiori informazioni su uno specifico comando.")
             .AppendLine()
             .AppendLine("Segui il canale @CraftLootBotNews per le news e aggiornamenti, contatta @AlexCortinovis per malfunzionamenti o dubbi")
@@ -125,7 +129,18 @@ Module help
             .AppendLine("Risulta particolarmente utile per sapere immediatamente cosa è possibile vendere perchè non necessario oppure perchè posseduto in abbondanza.")
             .AppendLine("Per utilizzare questa funzione devi avere lo zaino salvato.")
         End With
-
+        With creanegozi_builder
+            .AppendLine("*Creazione Negozi:*")
+            .AppendLine("Permette di creare negozi velocemente partendo dal proprio zaino oppure, specificando un oggetto, dalla lista oggetti non necessari per quell'oggetto.")
+            .AppendLine("I negozi creati saranno impostati come privati. Il bot dopo che avrà inviato tutti i negozi, invierà anche il comando per cambiare la privacy a tutti i negozi, nel caso si volesse utilizzare.")
+            .AppendLine("Il prezzo inserito di default è il prezzo base, è possibile inviare un messaggio per impostare il prezzo che si vuole agli oggetti. I prezzi saranno salvati per non doverli inviare ogni volta.")
+            .AppendLine("Se si imposta un prezzo minore o uguale a 0, quell'oggetto verrà escluso dalla vendita. Gli oggetti craftati oppure di rarità UE e superiore sono automaticamente esclusi.")
+            .AppendLine("Il formato da utilizzare è: ")
+            .AppendLine("Vetro:100")
+            .AppendLine("Pozione Piccola:0")
+            .AppendLine("Acqua:150")
+            .AppendLine("E' possibile farsi inviare la lista dei prezzi salvati tramite il comando /ottieniprezzi.")
+        End With
         With base_builder
             .AppendLine("*Lista oggetti base:*")
             .AppendLine("Con questo comando verrà mostrata una lista di tutti gli oggetti base per la rarità inserita.")
@@ -146,12 +161,14 @@ Module help
         Dim confronta_button As New InlineKeyboardButton("📊 Confronta 📊", "confronta")
         Dim base_button As New InlineKeyboardButton("🔤 Base 🔤", "base")
         Dim vendi_button As New InlineKeyboardButton("🏪 Vendi 🏪", "vendi")
+        Dim creanegozi_button As New InlineKeyboardButton("💸 CreaNegozi 💸", "creanegozi")
         Dim riepilogo_button As New InlineKeyboardButton("⬅️ Riepilogo ⬅️", "riepilogo")
         Dim row1() As InlineKeyboardButton
         Dim row2() As InlineKeyboardButton
         Dim row3() As InlineKeyboardButton
         Dim row4() As InlineKeyboardButton
         Dim row5() As InlineKeyboardButton
+        Dim row6() As InlineKeyboardButton
 
         row1.Add(lista_button)
         row1.Add(albero_button)
@@ -166,13 +183,16 @@ Module help
         row4.Add(base_button)
 
         row5.Add(vendi_button)
-        row5.Add(riepilogo_button)
+        row5.Add(creanegozi_button)
+
+        row6.Add(riepilogo_button)
 
         keyboardbuttons.Add(row1)
         keyboardbuttons.Add(row2)
         keyboardbuttons.Add(row3)
         keyboardbuttons.Add(row4)
         keyboardbuttons.Add(row5)
+        keyboardbuttons.Add(row6)
         keyboard.InlineKeyboard = keyboardbuttons
         Return keyboard
     End Function

@@ -9,7 +9,7 @@ Module Module1
     Dim WithEvents api As TelegramBotClient
 
     Dim time_start As Date = Date.UtcNow
-    Dim ItemIds As New Dictionary(Of Integer, Item)
+    Public ItemIds As New Dictionary(Of Integer, Item)
     Dim items() As Item
     Dim stati As New Dictionary(Of ULong, Integer)
     Dim zaini As New Dictionary(Of ULong, String)
@@ -91,7 +91,6 @@ Module Module1
             Catch e As Exception
                 Console.WriteLine("Errori durante l'aggiornamento: " + e.Message)
                 Threading.Thread.Sleep(60 * 1000) 'Aggiorno ogni minuto
-
             End Try
         End While
     End Sub
@@ -522,16 +521,7 @@ Module Module1
                     getNeededItemsList(id, CraftList, zainoDic_copy, gia_possiedi, spesa)
                     If rarity_value.ContainsKey(ItemIds.Item(id).rarity) Then spesa += rarity_value.Item(ItemIds.Item(id).rarity)
                     Dim result As String = getCraftListText(createCraftCountList(CraftList), it.name, zainoDic, gia_possiedi, spesa)
-                    If result.Length > 4096 Then
-                        Dim valid_substring
-                        Do
-                            Dim substring = result.Substring(0, If(result.Length > 4096, 4096, result.Length))
-                            valid_substring = substring.Substring(0, substring.LastIndexOf(Environment.NewLine))
-                            result = result.Substring(substring.LastIndexOf(Environment.NewLine))
-                            a = api.SendTextMessageAsync(message.Chat.Id, valid_substring,,, message.MessageId).Result
-                        Loop Until valid_substring <> ""
-                    End If
-                    a = api.SendTextMessageAsync(message.Chat.Id, result,,, message.MessageId).Result
+                    answerLongMessage(result, message.Chat.Id)
                 Else
                     a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
                 End If
@@ -625,16 +615,7 @@ Module Module1
                     getNeededItemsList(id, CraftList, zainoDic_copy, gia_possiedi, spesa)
                     Dim res = SottrazioneDizionariItem(zainoDic_copy, createCraftCountList(CraftList))
                     Dim result As String = getVendiText(res, zainoDic, it.name)
-                    If result.Length > 4096 Then
-                        Dim valid_substring
-                        Do
-                            Dim substring = result.Substring(0, If(result.Length > 4096, 4096, result.Length))
-                            valid_substring = substring.Substring(0, substring.LastIndexOf(Environment.NewLine))
-                            result = result.Substring(substring.LastIndexOf(Environment.NewLine))
-                            a = api.SendTextMessageAsync(message.Chat.Id, valid_substring,,, message.MessageId).Result
-                        Loop Until valid_substring <> ""
-                    End If
-                    a = api.SendTextMessageAsync(message.Chat.Id, result,,, message.MessageId).Result
+                    answerLongMessage(result, message.Chat.Id)
                 End If
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/svuota") Then
@@ -728,21 +709,47 @@ Module Module1
                 For Each negozio In negozi
                     a = api.SendTextMessageAsync(message.Chat.Id, negozio).Result
                 Next
+                a = api.SendTextMessageAsync(message.Chat.Id, "/privacy tutti").Result
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/ottieniprezzi") Then
 #Region "ottieniprezzi"
                 If IO.File.Exists("prezzi/" + message.From.Id.ToString + ".txt") Then
                     Dim prezzi_text = IO.File.ReadAllText("prezzi/" + message.From.Id.ToString + ".txt")
-                    a = api.SendTextMessageAsync(message.Chat.Id, prezzi_text).Result
+                    answerLongMessage(prezzi_text, message.Chat.Id)
                 Else
                     a = api.SendTextMessageAsync(message.Chat.Id, "Non hai prezzi salvati al momento").Result
                 End If
 #End Region
+
+            ElseIf message.Text.ToLower.StartsWith("/bilancia") Then
+                Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
+                Dim zaino As String = ""
+                If IO.File.Exists(path) Then
+                    zaino = IO.File.ReadAllText(path)
+                End If
+                If id <> -1 Then
+                    api.SendChatActionAsync(message.Chat.Id, ChatAction.Typing)
+                    zainoDic = parseZaino(zaino)
+                    Dim zainoDic_copy = zainoDic
+                    item = "Necrolama"
+                    id = getItemId(item)
+                    ItemIds.TryGetValue(id, it)
+                    getNeededItemsList(id, CraftList, zainoDic_copy, gia_possiedi, spesa)
+                    item = "Scudo necro"
+                    id = getItemId(item)
+                    getNeededItemsList(id, CraftList, zainoDic_copy, gia_possiedi, spesa)
+                    item = "Corazza necro"
+                    id = getItemId(item)
+                    getNeededItemsList(id, CraftList, zainoDic_copy, gia_possiedi, spesa)
+                    Dim result As String = getBilanciaText(createCraftCountList(CraftList))
+                    answerLongMessage(result, message.Chat.Id)
+
+                End If
             ElseIf message.Text.ToLower.StartsWith("/start") Then
 #Region "start"
                 If message.Text.Contains("inline_") Then
                     If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 100)) _
-                        Or stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) Then
+                            Or stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) Then
                         stati.Remove(message.From.Id)  'entro nello stato 10, ovvero salvataggio zaino
                         confronti.Remove(message.From.Id)
                     End If
@@ -763,6 +770,7 @@ Module Module1
                     builder.AppendLine("Benvenuto in Craft Lootbot!")
                     builder.AppendLine("Questo bot permette di riceve la lista dei materiali necessari al craft, l'albero dei craft di un oggetto e molto altro.")
                     builder.AppendLine("Usa /help per la guida ai comandi.")
+                    builder.AppendLine("Segui il canale @CraftLootBotNews per le news e aggiornamenti, contatta @AlexCortinovis per malfunzionamenti o dubbi")
                     builder.AppendLine("Provami! Non ti deluderò!")
                     a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString).Result
                 End If
@@ -926,6 +934,22 @@ Module Module1
             Next
         Next
         Return totbuilder.ToString
+    End Function
+
+    Function getBilanciaText(dic As Dictionary(Of Item, Integer)) As String
+        Dim a = From pair In dic
+                Order By pair.Value Descending
+                Group By pair.Key.rarity Into Rarita = Group, Count()
+        Dim list = a.ToList
+        Dim builder As New Text.StringBuilder
+        For Each rar In list
+            builder.Append(rar.rarity).Append(" (" + rar.Count.ToString + ")").AppendLine(":")
+
+            For Each It In rar.Rarita
+                builder.Append("   > ").Append(It.Value).Append(" ").Append(It.Key.name).AppendLine()
+            Next
+        Next
+        Return builder.ToString
     End Function
 
     Function getCraftListText(dic As Dictionary(Of Item, Integer), oggetto As String, zaino As Dictionary(Of Item, Integer), ByRef gia_possiedi As Dictionary(Of Item, Integer), spesa As Integer) As String
@@ -1122,12 +1146,15 @@ Module Module1
         Dim prezzo = ""
         For Each it In Filtro_zaino
             prezzo = ""
-            If prezzi IsNot Nothing AndAlso prezzi.ContainsKey(it.Key) Then prezzo = prezzi(it.Key).ToString
+            If prezzi IsNot Nothing AndAlso prezzi.ContainsKey(it.Key) Then
+                If prezzi(it.Key) <= 0 Then Continue For
+                prezzo = prezzi(it.Key).ToString
+            End If
             If it.Key.rarity <> prev_rarity Then
                 i_counter = 1
                 If builder(builder.Length - 1) = "," Then builder.Remove(builder.Length - 1, 1)
-                builder.Append(" #")
-                res.Add(builder.ToString)
+                'builder.Append("#")
+                If Not builder.ToString.Trim = "/negozio" Then res.Add(builder.ToString)
                 builder.Clear().Append("/negozio ")
                 builder.Append(it.Key.name).Append(":")
                 builder.Append(prezzo).Append(":")
@@ -1138,8 +1165,8 @@ Module Module1
                 builder.Append(it.Key.name).Append(":")
                 builder.Append(prezzo).Append(":")
                 builder.Append(it.Value)
-                builder.Append(" #")
-                res.Add(builder.ToString)
+                'builder.Append("#")
+                If Not builder.ToString.Trim = "/negozio" Then res.Add(builder.ToString)
                 builder.Clear().Append("/negozio ")
             Else
                 builder.Append(it.Key.name).Append(":")
@@ -1151,8 +1178,8 @@ Module Module1
             prev_rarity = it.Key.rarity
         Next
         builder.Remove(builder.Length - 1, 1)
-        builder.Append(" #")
-        res.Add(builder.ToString)
+        'builder.Append("#")
+        If Not builder.ToString.Trim = "/negozio" Then res.Add(builder.ToString)
         Return res
     End Function
 #End Region
@@ -1275,4 +1302,20 @@ Module Module1
         Dim a = api.SendTextMessageAsync(1265775, reportBuilder.ToString,, True).Result
     End Sub
 
+    Function answerLongMessage(result As String, chatID As Long) As Message
+        Dim a
+        If result.Length > 4096 Then
+            Dim valid_substring As String
+            Do
+                Dim substring = result.Substring(0, If(result.Length > 4096, 4096, result.Length))
+                valid_substring = substring.Substring(0, substring.LastIndexOf(Environment.NewLine))
+                result = result.Substring(substring.LastIndexOf(Environment.NewLine))
+                a = api.SendTextMessageAsync(chatID, valid_substring,,,,, ParseMode.Markdown).Result
+            Loop While result <> "" And result <> Environment.NewLine
+
+        Else
+            a = api.SendTextMessageAsync(chatID, result,,,,, ParseMode.Markdown).Result
+        End If
+        Return a
+    End Function
 End Module
