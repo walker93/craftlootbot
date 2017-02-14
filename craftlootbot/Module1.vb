@@ -616,6 +616,8 @@ Module Module1
                     Dim res = SottrazioneDizionariItem(zainoDic_copy, createCraftCountList(CraftList))
                     Dim result As String = getVendiText(res, zainoDic, it.name)
                     answerLongMessage(result, message.Chat.Id)
+                Else
+                    a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
                 End If
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/svuota") Then
@@ -669,7 +671,7 @@ Module Module1
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/creanegozi") Then
 #Region "creanegozi"
-                item = message.Text.Replace("/creanegozi", "").Trim
+                item = message.Text.Replace("/creanegozi", "").Trim.ToLower
                 Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
                 Dim zaino As String = ""
                 Dim result As New Dictionary(Of Item, Integer)
@@ -681,10 +683,11 @@ Module Module1
                     Exit Sub
                 End If
                 zainoDic = parseZaino(zaino)
-                If item = "" Then
+                If item = "" Or item = "@craftlootdebugbot" Then
                     'Uso lo zaino per creare i negozi
                     result = zainoDic
-                ElseIf Item <> "@craftlootbot" Then
+                Else
+                    item = item.Replace("@craftlootdebugbot", "").Trim
                     'Uso il /vendi per creare i negozi
                     id = getItemId(item)
                     ItemIds.TryGetValue(id, it)
@@ -697,6 +700,9 @@ Module Module1
                         Dim zainoDic_copy = zainoDic
                         getNeededItemsList(id, CraftList, zainoDic_copy, gia_possiedi, spesa)
                         result = SottrazioneDizionariItem(zainoDic_copy, createCraftCountList(CraftList))
+                    Else
+                        a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
+                        Exit Sub
                     End If
                 End If
                 Dim prezzi_dic As Dictionary(Of Item, Integer)
