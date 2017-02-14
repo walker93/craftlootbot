@@ -1313,7 +1313,12 @@ Module Module1
                 Dim substring = result.Substring(0, If(result.Length > 4096, 4096, result.Length))
                 valid_substring = substring.Substring(0, substring.LastIndexOf(Environment.NewLine))
                 result = result.Substring(substring.LastIndexOf(Environment.NewLine))
-                a = api.SendTextMessageAsync(chatID, valid_substring,,,,, ParseMode.Markdown).Result
+                If valid_substring.Trim <> "" And valid_substring <> Environment.NewLine Then
+                    a = api.SendTextMessageAsync(chatID, valid_substring,,,,, ParseMode.Markdown).Result
+                Else
+                    a = api.SendTextMessageAsync(chatID, result,,,,, ParseMode.Markdown).Result
+                    result = ""
+                End If
             Loop While result <> "" And result <> Environment.NewLine
 
         Else
