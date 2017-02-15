@@ -352,13 +352,13 @@ Module Module1
             If flush Then 'controllo flush, se attivo ignoro il messaggio
                 If message.Date < time_start Then Exit Sub
             End If
-            If message.Type <> MessageType.TextMessage Then Exit Sub
+            If message.Type <> MessageType.TextMessage And message.Type <> MessageType.DocumentMessage Then Exit Sub
+            Dim a As Message
             Dim CraftList As New List(Of Item)
             Dim zainoDic As New Dictionary(Of Item, Integer)
             Dim CraftCount As New Dictionary(Of Item, Integer)
             Dim CraftTree As New List(Of KeyValuePair(Of Item, Integer))
             Dim gia_possiedi As New Dictionary(Of Item, Integer)
-            Dim a As Message
             Dim item As String
             Dim id As Integer
             Dim spesa As Integer
@@ -366,6 +366,20 @@ Module Module1
             'Dim lootbot_id As ULong = 171514820
             Dim kill As Boolean = False
 
+            If message.Type = MessageType.DocumentMessage Then
+                'è un documento prezzi, lo scarico e lo salvo
+                If message.Document.MimeType <> "text/plain" Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Formato file non consentito, invia solamente file di testo.").Result
+                    Exit Sub
+                End If
+                Dim f As File = api.GetFileAsync(message.Document.FileId).Result
+                Dim c As New Http.HttpClient
+                Dim text = c.GetStringAsync(String.Format("https://api.telegram.org/file/bot{0}/{1}", token.token, f.FilePath)).Result
+                IO.File.WriteAllText("prezzi/" + message.From.Id.ToString + ".txt", text)
+                Console.WriteLine("Salvati prezzi di ID: " + message.From.Id.ToString)
+                a = api.SendTextMessageAsync(message.Chat.Id, "I tuoi prezzi sono stati salvati!").Result
+                Exit Sub
+            End If
             If isZaino(message.Text) Then
                 IO.Directory.CreateDirectory("zaini")
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) Then
@@ -721,7 +735,14 @@ Module Module1
 #Region "ottieniprezzi"
                 If IO.File.Exists("prezzi/" + message.From.Id.ToString + ".txt") Then
                     Dim prezzi_text = IO.File.ReadAllText("prezzi/" + message.From.Id.ToString + ".txt")
-                    answerLongMessage(prezzi_text, message.Chat.Id)
+                    If prezzi_text.Length > 4096 Then
+                        'invio file
+                        Dim name As String = getFileName()
+                        a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, prezzi_text, "Prezzi")).Result
+                        IO.File.Delete(name)
+                    Else
+                        answerLongMessage(prezzi_text, message.Chat.Id)
+                    End If
                 Else
                     a = api.SendTextMessageAsync(message.Chat.Id, "Non hai prezzi salvati al momento").Result
                 End If
