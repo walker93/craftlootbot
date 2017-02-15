@@ -375,10 +375,18 @@ Module Module1
                 Dim f As File = api.GetFileAsync(message.Document.FileId).Result
                 Dim c As New Http.HttpClient
                 Dim text = c.GetStringAsync(String.Format("https://api.telegram.org/file/bot{0}/{1}", token.token, f.FilePath)).Result
-                IO.File.WriteAllText("prezzi/" + message.From.Id.ToString + ".txt", text)
-                Console.WriteLine("Salvati prezzi di ID: " + message.From.Id.ToString)
-                a = api.SendTextMessageAsync(message.Chat.Id, "I tuoi prezzi sono stati salvati!").Result
-                Exit Sub
+                If isPrezziNegozi(text) Then
+                    IO.File.WriteAllText("prezzi/" + message.From.Id.ToString + ".txt", text)
+                    Console.WriteLine("Salvati prezzi di ID: " + message.From.Id.ToString)
+                    a = api.SendTextMessageAsync(message.Chat.Id, "I tuoi prezzi sono stati salvati!").Result
+                    Exit Sub
+                Else
+                    Dim builder As New Text.StringBuilder("Non sono stati riconosciuti prezzi all'interno del file.")
+                    builder.AppendLine().AppendLine("Utilizza il formato:")
+                    builder.AppendLine("Rame:400").AppendLine("Sabbia:400").AppendLine("Vetro:400")
+                    a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString).Result
+                    Exit Sub
+                End If
             End If
             If isZaino(message.Text) Then
                 IO.Directory.CreateDirectory("zaini")
@@ -639,9 +647,19 @@ Module Module1
                 Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
                 If IO.File.Exists(path) Then
                     IO.File.Delete(path)
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Lo zaino è stato svuotato",,, message.MessageId).Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Lo zaino è stato svuotato.").Result
                 Else
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Il tuo zaino non è salvato",,, message.MessageId).Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Il tuo zaino non è salvato").Result
+                End If
+#End Region
+            ElseIf message.Text.ToLower.StartsWith("/cancellaprezzi") Then
+#Region "CancellaPrezzi"
+                Dim path As String = "prezzi/" + message.From.Id.ToString + ".txt"
+                If IO.File.Exists(path) Then
+                    IO.File.Delete(path)
+                    a = api.SendTextMessageAsync(message.Chat.Id, "I prezzi sono stati cancellati.").Result
+                Else
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Non hai prezzi salvati al momento.").Result
                 End If
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/rinascita") Then
