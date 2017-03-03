@@ -5,15 +5,18 @@ Public Class Item
     Public Property id As Integer
     Public Property name As String
     Public Property rarity As String
-    Public Property rarity_name As String
+    Public Property description As String
     Public Property value As Integer
     Public Property craftable As Integer
+    Public Property searchable As Integer
     Public Property reborn As Integer
     Public Property power As Integer
     Public Property power_armor As Integer
     Public Property power_shield As Integer
     Public Property dragon_power As Integer
     Public Property critical As Integer
+    Public Property category As Integer
+    Public Property rarity_name As String
 
     Public Overrides Function ToString() As String
         Dim builder As New StringBuilder
@@ -48,3 +51,5 @@ Public Class Item
         End Function
     End Class
 End Class
+
+

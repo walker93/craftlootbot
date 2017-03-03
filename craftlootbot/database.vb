@@ -25,7 +25,7 @@ Module Database
         End While
     End Sub
 
-    Sub download_items()
+    Function download_items() As String
         Dim handler As New Http.HttpClientHandler
         If handler.SupportsAutomaticDecompression() Then
             handler.AutomaticDecompression = DecompressionMethods.Deflate Or DecompressionMethods.GZip
@@ -35,9 +35,11 @@ Module Database
         client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate")
         Dim res
         res = client.GetStringAsync(ITEM_URL).Result
+        Dim jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
         IO.File.WriteAllText("items.json", res)
-    End Sub
-    Sub download_crafts()
+        Return "Scaricati Items."
+    End Function
+    Function download_crafts() As String
         Dim handler As New Http.HttpClientHandler
         If handler.SupportsAutomaticDecompression() Then
             handler.AutomaticDecompression = DecompressionMethods.Deflate Or DecompressionMethods.GZip
@@ -47,10 +49,12 @@ Module Database
         client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate")
         Dim res
         res = client.GetStringAsync(CRAFT_URL + "id").Result
+        Dim jsonres = Json.JsonConvert.DeserializeObject(Of CraftTable)(res)
         IO.File.WriteAllText("crafts.json", res)
-    End Sub
+        Return "Scaricati Crafts."
+    End Function
 
-    Sub Leggo_Items()
+    Function Leggo_Items() As String
         Console.WriteLine("Aggiorno Items")
         Dim res
         Dim jsonres
@@ -71,8 +75,9 @@ Module Database
         Next
         Console.WriteLine("Numero di oggetti: " + ItemIds.Count.ToString)
         Console.WriteLine("Terminato aggiornamento")
-    End Sub
-    Sub Leggo_Crafts()
+        Return "Numero di oggetti: " + ItemIds.Count.ToString
+    End Function
+    Function Leggo_Crafts() As String
         Console.WriteLine("Aggiorno Crats")
         Dim res
         Dim jsonres
@@ -93,7 +98,8 @@ Module Database
         Next
         Console.WriteLine("Numero di crafts: " + CraftIds.Count.ToString)
         Console.WriteLine("Terminato aggiornamento")
-    End Sub
+        Return "Numero di crafts: " + CraftIds.Count.ToString
+    End Function
 
     Sub Salvo_Crafts()
         Dim table As New CraftTable With {.code = 200, .res = CraftIds.Values.ToArray}

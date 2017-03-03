@@ -49,16 +49,17 @@ Module help
     Sub init_help()
         With help_builder
             .AppendLine("*GUIDA:*")
-            .AppendLine("Usa '/lista <nome oggetto>' per ricevere la lista dei materiali base necessari al craft dell'oggetto inserito.")
-            .AppendLine("Usa '/albero <nome oggetto>' per ricevere un file di testo contenente l'albero dei craft dell'oggetto inserito.")
+            .AppendLine("Usa '/lista <oggetto/i>' per ricevere la lista dei materiali base necessari al craft degli oggetti inseriti.")
+            .AppendLine("Usa '/albero <oggetto>' per ricevere un file di testo contenente l'albero dei craft dell'oggetto inserito.")
             .AppendLine("Usa '/salvazaino' per salvare lo zaino diviso in più messaggi, copia o inoltralo senza nessun comando se è un singolo messaggio.")
             .AppendLine("Usa '/rinascita <Username> <oggetto>' per ricevere un file di testo con le stringhe scambio da copiare e incollare in lootbot.")
             .AppendLine("Usa '/confronta' per ricevere un elenco di oggetti in comune tra uno zaino e un elenco 'Cerco:' dal comando inline.")
-            .AppendLine("Usa '/craft <nome oggetto>' per ricevere un file di testo contenente stringhe da copiare e incollare, per craftare tutti gli oggetti necessari fino all'oggetto inserito.")
+            .AppendLine("Usa '/craft <oggetto/i>' per ricevere un file di testo contenente stringhe da copiare e incollare, per craftare tutti gli oggetti necessari fino agli oggetti inseriti.")
             .AppendLine("Usa '/base <rarità>' per ricevere un elenco di tutti gli oggetti base per la rarità inserita, per ogni oggetto è indicata la quantità che possiedi.")
-            .AppendLine("Usa '/vendi <oggetto>' per ottenere una lista di oggetti che puoi vendere in quanto non necessari per craftare l'oggettto specificato.")
-            .AppendLine("Usa '/creanegozi' o '/creanegozi <oggetto>' per ricevere dei comandi /negozio da inoltrare a @lootbotplus")
-            .AppendLine("Usa '@craftlootbot <nome oggetto>' in qualsiasi chat o gruppo per inviare rapidamente la lista dei materiali che stai cercando.")
+            .AppendLine("Usa '/vendi <oggetto/i>' per ottenere una lista di oggetti che puoi vendere in quanto non necessari per craftare gli oggetti inseriti.")
+            .AppendLine("Usa '/creanegozi' o '/creanegozi <oggetto/i>' per ricevere dei comandi /negozio da inoltrare a @lootbotplus")
+            .AppendLine("Usa '@craftlootbot <oggetto>' in qualsiasi chat o gruppo per inviare rapidamente la lista dei materiali che stai cercando.")
+            .AppendLine("Per specificare più oggetti esclusivamente nei comandi che lo supportano è necessario separarli con una virgola.")
 
             .AppendLine("Premi sui bottoni qui sotto per vedere maggiori informazioni su uno specifico comando.")
             .AppendLine()
@@ -66,7 +67,7 @@ Module help
         End With
         With lista_builder
             .AppendLine("*Lista:*")
-            .AppendLine("Usa '/lista <nome oggetto>' per ricevere la lista dei materiali base necessari al craft dell'oggetto inserito.")
+            .AppendLine("Usa '/lista <oggetto/i>' per ricevere la lista dei materiali base necessari al craft degli oggetti inseriti.")
             .AppendLine("Ad esempio _'/lista rivestimento elastico'_")
             .AppendLine("Quando hai salvato il tuo zaino nel bot, la lista mostrerà gli oggetti necessari (che non possiedi) seguito dal totale.")
             .AppendLine("Subito dopo ci sarà invece l'elenco degli oggetti in vostro possesso, compresi item già craftati.")
@@ -107,7 +108,7 @@ Module help
         End With
         With craft_builder
             .AppendLine("*Lista Craft:*")
-            .AppendLine("Permette di ricevere un file di testo contenente stringhe da copiare e incollare in lootbot, per craftare tutti gli oggetti necessari fino all'oggetto inserito.")
+            .AppendLine("Permette di ricevere un file di testo contenente stringhe da copiare e incollare in lootbot, per craftare tutti gli oggetti necessari fino agli oggetti inseriti.")
             .AppendLine("Se hai lo zaino salvato, gli oggetti necessari che hai già craftato verranno esclusi dall'elenco.")
             .AppendLine("La lista è in ordine decrescente, dall'oggetto più semplice al più complesso, in questo modo puoi eseguire tutti i craft in sequenza uno alla volta.")
         End With
@@ -125,13 +126,13 @@ Module help
         End With
         With vendi_bilder
             .AppendLine("*Lista oggetti non necessari:*")
-            .AppendLine("Permette di ricevere una lista di oggetti contenuti nel proprio zaino che non sono richiesti per il crafting dell'oggetto specificato.")
+            .AppendLine("Permette di ricevere una lista di oggetti contenuti nel proprio zaino che non sono richiesti per il crafting degli oggetti specificati.")
             .AppendLine("Risulta particolarmente utile per sapere immediatamente cosa è possibile vendere perchè non necessario oppure perchè posseduto in abbondanza.")
             .AppendLine("Per utilizzare questa funzione devi avere lo zaino salvato.")
         End With
         With creanegozi_builder
             .AppendLine("*Creazione Negozi:*")
-            .AppendLine("Permette di creare negozi velocemente partendo dal proprio zaino oppure, specificando un oggetto, dalla lista oggetti non necessari per quell'oggetto.")
+            .AppendLine("Permette di creare negozi velocemente partendo dal proprio zaino oppure, specificando uno o più oggetti, dalla lista oggetti non necessari per quegli oggetti.")
             .AppendLine("I negozi creati saranno impostati come privati. Il bot dopo che avrà inviato tutti i negozi, invierà anche il comando per cambiare la privacy a tutti i negozi, nel caso si volesse utilizzare.")
             .AppendLine("Il prezzo inserito di default è il prezzo base, è possibile inviare un messaggio per impostare il prezzo che si vuole agli oggetti. I prezzi saranno salvati per non doverli inviare ogni volta.")
             .AppendLine("Se si imposta un prezzo minore o uguale a 0, quell'oggetto verrà escluso dalla vendita. Gli oggetti craftati oppure di rarità UE e superiore sono automaticamente esclusi.")
@@ -140,6 +141,7 @@ Module help
             .AppendLine("Pozione Piccola:0")
             .AppendLine("Acqua:150")
             .AppendLine("E' possibile farsi inviare la lista dei prezzi salvati tramite il comando /ottieniprezzi.")
+            .AppendLine("E' possibile cancellare i prezzi salvati tramite il comando /cancellaprezzi.")
         End With
         With base_builder
             .AppendLine("*Lista oggetti base:*")

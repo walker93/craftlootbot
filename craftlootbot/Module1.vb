@@ -193,7 +193,7 @@ Module Module1
                     res.Add(article)
                 Next
                 If res IsNot Nothing Then results.AddRange(res)
-                Dim success = api.AnswerInlineQueryAsync(InlineQuery.Id, results.ToArray, 5, True,, "Aggiorna zaino salvato", "inline_" + query_text).Result
+                Dim success = api.AnswerInlineQueryAsync(InlineQuery.Id, results.ToArray, 5, True,, "Aggiorna zaino salvato", "inline_" + query_text.Replace(" ", "-")).Result
             Else
                 'Non ha zaino, propongo di salvarlo
                 api.AnswerInlineQueryAsync(InlineQuery.Id, results.ToArray, 0, True,, "Cliccami e salva lo zaino per questa funzione", "inline_" + query_text)
@@ -204,7 +204,7 @@ Module Module1
                     Console.WriteLine("   TaskCanceledException: Task {0}",
                                       DirectCast(v, TaskCanceledException).Task.Id)
                 Else
-                    Console.WriteLine("   Exception: {0}", v.GetType().Name)
+                    Console.WriteLine("   Exception: {0} - {1}", v.GetType().Name, v.Message)
                 End If
             Next
         Catch e As Exception
@@ -724,30 +724,6 @@ Module Module1
                     a = api.SendTextMessageAsync(message.Chat.Id, "Non hai prezzi salvati al momento").Result
                 End If
 #End Region
-
-                'ElseIf message.Text.ToLower.StartsWith("/bilancia") Then
-                '    Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
-                '    Dim zaino As String = ""
-                '    If IO.File.Exists(path) Then
-                '        zaino = IO.File.ReadAllText(path)
-                '    End If
-                '    If id <> -1 Then
-                '        api.SendChatActionAsync(message.Chat.Id, ChatAction.Typing)
-                '        zainoDic = parseZaino(zaino)
-                '        Dim zainoDic_copy = zainoDic
-                '        item = "Necrolama"
-                '        id = getItemId(item)
-                '        ItemIds.TryGetValue(id, it)
-                '        getNeededItemsList(id, CraftList, zainoDic_copy, gia_possiedi, spesa)
-                '        item = "Scudo necro"
-                '        id = getItemId(item)
-                '        getNeededItemsList(id, CraftList, zainoDic_copy, gia_possiedi, spesa)
-                '        item = "Corazza necro"
-                '        id = getItemId(item)
-                '        getNeededItemsList(id, CraftList, zainoDic_copy, gia_possiedi, spesa)
-                '        Dim result As String = getBilanciaText(createCraftCountList(CraftList))
-                '        answerLongMessage(result, message.Chat.Id)
-                '    End If
             ElseIf message.Text.ToLower.StartsWith("/start") Then
 #Region "start"
                 If message.Text.Contains("inline_") Then
@@ -762,9 +738,9 @@ Module Module1
                         zaini.Add(message.From.Id, "")
                     End If
                     If Not from_inline_query.ContainsKey(message.From.Id) Then
-                        from_inline_query.Add(message.From.Id, message.Text.ToLower.Trim.Replace("/start inline_", ""))
+                        from_inline_query.Add(message.From.Id, message.Text.ToLower.Trim.Replace("/start inline_", "").Replace("-", " "))
                     Else
-                        from_inline_query(message.From.Id) = message.Text.ToLower.Trim.Replace("/start inline_", "")
+                        from_inline_query(message.From.Id) = message.Text.ToLower.Trim.Replace("/start inline_", "").Replace("-", " ")
                     End If
                     a = api.SendTextMessageAsync(message.From.Id, "Inoltra o incolla di seguito il tuo zaino, può essere in più messaggi." + vbCrLf + "Premi 'Salva' quando hai terminato, o 'Annulla' per non salvare.",,,, creaZainoKeyboard).Result
                 Else
@@ -794,6 +770,13 @@ Module Module1
                 Next
                 a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString,,,,, ParseMode.Markdown).Result
 #End Region
+            ElseIf message.Text.ToLower.StartsWith("/db") Then
+                Dim builder As New Text.StringBuilder
+                builder.AppendLine(download_items())
+                builder.AppendLine(download_crafts())
+                builder.AppendLine(Leggo_Items())
+                builder.AppendLine(Leggo_Crafts())
+                a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString).Result
             ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/kill") Then
                 kill = True
                 Dim ex As New Exception("PROCESSO TERMINATO SU RICHIESTA")
@@ -1202,7 +1185,11 @@ Module Module1
 
     'controllo se l'item è craftabile
     Function isCraftable(id As Integer) As Boolean
-        Return If(ItemIds.Item(id).craftable = 0, False, True)
+        Try
+            Return If(ItemIds.Item(id).craftable = 0, False, True)
+        Catch e As Exception
+            Return False
+        End Try
     End Function
 
     'Data una lista di oggetti ripetuti creo dizionario(oggetto, quantità)
