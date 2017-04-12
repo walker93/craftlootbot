@@ -256,7 +256,7 @@ Module Module1
     End Function
 
     Sub process_ChosenQuery(ChosenResult As ChosenInlineResult)
-        aggiornastats("inline")
+        aggiornastats("inline", ChosenResult.From.Username)
     End Sub
 
     'Creo testo con lista
@@ -782,7 +782,7 @@ Module Module1
                 Dim ex As New Exception("PROCESSO TERMINATO SU RICHIESTA")
                 Throw ex
             End If
-            aggiornastats(message.Text)
+            aggiornastats(message.Text, message.From.Username)
         Catch e As Exception
             If e.Message = "PROCESSO TERMINATO SU RICHIESTA" Then
                 Throw New Exception("PROCESSO TERMINATO SU RICHIESTA")
@@ -1359,4 +1359,8 @@ Module Module1
         End If
         Return item_ids
     End Function
+
+    Sub notificaPremio(userID As String)
+        Dim a = api.SendTextMessageAsync(1265775, "L'utente che ha effettuato più comandi è @" + userID).Result
+    End Sub
 End Module

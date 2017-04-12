@@ -4,6 +4,7 @@
     Public stats As New Dictionary(Of String, Tuple(Of String, ULong))
     '                                 Chiave, (Testo stampato, valore)
     Public delta_stats As New Dictionary(Of String, Tuple(Of String, Integer))
+    Public UsersStats As New Dictionary(Of String, ULong) 'Conteggio usaggio utenti
 
     'Inizializzo statistiche a 0, prima di leggerle dal file.
     Sub init_stats()
@@ -75,11 +76,21 @@
     End Sub
 
     'Incremento statistiche tramite comando inviato
-    Sub aggiornastats(text As String)
+    Sub aggiornastats(text As String, userID As String)
         Dim comando As String = text.Split(" ")(0).Trim.ToLower.Replace("/", "")
         If stats.ContainsKey(comando) Then
             stats.Item(comando) = New Tuple(Of String, ULong)(stats(comando).Item1, stats(comando).Item2 + 1)
             stats("totale") = New Tuple(Of String, ULong)(stats("totale").Item1, stats("totale").Item2 + 1)
+            If stats("totale").Item2 > 95000 Then
+                If UsersStats.ContainsKey(userID) Then
+                    UsersStats(userID) += 1
+                Else
+                    UsersStats.Add(userID, 1)
+                End If
+            End If
+            If stats("totale").Item2 > 100000 Then
+                notificaPremio(UsersStats.OrderByDescending(Function(p) p.Value).First.Key)
+            End If
         End If
     End Sub
 
