@@ -12,7 +12,7 @@
     Public prezzoScrigni As New Dictionary(Of String, Integer)
     Public flush As Boolean = True
     Public CraftIds As New Dictionary(Of Integer, IDCraft)
-
+    Public olderZaini_limit As Integer = 30 'giorni
     'Legge da file impostazioni e inizializza variabili
     Sub initializeVariables()
         If Not IO.File.Exists(settings_file) Then
@@ -34,6 +34,8 @@
                     inline_message_row_limit = split(1)
                 Case "flush"
                     flush = If(split(1) = 1, True, False)
+                Case "olderzaini_limit"
+                    olderZaini_limit = split(1)
             End Select
         Next
         ITEM_URL = BASE_URL + "items/"

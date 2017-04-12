@@ -45,6 +45,8 @@ Module Module1
         thread.Start()
         Dim stats_thread As New Threading.Thread(New Threading.ThreadStart(AddressOf salvaStats))
         stats_thread.Start()
+        Dim zaini_thread As New Threading.Thread(New Threading.ThreadStart(AddressOf vecchizaini))
+        zaini_thread.Start()
     End Sub
 
     'Sub aggiorno_dictionary()
@@ -1362,5 +1364,22 @@ Module Module1
 
     Sub notificaPremio(userID As String)
         Dim a = api.SendTextMessageAsync(1265775, "L'utente che ha effettuato più comandi è @" + userID).Result
+    End Sub
+
+    Sub vecchizaini()
+        While True
+            Try
+                For Each file In IO.Directory.GetFiles("zaini/")
+                    If DateDiff(DateInterval.Day, IO.File.GetLastWriteTime(file), Date.Now) > olderZaini_limit Then
+                        IO.File.Delete(file)
+                        StampaDebug(file + " Cancellato!")
+                    End If
+                Next
+                Threading.Thread.Sleep(24 * 60 * 60 * 1000) 'aspetto 1 giorno
+            Catch ex As Exception
+                Console.WriteLine("Errore cancellazione file.")
+                Threading.Thread.Sleep(24 * 60 * 60 * 1000)
+            End Try
+        End While
     End Sub
 End Module
