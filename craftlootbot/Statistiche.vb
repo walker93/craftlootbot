@@ -81,15 +81,15 @@
         If stats.ContainsKey(comando) Then
             stats.Item(comando) = New Tuple(Of String, ULong)(stats(comando).Item1, stats(comando).Item2 + 1)
             stats("totale") = New Tuple(Of String, ULong)(stats("totale").Item1, stats("totale").Item2 + 1)
-            If stats("totale").Item2 > 95000 Then
+            If stats("totale").Item2 >= 95000 Then
                 If UsersStats.ContainsKey(userID) Then
                     UsersStats(userID) += 1
                 Else
                     UsersStats.Add(userID, 1)
                 End If
             End If
-            If stats("totale").Item2 > 100000 Then
-                notificaPremio(UsersStats.OrderByDescending(Function(p) p.Value).First.Key)
+            If stats("totale").Item2 = 100000 Then
+                notificaPremio()
             End If
         End If
     End Sub

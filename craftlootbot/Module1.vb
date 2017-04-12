@@ -1362,8 +1362,15 @@ Module Module1
         Return item_ids
     End Function
 
-    Sub notificaPremio(userID As String)
-        Dim a = api.SendTextMessageAsync(1265775, "L'utente che ha effettuato più comandi è @" + userID).Result
+    Sub notificaPremio()
+        Dim builder As New Text.StringBuilder()
+        builder.AppendLine()
+        Dim i = 1
+        For Each user In UsersStats.OrderByDescending(Function(p) p.Value)
+            builder.AppendLine(i.ToString + "° " + user.Key + ": " + user.Value.ToString)
+            i += 1
+        Next
+        answerLongMessage("La classifica è: " + builder.ToString, 1265775)
     End Sub
 
     Sub vecchizaini()
