@@ -1139,7 +1139,12 @@ Module Module1
         Dim builder As New Text.StringBuilder("/negozio ")
         Dim i_counter = 1
         Dim Filtro_zaino = zaino.Where(Function(p) prezzoScrigni.ContainsKey(p.Key.rarity) AndAlso Not isCraftable(p.Key.id))
-        Dim prev_rarity As String = Filtro_zaino.First.Key.rarity
+        If Filtro_zaino.Count = 0 Then
+            builder.Clear.Append("Nessun oggetto può essere venduto.")
+            res.Add(builder.ToString)
+            Return res
+        End If
+        Dim prev_rarity As String = Filtro_zaino.FirstOrDefault.Key.rarity
         Dim prezzo = ""
         For Each it In Filtro_zaino
             prezzo = ""
