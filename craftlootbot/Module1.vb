@@ -154,12 +154,21 @@ Module Module1
 
     Function process_query(InlineQuery As InlineQuery, ct As Threading.CancellationToken) As Boolean
         StampaDebug(String.Format("{0} {1} From: {2}-{3} ID:{4} TEXT: {5}", Now.ToShortDateString, Now.ToShortTimeString, InlineQuery.From.Id, InlineQuery.From.FirstName, InlineQuery.Id, InlineQuery.Query))
-        Dim query_text As String = InlineQuery.Query.Trim.ToLower
+        Dim unfiltered_query As String = InlineQuery.Query.Trim.ToLower
+        Dim query_text As String
         Dim path As String = "zaini/" + InlineQuery.From.Id.ToString + ".txt"
         Dim hasZaino As Boolean = IO.File.Exists(path)
         Dim results As New List(Of InlineQueryResults.InlineQueryResult)
-
+        Dim filter As String
         Try
+            Dim reg As New Regex("^(C|NC|R|UR|L|E|UE|U){1}", RegexOptions.IgnoreCase)
+            If reg.IsMatch(unfiltered_query) Then
+                filter = reg.Match(unfiltered_query).Value
+                query_text = unfiltered_query.Substring(2).Trim
+            Else
+                query_text = unfiltered_query
+            End If
+
             If hasZaino Then
                 'lo zaino è salvato, procedo ad elaborare
                 If query_text.Length < 4 Then
