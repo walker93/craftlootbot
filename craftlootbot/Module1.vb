@@ -151,7 +151,7 @@ Module Module1
 #End Region
 
 #Region "Inline Query"
-
+    Dim filter As String = Nothing
     Function process_query(InlineQuery As InlineQuery, ct As Threading.CancellationToken) As Boolean
         StampaDebug(String.Format("{0} {1} From: {2}-{3} ID:{4} TEXT: {5}", Now.ToShortDateString, Now.ToShortTimeString, InlineQuery.From.Id, InlineQuery.From.FirstName, InlineQuery.Id, InlineQuery.Query))
         Dim unfiltered_query As String = InlineQuery.Query.Trim.ToLower
@@ -159,12 +159,12 @@ Module Module1
         Dim path As String = "zaini/" + InlineQuery.From.Id.ToString + ".txt"
         Dim hasZaino As Boolean = IO.File.Exists(path)
         Dim results As New List(Of InlineQueryResults.InlineQueryResult)
-        Dim filter As String
+
         Try
             Dim reg As New Regex("^(C|NC|R|UR|L|E|UE|U){1}", RegexOptions.IgnoreCase)
             If reg.IsMatch(unfiltered_query) Then
                 filter = reg.Match(unfiltered_query).Value
-                query_text = unfiltered_query.Substring(2).Trim
+                query_text = unfiltered_query.Substring(1).Trim
             Else
                 query_text = unfiltered_query
             End If
@@ -286,6 +286,9 @@ Module Module1
         Dim numero_righe As Integer = 1
         Dim first_10_richiesti As Integer
         For Each it In sortedDictionary
+            If Not IsNothing(filter) Then
+                If it.Key.rarity.ToLower <> filter.ToLower Then Continue For
+            End If
             tot_necessari = sortedDictionary.Item(it.Key)
             With buildernecessari
                 necessari = If(zaino.ContainsKey(it.Key), tot_necessari - zaino.Item(it.Key), tot_necessari)
