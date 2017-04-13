@@ -164,8 +164,9 @@ Module Module1
             Dim reg As New Regex("^(C|NC|R|UR|L|E|UE|U){1}", RegexOptions.IgnoreCase)
             If reg.IsMatch(unfiltered_query) Then
                 filter = reg.Match(unfiltered_query).Value
-                query_text = unfiltered_query.Substring(1).Trim
+                query_text = unfiltered_query.Substring(filter.Length).Trim
             Else
+                filter = Nothing
                 query_text = unfiltered_query
             End If
 
@@ -200,7 +201,7 @@ Module Module1
                     article.Id = matching_items(i).id
                     article.InputMessageContent = content
                     article.Title = "Cerco per " + matching_items(i).name
-                    article.Description = If(content.MessageText.Contains("Possiedo"), "Hai già tutti gli oggetti.", "Hai bisogno di " + result.Value.ToString + If(result.Value = 1, " oggetto.", " oggetti."))
+                    article.Description = If(content.MessageText.Contains("Possiedo"), "Hai già tutti gli oggetti " + If(filter, "").ToUpper, "Hai bisogno di " + result.Value.ToString + If(result.Value = 1, " oggetto ", " oggetti ") + If(filter, "").ToUpper)
                     res.Add(article)
                 Next
                 If res IsNot Nothing Then results.AddRange(res)
