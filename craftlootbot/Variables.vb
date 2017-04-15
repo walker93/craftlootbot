@@ -4,6 +4,7 @@
     Public PLAYER_URL As String
     Public BASE_URL As String
     Public rarity_value As New Dictionary(Of String, Integer)
+    Public rarity_craft As New Dictionary(Of String, Integer)
     Public settings_file As String = "settings.dat"
     Public debug As Boolean
     Public update_db_timeout As Integer = 3 'ore
@@ -42,7 +43,8 @@
         CRAFT_URL = BASE_URL + "crafts/"
         PLAYER_URL = BASE_URL + "players/"
         token.token = If(debug, debug_token, release_token)
-        init_rarity()
+        init_rarity_value()
+        init_rarity_craft()
         init_help()
 
         init_stats()
@@ -61,8 +63,18 @@
         prezzoScrigni.Add("E", 10000)
     End Sub
 
-    'Inizializza valori craft rarità
-    Sub init_rarity()
+    'inizializza punti craft rarità
+    Sub init_rarity_craft()
+        rarity_craft.Add("UR", 2)
+        rarity_craft.Add("L", 3)
+        rarity_craft.Add("E", 5)
+        rarity_craft.Add("UE", 25)
+        rarity_craft.Add("U", 35)
+        rarity_craft.Add("X", 50)
+    End Sub
+
+    'Inizializza costo craft rarità
+    Sub init_rarity_value()
         rarity_value.Add("C", 0)
         rarity_value.Add("NC", 0)
         rarity_value.Add("R", 0)

@@ -20,9 +20,7 @@ Public Module MyExtensions
 
     'Se il debug è attivo mostra in console il testo in input
     Sub StampaDebug(text As String)
-        If debug Then
-            Console.WriteLine(text)
-        End If
+        If debug Then Console.WriteLine(text)
     End Sub
 
     'Restituisce stringa soldi formattata
@@ -50,7 +48,7 @@ Public Module MyExtensions
         Return file
     End Function
 
-    'Invia richiesta API e ottiene oggetti necessari al craft
+    'ottiene oggetti necessari al craft
     Function requestCraft(id As Integer) As Integer()
         'Dim res
         'If id > 1000 Then

@@ -377,6 +377,7 @@ Module Module1
             Dim item As String
             Dim id As Integer
             Dim spesa As Integer
+            Dim punti_craft As Integer
             Dim it As New Item
             'Dim lootbot_id As ULong = 171514820
             Dim kill As Boolean = False
@@ -546,10 +547,11 @@ Module Module1
                 zainoDic = parseZaino(zaino)
                 Dim zainoDic_copy = zainoDic
                 For Each i In item_ids
-                    getNeededItemsList(i, CraftList, zainoDic_copy, gia_possiedi, spesa)
+                    getNeededItemsList(i, CraftList, zainoDic_copy, gia_possiedi, spesa, punti_craft)
                     If rarity_value.ContainsKey(ItemIds.Item(i).rarity) Then spesa += rarity_value.Item(ItemIds.Item(i).rarity)
+                    If rarity_craft.ContainsKey(ItemIds.Item(i).rarity) Then punti_craft += rarity_craft.Item(ItemIds.Item(i).rarity)
                 Next
-                Dim result As String = getCraftListText(createCraftCountList(CraftList), item_ids.ToArray, zainoDic, gia_possiedi, spesa)
+                Dim result As String = getCraftListText(createCraftCountList(CraftList), item_ids.ToArray, zainoDic, gia_possiedi, spesa, punti_craft)
                 answerLongMessage(result, message.Chat.Id)
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/albero") Then
@@ -620,7 +622,7 @@ Module Module1
                 zainoDic = parseZaino(zaino)
                 Dim zainoDic_copy = zainoDic
                 For Each i In item_ids
-                    getNeededItemsList(i, CraftList, zainoDic_copy, gia_possiedi, spesa)
+                    getNeededItemsList(i, CraftList, zainoDic_copy, gia_possiedi, spesa, punti_craft)
                 Next
                 Dim res = SottrazioneDizionariItem(zainoDic_copy, createCraftCountList(CraftList))
                 Dim result As String = getVendiText(res, zainoDic, item_ids.ToArray)
@@ -707,7 +709,7 @@ Module Module1
                     api.SendChatActionAsync(message.Chat.Id, ChatAction.Typing)
                     Dim zainoDic_copy = zainoDic
                     For Each i In item_ids
-                        getNeededItemsList(i, CraftList, zainoDic_copy, gia_possiedi, spesa)
+                        getNeededItemsList(i, CraftList, zainoDic_copy, gia_possiedi, spesa, punti_craft)
                     Next
                     result = SottrazioneDizionariItem(zainoDic_copy, createCraftCountList(CraftList))
                 End If
@@ -823,7 +825,7 @@ Module Module1
         End Try
     End Sub
 
-    Sub getNeededItemsList(id As Integer, ByRef CraftList As List(Of Item), ByRef zaino As Dictionary(Of Item, Integer), ByRef possiedi As Dictionary(Of Item, Integer), ByRef spesa As Integer)
+    Sub getNeededItemsList(id As Integer, ByRef CraftList As List(Of Item), ByRef zaino As Dictionary(Of Item, Integer), ByRef possiedi As Dictionary(Of Item, Integer), ByRef spesa As Integer, ByRef punti_craft As Integer)
         Dim rows As Integer() = requestCraft(id)
         If rows Is Nothing Then Exit Sub
         Dim item As Item
@@ -831,9 +833,10 @@ Module Module1
             item = ItemIds(ids)
             If isCraftable(item.id) Then
                 If rarity_value.ContainsKey(item.rarity) Then spesa += rarity_value.Item(item.rarity)
-                StampaDebug(String.Format("Oggetto: {0}, +{1}={2}", item.name, If(rarity_value.ContainsKey(item.rarity), rarity_value.Item(item.rarity).ToString, "0"), spesa.ToString))
+                If rarity_craft.ContainsKey(item.rarity) Then punti_craft += rarity_craft.Item(item.rarity)
+                StampaDebug(String.Format("Oggetto: {0}, +{1}={2}", item.name, If(rarity_craft.ContainsKey(item.rarity), rarity_craft.Item(item.rarity).ToString, "0"), punti_craft.ToString))
                 If Not zaino.ContainsKey(item) Then
-                    getNeededItemsList(item.id, CraftList, zaino, possiedi, spesa)
+                    getNeededItemsList(item.id, CraftList, zaino, possiedi, spesa, punti_craft)
                 Else
                     zaino.Item(item) -= 1
                     If zaino.Item(item) = 0 Then zaino.Remove(item)
@@ -956,7 +959,7 @@ Module Module1
         Return builder.ToString
     End Function
 
-    Function getCraftListText(dic As Dictionary(Of Item, Integer), oggetti() As Integer, zaino As Dictionary(Of Item, Integer), ByRef gia_possiedi As Dictionary(Of Item, Integer), spesa As Integer) As String
+    Function getCraftListText(dic As Dictionary(Of Item, Integer), oggetti() As Integer, zaino As Dictionary(Of Item, Integer), ByRef gia_possiedi As Dictionary(Of Item, Integer), spesa As Integer, punti_craft As Integer) As String
 
         Dim sor As New SortedDictionary(Of Item, Integer)(New Item.ItemComparer)
         For Each pair In dic
@@ -1023,9 +1026,15 @@ Module Module1
         Next
         If builderposseduti.ToString = "Già possiedi: " + Environment.NewLine Then builderposseduti.AppendLine().AppendLine("Nessuno")
         If buildernecessari.ToString = (intestazione + Environment.NewLine) Then buildernecessari.AppendLine().AppendLine("Nessuno")
-        Dim result = buildernecessari.ToString + builderposseduti.ToString
-        result += vbCrLf + "Per eseguire i craft spenderai: " + prettyCurrency(spesa) + If(zaino.Count > 0, vbCrLf + " (Escludendo oggetti già craftati)", "")
-        Return result
+        Dim result As New Text.StringBuilder(buildernecessari.ToString + builderposseduti.ToString)
+        result.AppendLine()
+        result.Append("Per eseguire i craft spenderai: ")
+        result.AppendLine(prettyCurrency(spesa))
+        result.Append("Guadagnerai inoltre: ").Append(punti_craft).AppendLine(" punti craft")
+        If zaino.Count > 0 Then
+            result.AppendLine("(Escludendo oggetti già craftati)")
+        End If
+        Return result.ToString
     End Function
 
     Function getCraftTreeText(list As List(Of KeyValuePair(Of Item, Integer)), ByRef possiedi As Dictionary(Of Item, Integer), ByRef spesa As Integer) As String
