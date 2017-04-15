@@ -51,11 +51,20 @@ Public Class Item
             builder.Append("Costo per il Craft: ").AppendLine(prettyCurrency(spesa))
             builder.Append("Punti craft guadagnati: ").AppendLine(punti_craft)
         End If
-        If power > 0 Then builder.Append("Danno: ").AppendLine(power)
-        If power_armor < 0 Then builder.Append("Difesa: ").AppendLine(power_armor)
-        If power_shield < 0 Then builder.Append("Difesa: ").AppendLine(power_shield)
+        If power > 0 Then
+            builder.Append("Danno (Arma): ").AppendLine(power)
+            builder.Append("Critico: ").Append(critical).AppendLine("%")
+        End If
+        If power_armor < 0 Then
+            builder.Append("Difesa (Armatura): ").AppendLine(power_armor)
+            builder.Append("Critico: ").Append(critical).AppendLine("%")
+        End If
+        If power_shield < 0 Then
+            builder.Append("Difesa (Scudo): ").AppendLine(power_shield)
+            builder.Append("Critico: ").Append(critical).AppendLine("%")
+        End If
         If dragon_power <> 0 Then builder.Append("Danno/Difesa: ").AppendLine(dragon_power)
-        If critical > 0 Then builder.Append("Critico: ").Append(critical).AppendLine("%")
+
 
         If craftable Then
             builder.AppendLine.AppendLine("Necessari:")
