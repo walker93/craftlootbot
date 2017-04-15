@@ -802,6 +802,14 @@ Module Module1
                 a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString).Result
             ElseIf message.Text.ToLower.StartsWith("/classifica") Then
                 notificaPremio()
+            ElseIf message.Text.StartsWith("/info") Then
+                Dim items = checkInputItems(message.Text, message.Chat.Id, "/info", False)
+                If items.Count = 0 Then Exit Sub
+                Dim builder As New Text.StringBuilder
+                For Each i In items
+                    builder.AppendLine(ItemIds(i).ToString)
+                Next
+                a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString,,,,, ParseMode.Markdown).Result
             ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/kill") Then
                 kill = True
                 Dim ex As New Exception("PROCESSO TERMINATO SU RICHIESTA")
@@ -1038,7 +1046,7 @@ Module Module1
         result.AppendLine()
         result.Append("Per eseguire i craft spenderai: ")
         result.AppendLine(prettyCurrency(spesa))
-        result.Append("Guadagnerai inoltre: ").Append(punti_craft).AppendLine(" punti craft")
+        result.Append("Guadagnerai inoltre ").Append(punti_craft).AppendLine(" punti craft")
         If zaino.Count > 0 Then
             result.AppendLine("(Escludendo oggetti già craftati)")
         End If
@@ -1364,7 +1372,7 @@ Module Module1
         Return a
     End Function
 
-    Function checkInputItems(message_text As String, chat_id As Long, comando As String) As List(Of Integer)
+    Function checkInputItems(message_text As String, chat_id As Long, comando As String, Optional checkCraftable As Boolean = True) As List(Of Integer)
 
         Dim items = message_text.Replace(If(message_text.Contains("@craftlootbot"), comando + "@craftlootbot", comando), "").Split(",").Where(Function(p) p <> "").ToList
         Dim item_ids As New List(Of Integer)
@@ -1380,9 +1388,11 @@ Module Module1
                 a = api.SendTextMessageAsync(chat_id, "L'oggetto " + i + " non è stato riconosciuto, verrà saltato.").Result
                 Continue For
             End If
-            If Not isCraftable(temp_id) Then
-                Dim e = api.SendTextMessageAsync(chat_id, "L'oggetto " + i + " non è craftabile, verrà saltato.").Result
-                Continue For
+            If checkCraftable Then
+                If Not isCraftable(temp_id) Then
+                    Dim e = api.SendTextMessageAsync(chat_id, "L'oggetto " + i + " non è craftabile, verrà saltato.").Result
+                    Continue For
+                End If
             End If
             item_ids.Add(temp_id)
         Next
