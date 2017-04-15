@@ -381,7 +381,7 @@ Module Module1
             Dim it As New Item
             'Dim lootbot_id As ULong = 171514820
             Dim kill As Boolean = False
-
+#Region "File prezzi"
             If message.Type = MessageType.DocumentMessage Then
                 'è un documento prezzi, lo scarico e lo salvo
                 If message.Document.MimeType <> "text/plain" Then
@@ -404,6 +404,7 @@ Module Module1
                     Exit Sub
                 End If
             End If
+#End Region
             If isZaino(message.Text) Then
                 IO.Directory.CreateDirectory("zaini")
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) Then
@@ -460,6 +461,11 @@ Module Module1
                 Else
                     a = api.SendTextMessageAsync(message.Chat.Id, "Non stai effettuando il confronto.",,,, creaNULLKeyboard).Result
                 End If
+            ElseIf isAperturaScrigno(message.Text) Then
+                Dim rex As New Regex("\> ([0-9]+)x ([A-z 0-9òàèéìù'-]+) \(([A-Z]+)\)")
+                Dim matches As MatchCollection = rex.Matches(message.Text)
+                Dim res = rex.Replace(message.Text, "> $2 ($1)")
+                a = api.SendTextMessageAsync(message.Chat.Id, res).Result
             Else
                 Console.WriteLine("{0} {1} {2} from: {3}", Now.ToShortDateString, Now.ToShortTimeString, message.Text, message.From.Username)
             End If
@@ -794,6 +800,8 @@ Module Module1
                 builder.AppendLine(Leggo_Items())
                 builder.AppendLine(Leggo_Crafts())
                 a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString).Result
+            ElseIf message.Text.ToLower.StartsWith("/classifica") Then
+                notificaPremio()
             ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/kill") Then
                 kill = True
                 Dim ex As New Exception("PROCESSO TERMINATO SU RICHIESTA")
@@ -1388,7 +1396,7 @@ Module Module1
         Dim builder As New Text.StringBuilder()
         builder.AppendLine()
         Dim i = 1
-        For Each user In UsersStats.OrderByDescending(Function(p) p.Value)
+        For Each user In PersonalStats.OrderByDescending(Function(p) p.Value)
             builder.AppendLine(i.ToString + "° " + user.Key + ": " + user.Value.ToString)
             i += 1
         Next

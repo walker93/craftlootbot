@@ -1,14 +1,16 @@
 ﻿Module Statistiche
     Public stats_file As String = "stats.dat"
+    Public personal_file As String = "personal_stats.dat"
     Public stat_timeout As Integer = 20 'minuti, tra un salvataggio e l'altro delle statistiche
     Public stats As New Dictionary(Of String, Tuple(Of String, ULong))
     '                                 Chiave, (Testo stampato, valore)
     Public delta_stats As New Dictionary(Of String, Tuple(Of String, Integer))
-    Public UsersStats As New Dictionary(Of String, ULong) 'Conteggio usaggio utenti
+    Public PersonalStats As New Dictionary(Of String, ULong) 'Conteggio usaggio utenti
 
     'Inizializzo statistiche a 0, prima di leggerle dal file.
     Sub init_stats()
         If Not IO.File.Exists(stats_file) Then IO.File.WriteAllText(stats_file, "")
+        If Not IO.File.Exists(personal_file) Then IO.File.WriteAllText(personal_file, "")
         stats.Add("lista", New Tuple(Of String, ULong)("Liste inviate", 0))
         stats.Add("albero", New Tuple(Of String, ULong)("Alberi generati", 0))
         stats.Add("rinascita", New Tuple(Of String, ULong)("Liste scambi rinascita effettuate", 0))
@@ -34,6 +36,14 @@
                 stats.Item(split(0).ToLower) = New Tuple(Of String, ULong)(stats.Item(split(0).ToLower).Item1, split(1))
             End If
             StampaDebug("lettura statistica: " + line)
+        Next
+
+        'leggo statistiche personali
+        Dim personal_lines As String() = IO.File.ReadAllLines(personal_file)
+
+        For Each line In personal_lines
+            Dim split As String() = line.Split("=")
+            PersonalStats.Add(split(0), split(1))
         Next
     End Sub
     Sub read_stats(ByRef stats As Dictionary(Of String, Tuple(Of String, Integer)), Optional def As Boolean = False)
@@ -71,7 +81,15 @@
                 builder.Append(stat.Key + "=" + stat.Value.Item2.ToString).Append(vbCrLf)
             Next
             IO.File.WriteAllText(stats_file, builder.ToString)
-            Console.WriteLine("Salvate statistiche!")
+            StampaDebug("Salvate statistiche!")
+
+            'salvo statistiche personali
+            Dim personal_builder As New Text.StringBuilder
+            For Each us In PersonalStats
+                personal_builder.AppendLine(us.Key + "=" + us.Value.ToString)
+            Next
+            IO.File.WriteAllText(personal_file, personal_builder.ToString)
+            StampaDebug("Salvate statistiche personali!")
         End While
     End Sub
 
@@ -84,10 +102,10 @@
 
             'Conteggio statistiche personali per il premio
             If stats("totale").Item2 >= 100000 Then
-                If UsersStats.ContainsKey(userID) Then
-                    UsersStats(userID) += 1
+                If PersonalStats.ContainsKey(userID) Then
+                    PersonalStats(userID) += 1
                 Else
-                    UsersStats.Add(userID, 1)
+                    PersonalStats.Add(userID, 1)
                 End If
             End If
             If stats("totale").Item2 = 110000 Then
