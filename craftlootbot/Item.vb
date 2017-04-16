@@ -24,10 +24,32 @@ Public Class Item
         builder.AppendLine("*" + name.ToString + "*")
         builder.Append("ID oggetto: ").AppendLine(id)
         builder.Append("Rarità: ").AppendLine(rarity_name + " (" + rarity + ")")
-        builder.Append("Rinascita richiesta: ").AppendLine(If(reborn - 1 = 0, "Base", "R" + (reborn - 1).ToString))
+        builder.Append("Rinascita richiesta: ").AppendLine(If(reborn - 1 = 0, "Base", getstars()))
         builder.Append("Prezzo base: ").AppendLine(prettyCurrency(value))
         If Not IsNothing(estimate) Then builder.Append("Valore corrente stimato: ").AppendLine(prettyCurrency(estimate))
         builder.Append("Craftabile: ").AppendLine(If(craftable = 1, "Si", "No"))
+
+        builder.Append("Numero di usi per il set Necro: ").AppendLine(countNecro)
+        If craftable Then
+            Dim spesa As Integer = If(rarity_value.ContainsKey(rarity), rarity_value(rarity), 0)
+            Dim punti_craft As Integer = If(rarity_craft.ContainsKey(rarity), rarity_craft(rarity), 0)
+            contaCosto(id, spesa, punti_craft)
+            builder.Append("Costo per il Craft: ").AppendLine(prettyCurrency(spesa))
+            builder.Append("Punti craft guadagnati: ").AppendLine(punti_craft)
+        End If
+        If power > 0 Then
+            builder.Append("Danno: +").AppendLine(power)
+            builder.Append("Critico: ").Append(critical).AppendLine("%")
+        End If
+        If power_armor < 0 Then
+            builder.Append("Difesa: +").AppendLine(power_armor)
+            builder.Append("Critico: ").Append(critical).AppendLine("%")
+        End If
+        If power_shield < 0 Then
+            builder.Append("Difesa: +").AppendLine(power_shield)
+            builder.Append("Critico: ").Append(critical).AppendLine("%")
+        End If
+        If dragon_power <> 0 Then builder.Append("Danno/Difesa: ").AppendLine(If(dragon_power > 0, "+" + dragon_power.ToString, "-" + dragon_power.ToString))
         Select Case category
             Case 1
                 builder.Append("Categoria: ")
@@ -41,41 +63,49 @@ Public Class Item
             Case 4
                 builder.Append("Categoria: ")
                 builder.AppendLine("Consumabili")
+            Case Else
+                If power > 0 Then builder.Append("Categoria: ").AppendLine("Arma")
+                If power_armor < 0 Then builder.Append("Categoria: ").AppendLine("Armatura")
+                If power_shield < 0 Then builder.Append("Categoria: ").AppendLine("Scudo")
+                If dragon_power > 0 Then builder.Append("Categoria: ").AppendLine("Equipaggiamento Drago")
         End Select
         If category > 0 Then builder.Append("Descrizione: ").AppendLine(description)
-        builder.Append("Numero di usi per il set Necro: ").AppendLine(countNecro)
-        If craftable Then
-            Dim spesa As Integer = If(rarity_value.ContainsKey(rarity), rarity_value(rarity), 0)
-            Dim punti_craft As Integer = If(rarity_craft.ContainsKey(rarity), rarity_craft(rarity), 0)
-            contaCosto(id, spesa, punti_craft)
-            builder.Append("Costo per il Craft: ").AppendLine(prettyCurrency(spesa))
-            builder.Append("Punti craft guadagnati: ").AppendLine(punti_craft)
-        End If
-        If power > 0 Then
-            builder.Append("Danno (Arma): ").AppendLine(power)
-            builder.Append("Critico: ").Append(critical).AppendLine("%")
-        End If
-        If power_armor < 0 Then
-            builder.Append("Difesa (Armatura): ").AppendLine(power_armor)
-            builder.Append("Critico: ").Append(critical).AppendLine("%")
-        End If
-        If power_shield < 0 Then
-            builder.Append("Difesa (Scudo): ").AppendLine(power_shield)
-            builder.Append("Critico: ").Append(critical).AppendLine("%")
-        End If
-        If dragon_power <> 0 Then builder.Append("Danno/Difesa: ").AppendLine(dragon_power)
-
-
         If craftable Then
             builder.AppendLine.AppendLine("Necessari:")
             builder.Append("> ").Append(ItemIds(CraftIds(id).material_1).name).AppendLine(" (" + ItemIds(CraftIds(id).material_1).rarity + ")")
             builder.Append("> ").Append(ItemIds(CraftIds(id).material_2).name).AppendLine(" (" + ItemIds(CraftIds(id).material_2).rarity + ")")
             builder.Append("> ").Append(ItemIds(CraftIds(id).material_3).name).AppendLine(" (" + ItemIds(CraftIds(id).material_3).rarity + ")")
         End If
-
+        builder.AppendLine.Append(stampaUsi)
         Return builder.ToString
     End Function
 
+    'restituisce stringa Stelle rinascita
+    Function getstars()
+        Dim res As String = ""
+        For i = 1 To reborn - 1
+            res += "⭐️"
+        Next
+        Return res
+    End Function
+
+    'restituisce stringa oggetti in cui si può usare l'item
+    Function stampaUsi() As String
+        Dim usi_builder As New StringBuilder("Usato per:")
+        usi_builder.AppendLine()
+        Dim usi As Integer = 0
+        For Each craft In CraftIds
+            Dim required_ids() As Integer = {craft.Value.material_1, craft.Value.material_2, craft.Value.material_3}
+            If required_ids.Contains(id) Then
+                usi += 1
+                usi_builder.Append("> ").Append(ItemIds(craft.Value.material_result).name).AppendLine(" (" + ItemIds(craft.Value.material_result).rarity + ")")
+            End If
+        Next
+        If usi = 0 Then Return ""
+        Return usi_builder.ToString
+    End Function
+
+    'restituisce conteggio nel craft necro
     Function countNecro() As Integer
         Dim count As Integer
         contaUsi(221, count)
@@ -84,17 +114,20 @@ Public Class Item
         Return count
     End Function
 
+    'ricorsione per conteggio necro
     Sub contaUsi(necro As Integer, ByRef count As Integer)
         Dim craft As IDCraft = CraftIds(necro)
         Dim required_ids() As Integer = {craft.material_1, craft.material_2, craft.material_3}
+        'StampaDebug(ItemIds(necro).name)
+        If required_ids.Contains(id) Then count += 1
         For Each i In required_ids
-            If i = id Then count += 1
             If isCraftable(i) Then
                 contaUsi(i, count)
             End If
         Next
     End Sub
 
+    'ricorsione per punti craft e costo
     Sub contaCosto(item_id As Integer, ByRef spesa As Integer, ByRef punticraft As Integer)
         Dim craft As IDCraft = CraftIds(item_id)
         Dim required_ids() As Integer = {craft.material_1, craft.material_2, craft.material_3}

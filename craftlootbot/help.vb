@@ -58,7 +58,8 @@ Module help
             .AppendLine("Usa '/base <rarità>' per ricevere un elenco di tutti gli oggetti base per la rarità inserita, per ogni oggetto è indicata la quantità che possiedi.")
             .AppendLine("Usa '/vendi <oggetto/i>' per ottenere una lista di oggetti che puoi vendere in quanto non necessari per craftare gli oggetti inseriti.")
             .AppendLine("Usa '/creanegozi' o '/creanegozi <oggetto/i>' per ricevere dei comandi /negozio da inoltrare a @lootbotplus")
-            .AppendLine("Usa '@craftlootbot <oggetto>' in qualsiasi chat o gruppo per inviare rapidamente la lista dei materiali che stai cercando.")
+            .AppendLine("Usa '/info <oggetto/i>' per ricevere informazioni utili sugli oggetti inseriti.")
+            .AppendLine("Usa '@craftlootbot <rarità> <oggetto>' in qualsiasi chat o gruppo per inviare rapidamente la lista dei materiali che stai cercando, la rarità è opzionale.")
             .AppendLine("Per specificare più oggetti esclusivamente nei comandi che lo supportano è necessario separarli con una virgola.")
 
             .AppendLine("Premi sui bottoni qui sotto per vedere maggiori informazioni su uno specifico comando.")
