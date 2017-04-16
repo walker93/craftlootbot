@@ -14,6 +14,8 @@ Module help
     Public base_builder As New StringBuilder
     Public vendi_bilder As New StringBuilder
     Public creanegozi_builder As New StringBuilder
+    Public info_builder As New StringBuilder
+
     Function process_help(text As String) As String
         Dim builder As New StringBuilder
         Select Case text.ToLower.Trim
@@ -39,6 +41,8 @@ Module help
                 builder.Append(vendi_bilder.ToString)
             Case "creanegozi"
                 builder.Append(creanegozi_builder.ToString)
+            Case "info"
+                builder.Append(info_builder.ToString)
             Case Else
                 builder.Append("Comando non riconosciuto.")
         End Select
@@ -71,8 +75,8 @@ Module help
             .AppendLine("Usa '/lista <oggetto/i>' per ricevere la lista dei materiali base necessari al craft degli oggetti inseriti.")
             .AppendLine("Ad esempio _'/lista rivestimento elastico'_")
             .AppendLine("Quando hai salvato il tuo zaino nel bot, la lista mostrerà gli oggetti necessari (che non possiedi) seguito dal totale.")
-            .AppendLine("Subito dopo ci sarà invece l'elenco degli oggetti in vostro possesso, compresi item già craftati.")
-            .AppendLine("Infine il bot darà un indicazione sul costo richiesto per eseguire i craft, escludendo item già craftati.")
+            .AppendLine("Subito dopo ci sarà invece l'elenco degli oggetti in tuo possesso, compresi item già craftati.")
+            .AppendLine("Infine il bot darà un indicazione sul costo richiesto per eseguire i craft e i punti craft che si guadagnano, escludendo item già craftati.")
         End With
         With Albero_builder
             .AppendLine("*Albero craft:*")
@@ -118,6 +122,7 @@ Module help
             .AppendLine("Puoi anche usare il bot per inviare rapidamente in qualsiasi chat o gruppo i materiali che stai cercando attraverso comandi inline.")
             .Append("Man mano che stai scrivendo l'oggetto, il bot ti mostrerà una lista di item che contengono la parola che stai scrivendo ")
             .AppendLine("(questo ti permette di avere molteplici risultati senza dover completare il nome dell'oggetto inserito).")
+            .AppendLine("Puoi specificare una rarità inserendone la sigla prima dell'oggetto, la lista sarà filtrata e verrà inviato l'elenco contenente solo gli oggetti di quella rarità.")
             .AppendLine()
             .Append("Nella lista per ogni risultato appare anche il totale degli oggetti di cui hai bisogno. ")
             .AppendLine("Premendo un oggetto in lista, verrà inviato un messaggio nella chat con l'elenco dei materiali di cui hai bisogno per craftarlo.")
@@ -149,7 +154,11 @@ Module help
             .AppendLine("Con questo comando verrà mostrata una lista di tutti gli oggetti base per la rarità inserita.")
             .AppendLine("Se hai lo zaino salvato, tra parentesi viene mostrata la quantità che possiedi per quell'oggetto.")
         End With
-
+        With info_builder
+            .AppendLine("*Informazioni oggetti:*")
+            .AppendLine("Con questo comando sarà possibile visualizzare alcune informazioni utili sugli oggetti, molte delle quali disponibili anche in lootbot, altre invece esclusive di craftlootbot.")
+            .AppendLine("Ad esempio sarà visualizzato il costo di craft, i punti craft guadagnati craftandolo, e il numero di utilizzi all'interno del set necro.")
+        End With
     End Sub
 
     Function creaHelpKeyboard() As ReplyMarkups.InlineKeyboardMarkup
@@ -166,6 +175,7 @@ Module help
         Dim vendi_button As New InlineKeyboardButton("🏪 Vendi 🏪", "vendi")
         Dim creanegozi_button As New InlineKeyboardButton("💸 CreaNegozi 💸", "creanegozi")
         Dim riepilogo_button As New InlineKeyboardButton("⬅️ Riepilogo ⬅️", "riepilogo")
+        Dim info_button As New InlineKeyboardButton("ℹ️ Info ℹ️", "info")
         Dim row1() As InlineKeyboardButton
         Dim row2() As InlineKeyboardButton
         Dim row3() As InlineKeyboardButton
@@ -188,6 +198,7 @@ Module help
         row5.Add(vendi_button)
         row5.Add(creanegozi_button)
 
+        row6.Add(info_button)
         row6.Add(riepilogo_button)
 
         keyboardbuttons.Add(row1)
