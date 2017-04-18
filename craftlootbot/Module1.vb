@@ -415,11 +415,11 @@ Module Module1
 #End Region
             If isZaino(message.Text) Then
                 IO.Directory.CreateDirectory("zaini")
-                If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) Then
+                If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) AndAlso message.Chat.Type = ChatType.Private Then
                     'sta inviando più parti di zaino
                     zaini.Item(message.From.Id) += message.Text
                     StampaDebug("Zaino diviso ricevuto.")
-                ElseIf stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) Then
+                ElseIf stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) AndAlso message.Chat.Type = ChatType.Private Then
                     'sta inviando zaino per confronto
                     Dim zaino = parseZaino(message.Text)
                     Dim cercotext = parseCerca(confronti.Item(message.From.Id))
@@ -440,7 +440,7 @@ Module Module1
                     End Try
                 End If
             ElseIf isInlineCerco(message.Text) Then
-                If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 100)) Then
+                If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 100)) AndAlso message.Chat.Type = ChatType.Private Then
                     confronti.Item(message.From.Id) = message.Text
                     stati.Item(message.From.Id) = 110
                     a = api.SendTextMessageAsync(message.Chat.Id, "Invia ora lo zaino nel quale cercare gli oggetti che stai cercando." + vbCrLf + "Se ne hai uno salvato, puoi toccare 'Utilizza il mio zaino' per utilizzarlo.",,,, creaConfrontaKeyboard(True)).Result
@@ -451,7 +451,7 @@ Module Module1
                 Console.WriteLine("Salvati prezzi di ID: " + message.From.Id.ToString)
                 a = api.SendTextMessageAsync(message.Chat.Id, "I tuoi prezzi sono stati salvati!").Result
             ElseIf message.Text.ToLower.Trim.Equals("utilizza il mio zaino") Then
-                If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) Then
+                If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) AndAlso message.Chat.Type = ChatType.Private Then
                     Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
                     Dim zaino As String = ""
                     If IO.File.Exists(path) Then
@@ -546,6 +546,9 @@ Module Module1
                 End If
                 'entro nello stato di confronto
                 stati.Add(message.From.Id, 100)
+                If message.Chat.Type = ChatType.Group Or message.Chat.Type = ChatType.Supergroup Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Inoltra i messaggi in privato").Result
+                End If
                 a = api.SendTextMessageAsync(message.From.Id, "Invia l'elenco 'Cerco:' generato dal comando inline del bot.",,,, creaConfrontaKeyboard).Result
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/lista") Then
