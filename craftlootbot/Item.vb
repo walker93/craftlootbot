@@ -80,6 +80,24 @@ Public Class Item
         Return builder.ToString
     End Function
 
+    Function getRelatedItemsIDs() As Integer()
+        Dim items As Integer()
+        'necessari
+        If craftable Then
+            items.Add(ItemIds(CraftIds(id).material_1).id)
+            items.Add(ItemIds(CraftIds(id).material_2).id)
+            items.Add(ItemIds(CraftIds(id).material_3).id)
+        End If
+        'usi
+        For Each craft In CraftIds
+            Dim required_ids() As Integer = {craft.Value.material_1, craft.Value.material_2, craft.Value.material_3}
+            If required_ids.Contains(id) Then
+                items.Add(craft.Value.material_result)
+            End If
+        Next
+        Return items
+    End Function
+
     'restituisce stringa Stelle rinascita
     Function getstars()
         Dim res As String = ""

@@ -170,6 +170,26 @@ Public Module MyExtensions
         Return keyboard
     End Function
 
+    'Crea tastiera con oggetti per /info
+    Function creaInfoKeyboard(ids() As Integer) As ReplyMarkups.InlineKeyboardMarkup
+        Dim keyboard As New ReplyMarkups.InlineKeyboardMarkup
+        Dim keyboardbuttons()() As InlineKeyboardButton
+        Dim row As New List(Of InlineKeyboardButton)
+        'Dim rows As New List(Of InlineKeyboardButton())
+
+        For Each i In ids
+            Dim button As New InlineKeyboardButton(ItemIds(i).name, "info_" + i.ToString)
+            row.Add(button)
+            If row.Count = 2 Then
+                keyboardbuttons.Add(row.ToArray)
+                row.Clear()
+            End If
+            If ids.Last = i Then keyboardbuttons.Add(row.ToArray)
+        Next
+        keyboard.InlineKeyboard = keyboardbuttons
+        Return keyboard
+    End Function
+
     'Crea tastiera vuota
     Function creaNULLKeyboard() As ReplyMarkups.ReplyKeyboardRemove
         Dim keyboard As New ReplyMarkups.ReplyKeyboardRemove

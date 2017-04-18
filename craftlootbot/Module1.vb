@@ -137,15 +137,23 @@ Module Module1
 #Region "callbackdata"
     Sub process_callbackData(callback As CallbackQuery)
         Try
-            Dim result As String = process_help(callback.Data)
-            Dim e = api.EditMessageTextAsync(callback.Message.Chat.Id, callback.Message.MessageId, result, ParseMode.Markdown,, creaHelpKeyboard()).Result
-            Dim a = api.AnswerCallbackQueryAsync(callback.Id,,,, 0).Result
+            If callback.Data.StartsWith("info_") Then
+                Dim i As Integer = Integer.Parse(callback.Data.Replace("info_", ""))
+                Dim result As String = ItemIds(i).ToString
+                Dim related = ItemIds(i).getRelatedItemsIDs
+                Dim e = api.EditMessageTextAsync(callback.Message.Chat.Id, callback.Message.MessageId, result, ParseMode.Markdown,, If(IsNothing(related), Nothing, creaInfoKeyboard(related))).Result
+                Dim a = api.AnswerCallbackQueryAsync(callback.Id,,,, 0).Result
+            Else
+                Dim result As String = process_help(callback.Data)
+                Dim e = api.EditMessageTextAsync(callback.Message.Chat.Id, callback.Message.MessageId, result, ParseMode.Markdown,, creaHelpKeyboard()).Result
+                Dim a = api.AnswerCallbackQueryAsync(callback.Id,,,, 0).Result
+            End If
         Catch e As AggregateException
             Console.WriteLine(e.InnerException.Message)
         Catch e As Exception
             Console.WriteLine(e.Message)
         Finally
-            Dim a = api.AnswerCallbackQueryAsync(callback.Id,,,, 0).Result
+            'Dim a = api.AnswerCallbackQueryAsync(callback.Id,,,, 0).Result
         End Try
     End Sub
 #End Region
@@ -803,15 +811,22 @@ Module Module1
             ElseIf message.Text.ToLower.StartsWith("/classifica") Then
                 notificaPremio()
             ElseIf message.Text.StartsWith("/info") Then
-                Dim items = checkInputItems(message.Text, message.Chat.Id, "/info", False)
-                If items.Count = 0 Then Exit Sub
-                Dim builder As New Text.StringBuilder
-                For Each i In items
-                    builder.AppendLine(ItemIds(i).ToString)
-                Next
-                a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString,,,,, ParseMode.Markdown).Result
+                item = message.Text.Replace("/info", "").Trim
+                If item = "" Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto che vuoi ottenere").Result
+                    Exit Sub
+                End If
+                id = getItemId(item)
+                If id <> -1 Then
+                    Dim builder As New Text.StringBuilder
+                    Dim related = ItemIds(id).getRelatedItemsIDs
+                    builder.AppendLine(ItemIds(id).ToString)
+                    a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString,,,, If(IsNothing(related), Nothing, creaInfoKeyboard(related)), ParseMode.Markdown).Result
+                Else
+                    a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
+                End If
             ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/kill") Then
-                kill = True
+                    kill = True
                 Dim ex As New Exception("PROCESSO TERMINATO SU RICHIESTA")
                 Throw ex
             End If
