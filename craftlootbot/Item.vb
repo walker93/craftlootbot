@@ -42,11 +42,11 @@ Public Class Item
             builder.Append("Critico: ").Append(critical).AppendLine("%")
         End If
         If power_armor < 0 Then
-            builder.Append("Difesa: +").AppendLine(power_armor)
+            builder.Append("Difesa: ").AppendLine(power_armor)
             builder.Append("Critico: ").Append(critical).AppendLine("%")
         End If
         If power_shield < 0 Then
-            builder.Append("Difesa: +").AppendLine(power_shield)
+            builder.Append("Difesa: ").AppendLine(power_shield)
             builder.Append("Critico: ").Append(critical).AppendLine("%")
         End If
         If dragon_power <> 0 Then builder.Append("Danno/Difesa: ").AppendLine(If(dragon_power > 0, "+" + dragon_power.ToString, "-" + dragon_power.ToString))
@@ -80,6 +80,7 @@ Public Class Item
         Return builder.ToString
     End Function
 
+    'restituisce ID necessari e usi
     Function getRelatedItemsIDs() As Integer()
         Dim items As Integer()
         'necessari

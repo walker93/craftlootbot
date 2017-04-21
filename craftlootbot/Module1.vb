@@ -169,9 +169,9 @@ Module Module1
         Dim results As New List(Of InlineQueryResults.InlineQueryResult)
 
         Try
-            Dim reg As New Regex("^(C|NC|R|UR|L|E|UE|U){1}", RegexOptions.IgnoreCase)
+            Dim reg As New Regex("^(C|NC|R|UR|L|E|UE|U){1} ", RegexOptions.IgnoreCase)
             If reg.IsMatch(unfiltered_query) Then
-                filter = reg.Match(unfiltered_query).Value
+                filter = reg.Match(unfiltered_query).Value.Trim
                 query_text = unfiltered_query.Substring(filter.Length).Trim
             Else
                 filter = Nothing
@@ -206,10 +206,14 @@ Module Module1
                     Dim result = Tasks(i).Result
                     content.MessageText = result.Key
                     Dim article = New InlineQueryResults.InlineQueryResultArticle
+                    Dim costo As Integer = If(rarity_value.ContainsKey(matching_items(i).rarity), rarity_value(matching_items(i).rarity), 0)
+                    Dim punti As Integer = If(rarity_craft.ContainsKey(matching_items(i).rarity), rarity_craft(matching_items(i).rarity), 0)
                     article.Id = matching_items(i).id
                     article.InputMessageContent = content
                     article.Title = "Cerco per " + matching_items(i).name
+                    matching_items(i).contaCosto(matching_items(i).id, costo, punti)
                     article.Description = If(content.MessageText.Contains("Possiedo"), "Hai già tutti gli oggetti " + If(filter, "").ToUpper, "Hai bisogno di " + result.Value.ToString + If(result.Value = 1, " oggetto ", " oggetti ") + If(filter, "").ToUpper)
+                    article.Description += vbCrLf + "Costo craft: " + prettyCurrency(costo) + ", Punti craft: " + punti.ToString
                     res.Add(article)
                 Next
                 If res IsNot Nothing Then results.AddRange(res)
@@ -811,8 +815,10 @@ Module Module1
                 builder.AppendLine(Leggo_Items())
                 builder.AppendLine(Leggo_Crafts())
                 a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString).Result
-            ElseIf message.Text.ToLower.StartsWith("/classifica") Then
+            ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/classifica") Then
                 notificaPremio()
+            ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/test") Then
+                a = api.SendTextMessageAsync(message.Chat.Id, "").Result
             ElseIf message.Text.StartsWith("/info") Then
                 item = message.Text.Replace("/info", "").Trim
                 If item = "" Then
@@ -1350,6 +1356,7 @@ Module Module1
             .AppendLine("Zaino salvato: " + hasZaino)
             .AppendLine("Metodo: " + If(ex.TargetSite.Name, "Sconosciuto") + ", " + If(ex.Source, "Sconosciuta"))
             .AppendLine("Eccezione: " + ex.Message)
+            .AppendLine("Inner Exception: " + If(IsNothing(ex.InnerException), "Nessuna", ex.InnerException.Message))
         End With
         Dim a = api.SendTextMessageAsync(1265775, reportBuilder.ToString,, True).Result
     End Sub
@@ -1368,7 +1375,7 @@ Module Module1
         Dim a = api.SendTextMessageAsync(1265775, reportBuilder.ToString,, True).Result
     End Sub
 
-    Function answerLongMessage(result As String, chatID As Long) As Message
+    Function answerLongMessage(result As String, chatID As Long, Optional parse As ParseMode = ParseMode.Markdown) As Message
         Dim a
         If result.Length > 4096 Then
             Dim valid_substring As String
@@ -1377,15 +1384,15 @@ Module Module1
                 valid_substring = substring.Substring(0, substring.LastIndexOf(Environment.NewLine))
                 result = result.Substring(substring.LastIndexOf(Environment.NewLine))
                 If valid_substring.Trim <> "" And valid_substring <> Environment.NewLine Then
-                    a = api.SendTextMessageAsync(chatID, valid_substring,,,,, ParseMode.Markdown).Result
+                    a = api.SendTextMessageAsync(chatID, valid_substring,,,,, parse).Result
                 Else
-                    a = api.SendTextMessageAsync(chatID, result,,,,, ParseMode.Markdown).Result
+                    a = api.SendTextMessageAsync(chatID, result,,,,, parse).Result
                     result = ""
                 End If
             Loop While result <> "" And result <> Environment.NewLine
 
         Else
-            a = api.SendTextMessageAsync(chatID, result,,,,, ParseMode.Markdown).Result
+            a = api.SendTextMessageAsync(chatID, result,,,,, parse).Result
         End If
         Return a
     End Function
@@ -1424,11 +1431,11 @@ Module Module1
         Dim builder As New Text.StringBuilder()
         builder.AppendLine()
         Dim i = 1
-        For Each user In PersonalStats.OrderByDescending(Function(p) p.Value)
+        For Each user In PersonalStats.OrderByDescending(Function(p) p.Value).Take(50)
             builder.AppendLine(i.ToString + "° " + user.Key + ": " + user.Value.ToString)
             i += 1
         Next
-        answerLongMessage("La classifica è: " + builder.ToString, 1265775)
+        answerLongMessage("La classifica è: " + builder.ToString, 1265775, ParseMode.Default)
     End Sub
 
     Sub vecchizaini()
