@@ -624,7 +624,7 @@ Module Module1
                     If rarity_value.ContainsKey(ItemIds.Item(i).rarity) Then spesa += rarity_value.Item(ItemIds.Item(i).rarity)
                 Next
                 Dim name As String = getFileName()
-                a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, getcraftText(CraftTree, gia_possiedi), "Lista Craft"),,, message.MessageId).Result
+                a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, getcraftText(CraftTree, gia_possiedi, item_ids.ToArray), "Lista Craft"),,, message.MessageId).Result
                 IO.File.Delete(name)
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/vendi") Then
@@ -872,10 +872,11 @@ Module Module1
         For Each ids In rows
             item = ItemIds(ids)
             If isCraftable(item.id) Then
-                If rarity_value.ContainsKey(item.rarity) Then spesa += rarity_value.Item(item.rarity)
-                If rarity_craft.ContainsKey(item.rarity) Then punti_craft += rarity_craft.Item(item.rarity)
-                StampaDebug(String.Format("Oggetto: {0}, +{1}={2}", item.name, If(rarity_craft.ContainsKey(item.rarity), rarity_craft.Item(item.rarity).ToString, "0"), punti_craft.ToString))
                 If Not zaino.ContainsKey(item) Then
+                    If rarity_value.ContainsKey(item.rarity) Then spesa += rarity_value.Item(item.rarity)
+                    If rarity_craft.ContainsKey(item.rarity) Then punti_craft += rarity_craft.Item(item.rarity)
+                    StampaDebug(String.Format("Oggetto: {0}, +{1}={2}", item.name, If(rarity_craft.ContainsKey(item.rarity), rarity_craft.Item(item.rarity).ToString, "0"), punti_craft.ToString))
+
                     getNeededItemsList(item.id, CraftList, zaino, possiedi, spesa, punti_craft)
                 Else
                     zaino.Item(item) -= 1
@@ -1011,9 +1012,10 @@ Module Module1
         builderposseduti.AppendLine()
         If zaino.Count > 0 Then builderposseduti.AppendLine("Già possiedi: ")
         For Each pos In gia_possiedi
-            For i = 1 To pos.Value
-                If rarity_value.ContainsKey(pos.Key.rarity) Then spesa -= rarity_value.Item(pos.Key.rarity)
-            Next
+            'For i = 1 To pos.Value
+            '    If rarity_value.ContainsKey(pos.Key.rarity) Then spesa -= rarity_value.Item(pos.Key.rarity)
+
+            'Next
             With builderposseduti
                 .Append("> ")
                 .Append(pos.Key.name)
@@ -1099,22 +1101,24 @@ Module Module1
         Return builder.ToString
     End Function
 
-    Function getcraftText(list As List(Of KeyValuePair(Of Item, Integer)), ByRef possiedi As Dictionary(Of Item, Integer)) As String
-        Dim builder As New Text.StringBuilder("Lista craft per:  " + list(0).Key.name)
-        builder.Append(vbCrLf)
+    Function getcraftText(list As List(Of KeyValuePair(Of Item, Integer)), ByRef possiedi As Dictionary(Of Item, Integer), oggetti() As Integer) As String
+        Dim builder As New Text.StringBuilder
+        Dim ogg_string()
+        For Each i In oggetti
+            ogg_string.Add(ItemIds(i).name)
+        Next
+        Dim intestazione As String = "Lista craft per " + String.Join(", ", ogg_string) + ": "
+
+        builder.AppendLine(intestazione)
+        'builder.Append(vbCrLf)
         Dim sorted = From pair In list
                      Order By pair.Value Descending
         Dim sortedDictionary = sorted.ToList()
         For Each craft In sortedDictionary
             If isCraftable(craft.Key.id) Then
-                'If Not possiedi.ContainsKey(craft.Key) Then
                 builder.Append("Crea " + craft.Key.name)
-                    builder.Append(vbCrLf)
-                    'Else
-                    '    possiedi(craft.Key) -= 1
-                    '    If possiedi(craft.Key) = 0 Then possiedi.Remove(craft.Key)
-                    'End If
-                End If
+                builder.Append(vbCrLf)
+            End If
         Next
         Return builder.ToString
     End Function

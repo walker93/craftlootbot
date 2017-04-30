@@ -244,8 +244,15 @@ Public Module MyExtensions
         Return rex.IsMatch(text)
     End Function
 
+    'Controllo se il testo matcha un'apertura scrigni di loot
     Function isAperturaScrigno(text As String) As Boolean
         Dim rex As New Regex("\> ([0-9]+)x ([A-z 0-9òàèéìù'-]+) \(([A-Z]+)\)")
+        Dim matches As MatchCollection = rex.Matches(text)
+        Return rex.IsMatch(text)
+    End Function
+
+    Function isListaoVendi(text As String) As Boolean
+        Dim rex As New Regex("\> (([0-9]+) su )?([0-9]+) di ([A-z 0-9òàèéìù'-]+) \(([A-Z]+)\)")
         Dim matches As MatchCollection = rex.Matches(text)
         Return rex.IsMatch(text)
     End Function
