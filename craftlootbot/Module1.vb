@@ -427,6 +427,7 @@ Module Module1
                     'sta inviando zaino per confronto
                     Dim zaino = parseZaino(message.Text)
                     Dim cercotext = parseCerca(confronti.Item(message.From.Id))
+                    If cercotext.Count = 0 Then cercotext = parseListaoVendi(confronti(message.From.Id))
                     Dim result = ConfrontaDizionariItem(zaino, cercotext)
                     a = api.SendTextMessageAsync(message.Chat.Id, getConfrontoText(cercotext, result),,,, creaNULLKeyboard).Result
                     stati.Remove(message.From.Id)
@@ -448,6 +449,28 @@ Module Module1
                     confronti.Item(message.From.Id) = message.Text
                     stati.Item(message.From.Id) = 110
                     a = api.SendTextMessageAsync(message.Chat.Id, "Invia ora lo zaino nel quale cercare gli oggetti che stai cercando." + vbCrLf + "Se ne hai uno salvato, puoi toccare 'Utilizza il mio zaino' per utilizzarlo.",,,, creaConfrontaKeyboard(True)).Result
+                ElseIf stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) AndAlso message.Chat.Type = ChatType.Private Then
+                    Dim VendiDic = parseListaoVendi(message.Text)
+                    Dim ListaDic = parseListaoVendi(confronti(message.From.Id))
+                    If ListaDic.Count = 0 Then ListaDic = parseCerca(confronti(message.From.Id))
+                    Dim result = ConfrontaDizionariItem(VendiDic, ListaDic)
+                    a = api.SendTextMessageAsync(message.Chat.Id, getConfrontoText(ListaDic, result),,,, creaNULLKeyboard).Result
+                    stati.Remove(message.From.Id)
+                    confronti.Remove(message.From.Id)
+                End If
+            ElseIf isListaoVendi(message.Text) Then
+                If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 100)) AndAlso message.Chat.Type = ChatType.Private Then
+                    confronti.Item(message.From.Id) = message.Text
+                    stati.Item(message.From.Id) = 110
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Invia ora lo zaino nel quale cercare gli oggetti che stai cercando." + vbCrLf + "Se ne hai uno salvato, puoi toccare 'Utilizza il mio zaino' per utilizzarlo.",,,, creaConfrontaKeyboard(True)).Result
+                ElseIf stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) AndAlso message.Chat.Type = ChatType.Private Then
+                    Dim VendiDic = parseListaoVendi(message.Text)
+                    Dim ListaDic = parseListaoVendi(confronti(message.From.Id))
+                    If ListaDic.Count = 0 Then ListaDic = parseCerca(confronti(message.From.Id))
+                    Dim result = ConfrontaDizionariItem(VendiDic, ListaDic)
+                    a = api.SendTextMessageAsync(message.Chat.Id, getConfrontoText(ListaDic, result),,,, creaNULLKeyboard).Result
+                    stati.Remove(message.From.Id)
+                    confronti.Remove(message.From.Id)
                 End If
             ElseIf isPrezziNegozi(message.Text) Then
                 IO.Directory.CreateDirectory("prezzi")
@@ -1322,6 +1345,24 @@ Module Module1
             End Try
         Next
         Return cercodic
+    End Function
+
+    'dato una /list o un /vendi restituisco dizionario(oggetto, quantità necessaria)
+    Function parseListaoVendi(text As String) As Dictionary(Of Item, Integer)
+        Dim listadic As New Dictionary(Of Item, Integer)
+        Dim rex As New Regex("\> (([0-9]+) su )?([0-9]+) di ([A-z 0-9òàèéìù'-]+) \(([A-Z]+)\)")
+        Dim matches As MatchCollection = rex.Matches(text)
+        For Each match As Match In matches
+            Try
+                If text.Contains("Già possiedi:") AndAlso match.Index > text.IndexOf("Già possiedi:") Then Return listadic
+                Dim necessario = match.Groups(2).Value
+                If necessario = "" Then necessario = match.Groups(3).Value
+                listadic.Add(ItemIds.Item(getItemId(match.Groups(4).Value)), (Integer.Parse(necessario)))
+            Catch e As Exception
+                Continue For
+            End Try
+        Next
+        Return listadic
     End Function
 
     'Date le impostazioni prezzi per i negozi, restituisco un dizionario(Oggetto, prezzo)
