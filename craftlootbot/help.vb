@@ -57,7 +57,7 @@ Module help
             .AppendLine("> '/albero <oggetto>' per ricevere un file di testo contenente l'albero dei craft dell'oggetto inserito.")
             .AppendLine("> '/salvazaino' per salvare lo zaino diviso in più messaggi, copia o inoltralo senza nessun comando se è un singolo messaggio.")
             .AppendLine("> '/rinascita <Username> <oggetto>' per ricevere un file di testo con le stringhe scambio da copiare e incollare in lootbot.")
-            .AppendLine("> '/confronta' per ricevere un elenco di oggetti in comune tra uno zaino e un elenco 'Cerco:' dal comando inline.")
+            .AppendLine("> '/confronta' per ricevere un elenco di oggetti in comune tra una lista di oggetti in vendita e gli oggetti che stai cercando.")
             .AppendLine("> '/craft <oggetto/i>' per ricevere un file di testo contenente stringhe da copiare e incollare, per craftare tutti gli oggetti necessari fino agli oggetti inseriti.")
             .AppendLine("> '/base <rarità>' per ricevere un elenco di tutti gli oggetti base per la rarità inserita, per ogni oggetto è indicata la quantità che possiedi.")
             .AppendLine("> '/vendi <oggetto/i>' per ottenere una lista di oggetti che puoi vendere in quanto non necessari per craftare gli oggetti inseriti.")
@@ -106,10 +106,10 @@ Module help
         End With
         With confronta_builder
             .AppendLine("*Confronta:*")
-            .AppendLine("Permette di confrontare un elenco 'Cerco:' dal comando inline e uno zaino restituendo gli oggetti che sono presenti in entrambi.")
-            .AppendLine("Torna molto utile quando qualcuno invia lo zaino perchè vende tutto (ad esempio in vista della rinascita), e tu puoi subito sapere quali oggetti nel suo zaino sono nel tuo elenco 'Cerco:'.")
-            .AppendLine("Torna utile anche quando tu invii l'elenco 'Cerco:' dal comando inline in un gruppo permettendo alle persone di confrontare immediatamente il loro zaino con il tuo elenco e dirti cosa possiedono.")
-            .AppendLine("Dopo aver inviato '/confronta', invia l'elenco 'Cerco:' e infine lo zaino nel quale cercare gli oggetti.")
+            .AppendLine("Permette di confrontare un elenco 'Cerco:' dal comando inline o una /lista con uno zaino o un comando /vendi restituendo gli oggetti che sono presenti in entrambi.")
+            .AppendLine("Torna molto utile quando qualcuno invia lo zaino perchè vende tutto (ad esempio in vista della rinascita), e tu puoi subito sapere quali oggetti nel suo zaino sono nel tuo elenco 'Cerco:' o nella tua lista di oggetti necessari.")
+            .AppendLine("Torna utile anche quando tu invii l'elenco 'Cerco:' dal comando inline o la tua /lista di oggetti che cerchi in un gruppo permettendo alle persone di confrontare immediatamente il loro zaino o la loro lista /vendi di oggetti non necessari con il tuo elenco e dirti cosa possiedono.")
+            .AppendLine("Dopo aver inviato '/confronta', invia l'elenco 'Cerco:' o la /lista successivamente invia lo zaino o il /vendi nel quale cercare gli oggetti.")
             .AppendLine("Se hai uno zaino salvato, puoi toccare il pulsante 'Utilizza il mio zaino' per utilizzarlo.")
             .AppendLine("In qualsiasi momento puoi premere annulla per annullare il confronto, gli zaini inviati tramite questo comando non sono salvati.")
         End With

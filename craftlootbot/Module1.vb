@@ -448,7 +448,7 @@ Module Module1
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 100)) AndAlso message.Chat.Type = ChatType.Private Then
                     confronti.Item(message.From.Id) = message.Text
                     stati.Item(message.From.Id) = 110
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Invia ora lo zaino nel quale cercare gli oggetti che stai cercando." + vbCrLf + "Se ne hai uno salvato, puoi toccare 'Utilizza il mio zaino' per utilizzarlo.",,,, creaConfrontaKeyboard(True)).Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Invia ora lo zaino o il /vendi nel quale cercare gli oggetti che stai cercando." + vbCrLf + "Se ne hai uno salvato, puoi toccare 'Utilizza il mio zaino' per utilizzarlo.",,,, creaConfrontaKeyboard(True)).Result
                 ElseIf stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) AndAlso message.Chat.Type = ChatType.Private Then
                     Dim VendiDic = parseListaoVendi(message.Text)
                     Dim ListaDic = parseListaoVendi(confronti(message.From.Id))
@@ -462,7 +462,7 @@ Module Module1
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 100)) AndAlso message.Chat.Type = ChatType.Private Then
                     confronti.Item(message.From.Id) = message.Text
                     stati.Item(message.From.Id) = 110
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Invia ora lo zaino nel quale cercare gli oggetti che stai cercando." + vbCrLf + "Se ne hai uno salvato, puoi toccare 'Utilizza il mio zaino' per utilizzarlo.",,,, creaConfrontaKeyboard(True)).Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Invia ora lo zaino o il /vendi nel quale cercare gli oggetti che stai cercando." + vbCrLf + "Se hai uno zaino salvato, puoi toccare 'Utilizza il mio zaino' per utilizzarlo.",,,, creaConfrontaKeyboard(True)).Result
                 ElseIf stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) AndAlso message.Chat.Type = ChatType.Private Then
                     Dim VendiDic = parseListaoVendi(message.Text)
                     Dim ListaDic = parseListaoVendi(confronti(message.From.Id))
@@ -576,7 +576,7 @@ Module Module1
                 If message.Chat.Type = ChatType.Group Or message.Chat.Type = ChatType.Supergroup Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Inoltra i messaggi in privato").Result
                 End If
-                a = api.SendTextMessageAsync(message.From.Id, "Invia l'elenco 'Cerco:' generato dal comando inline del bot.",,,, creaConfrontaKeyboard).Result
+                a = api.SendTextMessageAsync(message.From.Id, "Invia l'elenco 'Cerco:' generato dal comando inline del bot o la lista degli oggetti necessari generata dal comando /lista.",,,, creaConfrontaKeyboard).Result
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/lista") Then
 #Region "lista"
