@@ -1132,8 +1132,8 @@ Module Module1
         Next
         Dim intestazione As String = "Lista craft per " + String.Join(", ", ogg_string) + ": "
 
-        builder.AppendLine(intestazione)
-        'builder.Append(vbCrLf)
+        builder.Append(intestazione)
+        builder.Append(vbCrLf)
         Dim sorted = From pair In list
                      Order By pair.Value Descending
         Dim sortedDictionary = sorted.ToList()
