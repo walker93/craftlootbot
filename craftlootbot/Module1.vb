@@ -208,10 +208,11 @@ Module Module1
                     Dim article = New InlineQueryResults.InlineQueryResultArticle
                     Dim costo As Integer = If(rarity_value.ContainsKey(matching_items(i).rarity), rarity_value(matching_items(i).rarity), 0)
                     Dim punti As Integer = If(rarity_craft.ContainsKey(matching_items(i).rarity), rarity_craft(matching_items(i).rarity), 0)
+                    Dim costoBase As Integer = 0 'matching_items(i).value
                     article.Id = matching_items(i).id
                     article.InputMessageContent = content
                     article.Title = "Cerco per " + matching_items(i).name
-                    matching_items(i).contaCosto(matching_items(i).id, costo, punti)
+                    matching_items(i).contaCosto(matching_items(i).id, costo, punti, costoBase)
                     article.Description = If(content.MessageText.Contains("Possiedo"), "Hai già tutti gli oggetti " + If(filter, "").ToUpper, "Hai bisogno di " + result.Value.ToString + If(result.Value = 1, " oggetto ", " oggetti ") + If(filter, "").ToUpper)
                     article.Description += vbCrLf + "Costo craft: " + prettyCurrency(costo) + ", Punti craft: " + punti.ToString
                     res.Add(article)
@@ -843,9 +844,10 @@ Module Module1
             ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/test") Then
                 a = api.SendTextMessageAsync(message.Chat.Id, "").Result
             ElseIf message.Text.StartsWith("/info") Then
+#Region "/info"
                 item = message.Text.Replace("/info", "").Trim
                 If item = "" Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto che vuoi ottenere").Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto su cui avere informazioni").Result
                     Exit Sub
                 End If
                 id = getItemId(item)
@@ -857,8 +859,51 @@ Module Module1
                 Else
                     a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
                 End If
+#End Region
+            ElseIf message.Text.StartsWith("/stima") Then
+                item = message.Text.Replace("/stima", "").Trim
+                If item = "" Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto dopo il comando: '/stima spada antimateria'").Result
+                    Exit Sub
+                End If
+                id = getItemId(item)
+                If id <> -1 Then
+                    Dim builder As New Text.StringBuilder
+                    Dim rarity = ItemIds(id).rarity
+                    Dim s_tot As Integer = If(rarity_value.ContainsKey(rarity), rarity_value(rarity), 0)
+                    Dim pc_tot As Integer = If(rarity_craft.ContainsKey(rarity), rarity_craft(rarity), 0)
+                    Dim costoBase As Integer = 0
+
+                    Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
+                    Dim zaino As String = ""
+                    If IO.File.Exists(path) Then
+                        zaino = IO.File.ReadAllText(path)
+                    End If
+                    api.SendChatActionAsync(message.Chat.Id, ChatAction.Typing)
+                    zainoDic = parseZaino(zaino)
+                    Dim zainoDic_copy = zainoDic
+                    getNeededItemsList(id, CraftList, zainoDic_copy, gia_possiedi, spesa, punti_craft)
+                    If rarity_value.ContainsKey(ItemIds.Item(id).rarity) Then spesa += rarity_value.Item(ItemIds.Item(id).rarity)
+                    If rarity_craft.ContainsKey(ItemIds.Item(id).rarity) Then punti_craft += rarity_craft.Item(ItemIds.Item(id).rarity)
+
+                    Dim prezzi_dic As Dictionary(Of Item, Integer)
+                    Dim prezzi As String
+                    If IO.File.Exists("prezzi/" + message.From.Id.ToString + ".txt") Then
+                        prezzi = IO.File.ReadAllText("prezzi/" + message.From.Id.ToString + ".txt")
+                        prezzi_dic = parsePrezzoNegozi(prezzi)
+                    End If
+                    ItemIds(id).contaCosto(id, s_tot, pc_tot, costoBase, prezzi_dic)
+                    builder.AppendLine(ItemIds(id).name + ":").AppendLine()
+                    builder.Append("Punti craft mancanti / totali: ").AppendLine(punti_craft.ToString + "/" + pc_tot.ToString)
+                    builder.Append("Costo craft mancante / totale: ").AppendLine(prettyCurrency(spesa) + "/" + prettyCurrency(s_tot))
+                    builder.Append("Valore stimato con i prezzi salvati: ").AppendLine(prettyCurrency(costoBase))
+                    builder.Append("Valore corrente stimato: ").AppendLine(prettyCurrency(ItemIds(id).estimate))
+                    a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString).Result
+                Else
+                    a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
+                End If
             ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/kill") Then
-                    kill = True
+                kill = True
                 Dim ex As New Exception("PROCESSO TERMINATO SU RICHIESTA")
                 Throw ex
             End If
@@ -1499,4 +1544,5 @@ Module Module1
             End Try
         End While
     End Sub
+
 End Module

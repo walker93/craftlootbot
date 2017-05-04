@@ -33,23 +33,26 @@ Public Class Item
         If craftable Then
             Dim spesa As Integer = If(rarity_value.ContainsKey(rarity), rarity_value(rarity), 0)
             Dim punti_craft As Integer = If(rarity_craft.ContainsKey(rarity), rarity_craft(rarity), 0)
-            contaCosto(id, spesa, punti_craft)
+            Dim costoBase As Integer = 0
+
+            contaCosto(id, spesa, punti_craft, costoBase)
             builder.Append("Costo per il Craft: ").AppendLine(prettyCurrency(spesa))
+            builder.Append("Valore oggetti base + costo craft: ").AppendLine(prettyCurrency(costoBase + spesa))
             builder.Append("Punti craft guadagnati: ").AppendLine(punti_craft)
         End If
         If power > 0 Then
-            builder.Append("Danno: +").AppendLine(power)
-            builder.Append("Critico: ").Append(critical).AppendLine("%")
-        End If
-        If power_armor < 0 Then
-            builder.Append("Difesa: ").AppendLine(power_armor)
-            builder.Append("Critico: ").Append(critical).AppendLine("%")
-        End If
-        If power_shield < 0 Then
-            builder.Append("Difesa: ").AppendLine(power_shield)
-            builder.Append("Critico: ").Append(critical).AppendLine("%")
-        End If
-        If dragon_power <> 0 Then builder.Append("Danno/Difesa: ").AppendLine(If(dragon_power > 0, "+" + dragon_power.ToString, "-" + dragon_power.ToString))
+                builder.Append("Danno: +").AppendLine(power)
+                builder.Append("Critico: ").Append(critical).AppendLine("%")
+            End If
+            If power_armor < 0 Then
+                builder.Append("Difesa: ").AppendLine(power_armor)
+                builder.Append("Critico: ").Append(critical).AppendLine("%")
+            End If
+            If power_shield < 0 Then
+                builder.Append("Difesa: ").AppendLine(power_shield)
+                builder.Append("Critico: ").Append(critical).AppendLine("%")
+            End If
+            If dragon_power <> 0 Then builder.Append("Danno/Difesa: ").AppendLine(If(dragon_power > 0, "+" + dragon_power.ToString, "-" + dragon_power.ToString))
         Select Case category
             Case 1
                 builder.Append("Categoria: ")
@@ -77,7 +80,7 @@ Public Class Item
             builder.Append("> ").Append(ItemIds(CraftIds(id).material_3).name).AppendLine(" (" + ItemIds(CraftIds(id).material_3).rarity + ")")
         End If
         builder.AppendLine.Append(stampaUsi)
-        Return builder.ToString
+            Return builder.ToString
     End Function
 
     'restituisce ID necessari e usi
@@ -147,7 +150,7 @@ Public Class Item
     End Sub
 
     'ricorsione per punti craft e costo
-    Sub contaCosto(item_id As Integer, ByRef spesa As Integer, ByRef punticraft As Integer)
+    Sub contaCosto(item_id As Integer, ByRef spesa As Integer, ByRef punticraft As Integer, ByRef costoBase As Integer, Optional prezzi_dic As Dictionary(Of Item, Integer) = Nothing)
         Dim craft As IDCraft = CraftIds(item_id)
         Dim required_ids() As Integer = {craft.material_1, craft.material_2, craft.material_3}
         Dim ite As Item
@@ -156,7 +159,13 @@ Public Class Item
             If isCraftable(i) Then
                 If rarity_value.ContainsKey(ite.rarity) Then spesa += rarity_value.Item(ite.rarity)
                 If rarity_craft.ContainsKey(ite.rarity) Then punticraft += rarity_craft.Item(ite.rarity)
-                contaCosto(i, spesa, punticraft)
+                contaCosto(i, spesa, punticraft, costoBase)
+            Else
+                If Not IsNothing(prezzi_dic) AndAlso prezzi_dic.ContainsKey(ite) AndAlso prezzi_dic(ite) > 0 Then
+                    costoBase += prezzi_dic(ite)
+                Else
+                    costoBase += ite.value
+                End If
             End If
         Next
     End Sub
