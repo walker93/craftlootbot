@@ -419,6 +419,7 @@ Module Module1
             End If
 #End Region
             If isZaino(message.Text) Then
+#Region "Zaino Ricevuto"
                 IO.Directory.CreateDirectory("zaini")
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) AndAlso message.Chat.Type = ChatType.Private Then
                     'sta inviando più parti di zaino
@@ -445,7 +446,9 @@ Module Module1
                         End If
                     End Try
                 End If
+#End Region
             ElseIf isInlineCerco(message.Text) Then
+#Region "Cerco Inline ricevuto"
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 100)) AndAlso message.Chat.Type = ChatType.Private Then
                     confronti.Item(message.From.Id) = message.Text
                     stati.Item(message.From.Id) = 110
@@ -459,7 +462,9 @@ Module Module1
                     stati.Remove(message.From.Id)
                     confronti.Remove(message.From.Id)
                 End If
+#End Region
             ElseIf isListaoVendi(message.Text) Then
+#Region "lista o vendi ricevuto"
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 100)) AndAlso message.Chat.Type = ChatType.Private Then
                     confronti.Item(message.From.Id) = message.Text
                     stati.Item(message.From.Id) = 110
@@ -473,12 +478,16 @@ Module Module1
                     stati.Remove(message.From.Id)
                     confronti.Remove(message.From.Id)
                 End If
+#End Region
             ElseIf isPrezziNegozi(message.Text) Then
+#Region "prezzi ricevuti"
                 IO.Directory.CreateDirectory("prezzi")
                 IO.File.WriteAllText("prezzi/" + message.From.Id.ToString + ".txt", message.Text)
                 Console.WriteLine("Salvati prezzi di ID: " + message.From.Id.ToString)
                 a = api.SendTextMessageAsync(message.Chat.Id, "I tuoi prezzi sono stati salvati!").Result
+#End Region
             ElseIf message.Text.ToLower.Trim.Equals("utilizza il mio zaino") Then
+#Region "utilizza zaino ricevuto"
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) AndAlso message.Chat.Type = ChatType.Private Then
                     Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
                     Dim zaino As String = ""
@@ -497,6 +506,7 @@ Module Module1
                 Else
                     a = api.SendTextMessageAsync(message.Chat.Id, "Non stai effettuando il confronto.",,,, creaNULLKeyboard).Result
                 End If
+#End Region
             ElseIf isAperturaScrigno(message.Text) Then
                 Dim rex As New Regex("\> ([0-9]+)x ([A-z 0-9òàèéìù'-]+) \(([A-Z]+)\)")
                 Dim matches As MatchCollection = rex.Matches(message.Text)
@@ -505,7 +515,9 @@ Module Module1
             Else
                 Console.WriteLine("{0} {1} {2} from: {3}", Now.ToShortDateString, Now.ToShortTimeString, message.Text, message.From.Username)
             End If
+            'COMANDI
             If message.Text.ToLower.StartsWith("/salvazaino") Then
+#Region "/salvazaino"
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Stai già salvando lo zaino, inoltralo di seguito.").Result
                     Exit Sub
@@ -546,6 +558,7 @@ Module Module1
                 Else
                     a = api.SendTextMessageAsync(message.Chat.Id, "Non hai azioni in sospeso.",,,, creaNULLKeyboard).Result
                 End If
+#End Region
             ElseIf message.Text.ToLower.StartsWith("/base") Then
 #Region "Base"
                 Dim rarity = message.Text.Replace("/base", "").Trim
@@ -841,11 +854,9 @@ Module Module1
                 a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString).Result
             ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/classifica") Then
                 notificaPremio()
-            ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/test") Then
-                a = api.SendTextMessageAsync(message.Chat.Id, "").Result
             ElseIf message.Text.StartsWith("/info") Then
 #Region "/info"
-                item = message.Text.Replace("/info", "").Trim
+                item = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/info" + "@craftlootbot", "/info"), "").Trim
                 If item = "" Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto su cui avere informazioni").Result
                     Exit Sub
@@ -861,7 +872,8 @@ Module Module1
                 End If
 #End Region
             ElseIf message.Text.StartsWith("/stima") Then
-                item = message.Text.Replace("/stima", "").Trim
+#Region "/stima"
+                item = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/stima" + "@craftlootbot", "/stima"), "").Trim
                 If item = "" Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto dopo il comando: '/stima spada antimateria'").Result
                     Exit Sub
@@ -902,6 +914,46 @@ Module Module1
                 Else
                     a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
                 End If
+#End Region
+            ElseIf message.Text.StartsWith("/creabili") Then
+#Region "/creabili"
+                Dim params = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/creabili" + "@craftlootbot", "/creabili"), "").Trim
+                Dim param_array = params.Split(" ")
+                Dim rarity = If(param_array.Length > 1, param_array(0).Trim, "")
+                Dim offset As Integer
+                If Not Integer.TryParse(If(param_array.Length = 1, param_array(0).Trim, param_array(1).Trim), offset) Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci un numero valido dopo la rarità").Result
+                End If
+                Dim reg As New Regex("^(C|NC|R|UR|L|E|UE|U|S|X){1}", RegexOptions.IgnoreCase)
+                Dim fil = Nothing
+                If reg.IsMatch(rarity) Then fil = reg.Match(params).Value.Trim.ToUpper
+                Dim filtered_items = ItemIds.Where(Function(i) isCraftable(i.Value.id) AndAlso If(IsNothing(fil), True, i.Value.rarity = fil))
+                Dim limit = filtered_items.Count
+                Dim Tasks(limit) As Task(Of KeyValuePair(Of String, Integer))
+                Dim ct As New Threading.CancellationTokenSource
+                For i = 0 To limit - 1
+                    Dim ite As Item = filtered_items(i).Value
+                    'If Not isCraftable(ite.id) Then Continue For
+                    Tasks(i) = Task.Factory.StartNew(Function() As KeyValuePair(Of String, Integer)
+                                                         Return task_getMessageText(ite, message.From.Id, ct.Token)
+                                                     End Function)
+                Next
+                Dim builder As New Text.StringBuilder
+                For i = 0 To limit - 1
+                    If Tasks(i) Is Nothing Then Continue For
+                    Dim result = Tasks(i).Result
+                    If result.Value <= offset Then
+                        If result.Value = 0 Then
+                            builder.AppendLine("`/craft " + filtered_items(i).Value.name + "`")
+                        Else
+                            builder.Append("`/lista " + filtered_items(i).Value.name + "` ").AppendLine(result.Value.ToString + " mancanti")
+                        End If
+
+                    End If
+                Next
+                If builder.ToString = "" Then builder.AppendLine("Nessun oggetto craftabile con l'offset specificato")
+                answerLongMessage(builder.ToString, message.Chat.Id)
+#End Region
             ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/kill") Then
                 kill = True
                 Dim ex As New Exception("PROCESSO TERMINATO SU RICHIESTA")
@@ -909,6 +961,7 @@ Module Module1
             End If
             aggiornastats(message.Text, message.From.Username)
         Catch e As Exception
+#Region "exception handling"
             If e.Message = "PROCESSO TERMINATO SU RICHIESTA" Then
                 Throw New Exception("PROCESSO TERMINATO SU RICHIESTA")
             End If
@@ -931,6 +984,7 @@ Module Module1
             Catch
             End Try
         End Try
+#End Region
     End Sub
 
     Sub getNeededItemsList(id As Integer, ByRef CraftList As List(Of Item), ByRef zaino As Dictionary(Of Item, Integer), ByRef possiedi As Dictionary(Of Item, Integer), ByRef spesa As Integer, ByRef punti_craft As Integer)
@@ -1349,9 +1403,11 @@ Module Module1
     'Dato il nome ottengo l'id
     Function getItemId(ByVal name As String) As Integer
         Try
-            For Each it In ItemIds
-                If it.Value.name.ToLower = name.ToLower.Trim Then Return it.Key
-            Next
+            Dim list = ItemIds.Where(Function(i) i.Value.name.ToLower = name.ToLower.Trim)
+            If list.Count > 0 Then Return list.First.Key
+            'For Each it In ItemIds
+            '    If it.Value.name.ToLower = name.ToLower.Trim Then Return it.Key
+            'Next
         Catch ex As Exception
             download_crafts()
             download_items()
