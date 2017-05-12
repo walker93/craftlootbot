@@ -267,7 +267,11 @@ Module Module1
         Dim zainoDic As New Dictionary(Of Item, Integer)
         Dim it As New Item
         Dim zaino As String = ""
-        zaino = IO.File.ReadAllText("zaini/" + id.ToString + ".txt")
+        If IO.File.Exists("zaini/" + id.ToString + ".txt") Then
+            zaino = IO.File.ReadAllText("zaini/" + id.ToString + ".txt")
+        Else
+            Return New KeyValuePair(Of String, Integer)("", -1)
+        End If
         zainoDic = parseZaino(zaino)
         zainoDic_copy = zainoDic
 
@@ -879,7 +883,12 @@ Module Module1
                     Exit Sub
                 End If
                 id = getItemId(item)
+
                 If id <> -1 Then
+                    If Not isCraftable(id) Then
+                        a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto inserito deve essere craftabile").Result
+                        Exit Sub
+                    End If
                     Dim builder As New Text.StringBuilder
                     Dim rarity = ItemIds(id).rarity
                     Dim s_tot As Integer = If(rarity_value.ContainsKey(rarity), rarity_value(rarity), 0)
@@ -942,7 +951,7 @@ Module Module1
                 For i = 0 To limit - 1
                     If Tasks(i) Is Nothing Then Continue For
                     Dim result = Tasks(i).Result
-                    If result.Value <= offset Then
+                    If result.Value >= 0 And result.Value <= offset Then
                         If result.Value = 0 Then
                             builder.AppendLine("`/craft " + filtered_items(i).Value.name + "`")
                         Else
