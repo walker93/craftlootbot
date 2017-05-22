@@ -102,7 +102,7 @@ Public Module MyExtensions
         '    Return arr.ToArray()
         'End Try
         ' End If
-        Dim matching_items = ItemIds.Select(Function(p) p.Value).Where(Function(p) p.name.Contains(name))
+        Dim matching_items = ItemIds.Select(Function(p) p.Value).Where(Function(p) p.name.ToLower.Contains(name.ToLower))
         Try
             'Dim jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
             'If jsonres.code = 200 Then
