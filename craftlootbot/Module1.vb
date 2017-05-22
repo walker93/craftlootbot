@@ -208,9 +208,11 @@ Module Module1
     End Function
 
     Private Function getUserHistory(User_id As Integer) As Integer()
-        Dim user_history() As Integer = inline_history(User_id).ToArray
-
-        Return user_history
+        Dim user_history As New List(Of Integer)
+        If inline_history.ContainsKey(User_id) Then
+            Return inline_history(User_id).ToArray
+        End If
+        Return user_history.ToArray
     End Function
 
     Function task_getMessageText(item As Item, id As Integer, ct As Threading.CancellationToken) As KeyValuePair(Of String, Integer)
