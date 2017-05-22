@@ -47,55 +47,9 @@ Module Module1
         stats_thread.Start()
         Dim zaini_thread As New Threading.Thread(New Threading.ThreadStart(AddressOf vecchizaini))
         zaini_thread.Start()
+        Dim inlineHistory_thread As New Threading.Thread(New Threading.ThreadStart(AddressOf salva_inlineHistory))
+        inlineHistory_thread.Start()
     End Sub
-
-    'Sub aggiorno_dictionary()
-    '    Console.WriteLine("Aggiorno database")
-    '    Dim handler As New Http.HttpClientHandler
-    '    If handler.SupportsAutomaticDecompression() Then
-    '        handler.AutomaticDecompression = DecompressionMethods.Deflate Or DecompressionMethods.GZip
-    '    End If
-    '    Dim client As New Http.HttpClient(handler)
-    '    client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json")
-    '    client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate")
-    '    Dim res
-    '    Dim jsonres
-    '    'aggiungo rifugi
-    '    res = getRifugiItemsJSON()
-    '    jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
-    '    ItemIds.Clear()
-    '    items = {}
-    '    Dim rif() As Item = jsonres.res
-    '    For Each it As Item In rif
-    '        ItemIds.Add(it.id, it)
-    '        items.Add(it)
-    '    Next
-
-    '    res = client.GetStringAsync(ITEM_URL).Result
-    '    jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
-    '    Dim res_items = jsonres.res
-    '    For Each it As Item In res_items
-    '        ItemIds.Add(it.id, it)
-    '        items.Add(it)
-    '    Next
-    '    Console.WriteLine("Numero di oggetti: " + items.Length.ToString)
-    '    Console.WriteLine("Terminato aggiornamento")
-    'End Sub
-
-    'Sub initialize_Dictionary()
-    '    While True
-    '        Try
-    '            aggiorno_dictionary()
-    '            Threading.Thread.Sleep(update_db_timeout * 60 * 60 * 1000) 'aggiorno ogni 12 ore
-    '        Catch e As AggregateException
-    '            Console.WriteLine("Errori durante l'aggiornamento: " + e.InnerException.Message)
-    '            Threading.Thread.Sleep(60 * 1000) 'Aggiorno ogni minuto         
-    '        Catch e As Exception
-    '            Console.WriteLine("Errori durante l'aggiornamento: " + e.Message)
-    '            Threading.Thread.Sleep(60 * 1000) 'Aggiorno ogni minuto
-    '        End Try
-    '    End While
-    'End Sub
 
     Sub run()
         Dim updates() As Update
@@ -167,7 +121,7 @@ Module Module1
         Dim path As String = "zaini/" + InlineQuery.From.Id.ToString + ".txt"
         Dim hasZaino As Boolean = IO.File.Exists(path)
         Dim results As New List(Of InlineQueryResults.InlineQueryResult)
-
+        Dim user_history() As Integer = getUserHistory(InlineQuery.From.Id)
         Try
             Dim reg As New Regex("^(C|NC|R|UR|L|E|UE|U){1} ", RegexOptions.IgnoreCase)
             If reg.IsMatch(unfiltered_query) Then
@@ -180,15 +134,19 @@ Module Module1
 
             If hasZaino Then
                 'lo zaino è salvato, procedo ad elaborare
+                Dim matching_items() As Item
                 If query_text.Length < 4 Then
-                    api.AnswerInlineQueryAsync(InlineQuery.Id, results.ToArray, 0, True)
-                    Return True
+                    For Each it In user_history.Reverse
+                        matching_items.Add(ItemIds(it))
+                    Next
+                Else
+                    matching_items = requestItems(query_text)
                 End If
-                Dim matching_items() As Item = requestItems(query_text)
                 If matching_items Is Nothing OrElse matching_items.Length = 0 Then
                     api.AnswerInlineQueryAsync(InlineQuery.Id, results.ToArray, 0, True)
                     Return True
                 End If
+
                 Dim limit As Integer = If(matching_items.Length > 50, 50, matching_items.Length - 1)
                 Dim res() As InlineQueryResults.InlineQueryResultArticle
                 Dim message_text As String = ""
@@ -249,6 +207,12 @@ Module Module1
         Return True
     End Function
 
+    Private Function getUserHistory(User_id As Integer) As Integer()
+        Dim user_history() As Integer = inline_history(User_id).ToArray
+
+        Return user_history
+    End Function
+
     Function task_getMessageText(item As Item, id As Integer, ct As Threading.CancellationToken) As KeyValuePair(Of String, Integer)
         If ct.IsCancellationRequested Then
             StampaDebug("Cancellazione richiesta per " + Threading.Thread.CurrentThread.ManagedThreadId.ToString)
@@ -286,6 +250,20 @@ Module Module1
 
     Sub process_ChosenQuery(ChosenResult As ChosenInlineResult)
         aggiornastats("inline", ChosenResult.From.Username)
+        Dim user_id = ChosenResult.From.Id
+        If inline_history.ContainsKey(user_id) Then
+            If inline_history(user_id).Contains(ChosenResult.ResultId) Then
+                Dim list = inline_history(user_id).ToList
+                list.Remove(ChosenResult.ResultId)
+                inline_history(user_id) = New Queue(Of Integer)(list)
+            End If
+            inline_history(user_id).Enqueue(Integer.Parse(ChosenResult.ResultId))
+            If inline_history(user_id).Count > 20 Then inline_history(user_id).Dequeue()
+        Else
+            Dim id() As Integer
+            id.Add(Integer.Parse(ChosenResult.ResultId))
+            inline_history.Add(user_id, New Queue(Of Integer)(id))
+        End If
     End Sub
 
     'Creo testo con lista

@@ -50,23 +50,6 @@ Public Module MyExtensions
 
     'ottiene oggetti necessari al craft
     Function requestCraft(id As Integer) As Integer()
-        'Dim res
-        'If id > 1000 Then
-        '    If IO.File.Exists("rifugi/" + id.ToString + ".json") Then
-        '        res = IO.File.ReadAllText("rifugi/" + id.ToString + ".json")
-        '    End If
-        'Else
-        '    Dim handler As New Http.HttpClientHandler
-        '    If handler.SupportsAutomaticDecompression() Then
-        '        handler.AutomaticDecompression = DecompressionMethods.Deflate Or DecompressionMethods.GZip
-        '    End If
-        '    Dim client As New Http.HttpClient(handler)
-        '    client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json")
-        '    client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate")
-        '    res = client.GetStringAsync(getCraftUrl(id)).Result
-        'End If
-        'Dim jres = Json.JsonConvert.DeserializeObject(Of CraftResponse)(res)
-        'Return jres.res
         Dim craft As IDCraft = CraftIds(id)
         Dim required_ids() As Integer = {craft.material_1, craft.material_2, craft.material_3}
         Return required_ids
@@ -102,7 +85,7 @@ Public Module MyExtensions
         '    Return arr.ToArray()
         'End Try
         ' End If
-        Dim matching_items = ItemIds.Select(Function(p) p.Value).Where(Function(p) p.name.ToLower.Contains(name.ToLower))
+        Dim matching_items = ItemIds.Select(Function(p) p.Value).Where(Function(p) p.craftable AndAlso p.name.ToLower.Contains(name.ToLower))
         Try
             'Dim jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
             'If jsonres.code = 200 Then

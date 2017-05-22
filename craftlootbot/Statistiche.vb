@@ -1,12 +1,13 @@
 ﻿Module Statistiche
     Public stats_file As String = "stats.dat"
     Public personal_file As String = "personal_stats.dat"
+    Public Inlinehistory_file As String = "inline_recents.dat"
     Public stat_timeout As Integer = 20 'minuti, tra un salvataggio e l'altro delle statistiche
     Public stats As New Dictionary(Of String, Tuple(Of String, ULong))
     '                                 Chiave, (Testo stampato, valore)
     Public delta_stats As New Dictionary(Of String, Tuple(Of String, Integer))
     Public PersonalStats As New Dictionary(Of String, ULong) 'Conteggio usaggio utenti
-
+    Public inline_history As New Dictionary(Of Integer, Queue(Of Integer)) 'ricerche inline recenti degli utenti
     'Inizializzo statistiche a 0, prima di leggerle dal file.
     Sub init_stats()
         If Not IO.File.Exists(stats_file) Then IO.File.WriteAllText(stats_file, "")
@@ -21,6 +22,7 @@
         stats.Add("vendi", New Tuple(Of String, ULong)("Liste oggetti non necessari", 0))
         stats.Add("creanegozi", New Tuple(Of String, ULong)("Creazioni di negozi ricevute", 0))
         stats.Add("info", New Tuple(Of String, ULong)("Informazioni oggetti inviate", 0))
+        stats.Add("stima", New Tuple(Of String, ULong)("Stime di oggetti valutate", 0))
         stats.Add("totale", New Tuple(Of String, ULong)("Totale comandi processati", 0))
         stats.Add("zaini", New Tuple(Of String, ULong)("Zaini attualmente salvati", 0))
 
@@ -109,10 +111,38 @@
                     PersonalStats.Add(userID, 1)
                 End If
             End If
-            If stats("totale").Item2 = 110000 Then
-                notificaPremio()
-            End If
         End If
+    End Sub
+
+    Sub read_inlineHistory()
+        If Not IO.File.Exists(Inlinehistory_file) Then IO.File.WriteAllText(Inlinehistory_file, "")
+        Dim Global_history As String() = IO.File.ReadAllLines(Inlinehistory_file)
+        For Each line In Global_history
+            Dim User_ID As Integer = Integer.Parse(line.Split("=")(0))
+            Dim item_ids() As String = line.Split("=")(1).Split(";")
+            Dim q As New Queue(Of Integer)
+            For Each i In item_ids
+                q.Enqueue(Integer.Parse(i))
+            Next
+            inline_history.Add(User_ID, q)
+            StampaDebug("lettura cronologia inline: " + line)
+        Next
+    End Sub
+
+    Sub salva_inlineHistory()
+        While True
+            Threading.Thread.Sleep(stat_timeout * 60 * 1000) 'ogni X minuti, X è salvato nelle impostazioni
+            Dim history_builder As New Text.StringBuilder
+            For Each user In inline_history
+                Dim ids_string As String = ""
+                For Each id In user.Value
+                    ids_string &= id.ToString + ";"
+                Next
+                history_builder.AppendLine(user.Key.ToString + "=" + ids_string.Remove(ids_string.Length - 1))
+            Next
+            IO.File.WriteAllText(Inlinehistory_file, history_builder.ToString)
+            StampaDebug("Salvata cronologia inline!")
+        End While
     End Sub
 
 End Module

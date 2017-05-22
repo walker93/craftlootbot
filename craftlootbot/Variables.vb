@@ -50,6 +50,8 @@
         init_stats()
         read_stats()
 
+        read_inlineHistory()
+
         init_rifugiMatch()
         init_prezzoscrigni()
     End Sub
