@@ -1491,13 +1491,6 @@ Module Module1
         Return prezzo_dic
     End Function
 
-    'Converto oggetto craft a oggetto normale
-    'Public Function RowToItem(row As Row) As Item
-    '    Dim it As New Item
-    '    ItemIds.TryGetValue(row.id, it)
-    '    Return it
-    'End Function
-
     'invio report di errore allo sviluppatore
     Sub sendReport(ex As Exception, message As Message)
         Dim reportBuilder As New Text.StringBuilder

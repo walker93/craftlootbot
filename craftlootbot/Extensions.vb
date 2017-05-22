@@ -74,43 +74,44 @@ Public Module MyExtensions
 
     'Invia richiesta API e ottiene info oggetti
     Function requestItems(name As String) As Item()
-        Dim res
+        'Dim res
         Dim arr As New List(Of Item)
 
-        If rifugiMatch.Contains(name.ToLower) Then
-            Dim allrifugi() = Json.JsonConvert.DeserializeObject(Of ItemResponse)(getRifugiItemsJSON()).res
-            For Each rif In allrifugi
-                arr.Add(rif)
-                If rif.name.ToLower.Equals(name.ToLower.Trim) Then
-                    arr.Clear()
-                    arr.Add(rif)
-                    Return arr.ToArray
-                End If
-            Next
-            Return arr.ToArray
-        Else
-            Dim handler As New Http.HttpClientHandler
-            If handler.SupportsAutomaticDecompression() Then
-                handler.AutomaticDecompression = DecompressionMethods.Deflate Or DecompressionMethods.GZip
-            End If
-            Dim client As New Http.HttpClient(handler)
-            client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json")
-            client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate")
-            Try
-                res = client.GetStringAsync(getItemUrl(name)).Result
-            Catch ex As Exception
-                Return arr.ToArray()
-            End Try
-        End If
-
+        ' If rifugiMatch.Contains(name.ToLower) Then
+        'Dim allrifugi() = Json.JsonConvert.DeserializeObject(Of ItemResponse)(getRifugiItemsJSON()).res
+        'For Each rif In allrifugi
+        '    arr.Add(rif)
+        '    If rif.name.ToLower.Equals(name.ToLower.Trim) Then
+        '        arr.Clear()
+        '        arr.Add(rif)
+        '        Return arr.ToArray
+        '    End If
+        'Next
+        'Return arr.ToArray
+        ' Else
+        'Dim handler As New Http.HttpClientHandler
+        'If handler.SupportsAutomaticDecompression() Then
+        '    handler.AutomaticDecompression = DecompressionMethods.Deflate Or DecompressionMethods.GZip
+        'End If
+        'Dim client As New Http.HttpClient(handler)
+        'client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json")
+        'client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate")
+        'Try
+        '    res = client.GetStringAsync(getItemUrl(name)).Result
+        'Catch ex As Exception
+        '    Return arr.ToArray()
+        'End Try
+        ' End If
+        Dim matching_items = ItemIds.Select(Function(p) p.Value).Where(Function(p) p.name.Contains(name))
         Try
-            Dim jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
-            If jsonres.code = 200 Then
-                arr.AddRange(jsonres.res)
-            End If
+            'Dim jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
+            'If jsonres.code = 200 Then
+            '    arr.AddRange(jsonres.res)
+            'End If
+            arr.AddRange(matching_items)
         Catch
-            Dim jsonres = Json.JsonConvert.DeserializeObject(Of SingleItemResponse)(res)
-            If jsonres.res IsNot Nothing Then arr.Add(jsonres.res)
+            'Dim jsonres = Json.JsonConvert.DeserializeObject(Of SingleItemResponse)(res)
+            'If jsonres.res IsNot Nothing Then arr.Add(jsonres.res)
         End Try
         Return arr.ToArray
     End Function
