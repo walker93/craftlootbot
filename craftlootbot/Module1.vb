@@ -121,7 +121,7 @@ Module Module1
         Dim path As String = "zaini/" + InlineQuery.From.Id.ToString + ".txt"
         Dim hasZaino As Boolean = IO.File.Exists(path)
         Dim results As New List(Of InlineQueryResults.InlineQueryResult)
-        Dim user_history() As Integer = getUserHistory(InlineQuery.From.Id)
+        Dim user_history() As KeyValuePair(Of String, Integer) = getUserHistory(InlineQuery.From.Id)
         Try
             Dim reg As New Regex("^(C|NC|R|UR|L|E|UE|U){1} ", RegexOptions.IgnoreCase)
             If reg.IsMatch(unfiltered_query) Then
@@ -134,13 +134,15 @@ Module Module1
 
             If hasZaino Then
                 'lo zaino è salvato, procedo ad elaborare
-                Dim matching_items() As Item
+                Dim matching_items() As KeyValuePair(Of Item, String)
                 If query_text.Length < 4 Then
                     For Each it In user_history.Reverse
-                        matching_items.Add(ItemIds(it))
+                        matching_items.Add(New KeyValuePair(Of Item, String)(ItemIds(it.Value), it.Key))
                     Next
                 Else
-                    matching_items = requestItems(query_text)
+                    For Each i In requestItems(query_text)
+                        matching_items.Add(New KeyValuePair(Of Item, String)(i, filter))
+                    Next
                 End If
                 If matching_items Is Nothing OrElse matching_items.Length = 0 Then
                     api.AnswerInlineQueryAsync(InlineQuery.Id, results.ToArray, 0, True)
@@ -152,10 +154,11 @@ Module Module1
                 Dim message_text As String = ""
                 Dim Tasks(limit) As Task(Of KeyValuePair(Of String, Integer))
                 For i = 0 To limit
-                    Dim it As Item = matching_items(i)
-                    If Not isCraftable(it.id) Then Continue For
+                    Dim pair = matching_items(i)
+                    If Not isCraftable(pair.key.id) Then Continue For
+
                     Tasks(i) = Task.Factory.StartNew(Function() As KeyValuePair(Of String, Integer)
-                                                         Return task_getMessageText(it, InlineQuery.From.Id, ct)
+                                                         Return task_getMessageText(pair.Key, InlineQuery.From.Id, ct, pair.Value)
                                                      End Function)
                 Next
                 For i = 0 To limit
@@ -163,15 +166,17 @@ Module Module1
                     If Tasks(i) Is Nothing Then Continue For
                     Dim result = Tasks(i).Result
                     content.MessageText = result.Key
+                    Dim f = matching_items(i).Value
                     Dim article = New InlineQueryResults.InlineQueryResultArticle
-                    Dim costo As Integer = If(rarity_value.ContainsKey(matching_items(i).rarity), rarity_value(matching_items(i).rarity), 0)
-                    Dim punti As Integer = If(rarity_craft.ContainsKey(matching_items(i).rarity), rarity_craft(matching_items(i).rarity), 0)
+                    Dim costo As Integer = If(rarity_value.ContainsKey(matching_items(i).Key.rarity), rarity_value(matching_items(i).Key.rarity), 0)
+                    Dim punti As Integer = If(rarity_craft.ContainsKey(matching_items(i).Key.rarity), rarity_craft(matching_items(i).Key.rarity), 0)
                     Dim costoBase As Integer = 0 'matching_items(i).value
-                    article.Id = matching_items(i).id
+                    article.Id = f + matching_items(i).Key.id.ToString
                     article.InputMessageContent = content
-                    article.Title = "Cerco per " + matching_items(i).name
-                    matching_items(i).contaCosto(matching_items(i).id, costo, punti, costoBase)
-                    article.Description = If(content.MessageText.Contains("Possiedo"), "Hai già tutti gli oggetti " + If(filter, "").ToUpper, "Hai bisogno di " + result.Value.ToString + If(result.Value = 1, " oggetto ", " oggetti ") + If(filter, "").ToUpper)
+                    article.Title = "Cerco per " + matching_items(i).Key.name
+                    matching_items(i).Key.contaCosto(matching_items(i).Key.id, costo, punti, costoBase)
+
+                    article.Description = If(content.MessageText.Contains("Possiedo"), "Hai già tutti gli oggetti " + If(IsNothing(f), "", f).ToUpper, "Hai bisogno di " + result.Value.ToString + If(result.Value = 1, " oggetto ", " oggetti ") + If(IsNothing(f), "", f).ToUpper)
                     article.Description += vbCrLf + "Costo craft: " + prettyCurrency(costo) + ", Punti craft: " + punti.ToString
                     res.Add(article)
                 Next
@@ -207,15 +212,25 @@ Module Module1
         Return True
     End Function
 
-    Private Function getUserHistory(User_id As Integer) As Integer()
-        Dim user_history As New List(Of Integer)
+    Private Function getUserHistory(User_id As Integer) As KeyValuePair(Of String, Integer)()
+        Dim user_history As New List(Of KeyValuePair(Of String, Integer))
+        Dim filter As String = ""
+        Dim reg As New Regex("^(C|NC|R|UR|L|E|UE|U){0,1}([0-9]+)", RegexOptions.IgnoreCase)
         If inline_history.ContainsKey(User_id) Then
-            Return inline_history(User_id).ToArray
+            For Each t In inline_history(User_id)
+                Dim id As Integer
+                If reg.IsMatch(t) Then
+                    Dim m As Match = reg.Match(t)
+                    filter = If(m.Groups(1).Success, m.Groups(1).Value, Nothing)
+                    id = m.Groups(2).Value
+                    user_history.Add(New KeyValuePair(Of String, Integer)(filter, id))
+                End If
+            Next
         End If
         Return user_history.ToArray
     End Function
 
-    Function task_getMessageText(item As Item, id As Integer, ct As Threading.CancellationToken) As KeyValuePair(Of String, Integer)
+    Function task_getMessageText(item As Item, id As Integer, ct As Threading.CancellationToken, Optional fil As String = Nothing) As KeyValuePair(Of String, Integer)
         If ct.IsCancellationRequested Then
             StampaDebug("Cancellazione richiesta per " + Threading.Thread.CurrentThread.ManagedThreadId.ToString)
             Try
@@ -244,7 +259,7 @@ Module Module1
         task_getNeededItemsList(item.id, CraftList, zainoDic_copy, gia_possiedi, ct)
         If CraftList.Count <> 0 Then
             StampaDebug(String.Format("returning from '{0}'.", Threading.Thread.CurrentThread.ManagedThreadId))
-            Return getCercoText(createCraftCountList(CraftList), zainoDic)
+            Return getCercoText(createCraftCountList(CraftList), zainoDic, fil)
         End If
         StampaDebug(String.Format("Terminating '{0}'.", Threading.Thread.CurrentThread.ManagedThreadId))
         Return New KeyValuePair(Of String, Integer)("", 0)
@@ -254,22 +269,22 @@ Module Module1
         aggiornastats("inline", ChosenResult.From.Username)
         Dim user_id = ChosenResult.From.Id
         If inline_history.ContainsKey(user_id) Then
-            If inline_history(user_id).Contains(ChosenResult.ResultId) Then
+            If inline_history(user_id).Contains(ChosenResult.ResultId.Trim) Then
                 Dim list = inline_history(user_id).ToList
-                list.Remove(ChosenResult.ResultId)
-                inline_history(user_id) = New Queue(Of Integer)(list)
+                list.Remove(ChosenResult.ResultId.Trim)
+                inline_history(user_id) = New Queue(Of String)(list)
             End If
-            inline_history(user_id).Enqueue(Integer.Parse(ChosenResult.ResultId))
-            If inline_history(user_id).Count > 20 Then inline_history(user_id).Dequeue()
+            inline_history(user_id).Enqueue(ChosenResult.ResultId.Trim)
+            If inline_history(user_id).Count > inline_history_limit Then inline_history(user_id).Dequeue()
         Else
-            Dim id() As Integer
-            id.Add(Integer.Parse(ChosenResult.ResultId))
-            inline_history.Add(user_id, New Queue(Of Integer)(id))
+            Dim id() As String
+            id.Add(ChosenResult.ResultId.Trim)
+            inline_history.Add(user_id, New Queue(Of String)(id))
         End If
     End Sub
 
     'Creo testo con lista
-    Function getCercoText(dic As Dictionary(Of Item, Integer), zaino As Dictionary(Of Item, Integer)) As KeyValuePair(Of String, Integer)
+    Function getCercoText(dic As Dictionary(Of Item, Integer), zaino As Dictionary(Of Item, Integer), Optional filter As String = Nothing) As KeyValuePair(Of String, Integer)
         Dim sor As New SortedDictionary(Of Item, Integer)(New Item.ItemComparer)
         For Each pair In dic
             sor.Add(pair.Key, pair.Value)
@@ -396,7 +411,7 @@ Module Module1
                 Else
                     Dim builder As New Text.StringBuilder("Non sono stati riconosciuti prezzi all'interno del file.")
                     builder.AppendLine().AppendLine("Utilizza il formato:")
-                    builder.AppendLine("Rame:400").AppendLine("Sabbia:400").AppendLine("Vetro:400")
+                    builder.AppendLine("Piombo:2400").AppendLine("Sabbia:400").AppendLine("Vetro:150")
                     a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString).Result
                     Exit Sub
                 End If
@@ -1222,10 +1237,11 @@ Module Module1
 
         builder.Append(intestazione)
         builder.Append(vbCrLf)
-        Dim sorted = From pair In list
-                     Order By pair.Value Descending
-        Dim sortedDictionary = sorted.ToList()
-        For Each craft In sortedDictionary
+        'Dim sorted = From pair In list
+        'Order By pair.Value Descending
+        Dim sorted = list.OrderByDescending(Of Integer)(Function(x) x.Value).ThenBy(Of String)(Function(p) p.Key.name).Select(Of KeyValuePair(Of Item, Integer))(Function(o) o)
+        'Dim sortedDictionary = sorted.ToList()
+        For Each craft In sorted
             If isCraftable(craft.Key.id) Then
                 builder.Append("Crea " + craft.Key.name)
                 builder.Append(vbCrLf)

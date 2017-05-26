@@ -7,7 +7,7 @@
     '                                 Chiave, (Testo stampato, valore)
     Public delta_stats As New Dictionary(Of String, Tuple(Of String, Integer))
     Public PersonalStats As New Dictionary(Of String, ULong) 'Conteggio usaggio utenti
-    Public inline_history As New Dictionary(Of Integer, Queue(Of Integer)) 'ricerche inline recenti degli utenti
+    Public inline_history As New Dictionary(Of Integer, Queue(Of String)) 'ricerche inline recenti degli utenti
     'Inizializzo statistiche a 0, prima di leggerle dal file.
     Sub init_stats()
         If Not IO.File.Exists(stats_file) Then IO.File.WriteAllText(stats_file, "")
@@ -120,10 +120,8 @@
         For Each line In Global_history
             Dim User_ID As Integer = Integer.Parse(line.Split("=")(0))
             Dim item_ids() As String = line.Split("=")(1).Split(";")
-            Dim q As New Queue(Of Integer)
-            For Each i In item_ids
-                q.Enqueue(Integer.Parse(i))
-            Next
+            Dim q As New Queue(Of String)(item_ids)
+
             inline_history.Add(User_ID, q)
             StampaDebug("lettura cronologia inline: " + line)
         Next
@@ -135,10 +133,8 @@
             Dim history_builder As New Text.StringBuilder
             For Each user In inline_history
                 Dim ids_string As String = ""
-                For Each id In user.Value
-                    ids_string &= id.ToString + ";"
-                Next
-                history_builder.AppendLine(user.Key.ToString + "=" + ids_string.Remove(ids_string.Length - 1))
+                ids_string = String.Join(";", user.Value)
+                history_builder.AppendLine(user.Key.ToString + "=" + ids_string) '.Remove(ids_string.Length - 1))
             Next
             IO.File.WriteAllText(Inlinehistory_file, history_builder.ToString)
             StampaDebug("Salvata cronologia inline!")
