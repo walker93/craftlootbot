@@ -516,7 +516,7 @@ Module Module1
             End If
             'COMANDI
             If message.Text.ToLower.StartsWith("/salvazaino") Then
-#Region "/salvazaino"
+#Region "salvazaino"
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Stai già salvando lo zaino, inoltralo di seguito.").Result
                     Exit Sub
@@ -958,6 +958,28 @@ Module Module1
                 If builder.ToString = "" Then builder.AppendLine("Nessun oggetto craftabile con l'offset specificato")
                 answerLongMessage(builder.ToString, message.Chat.Id)
 #End Region
+            ElseIf message.Text.StartsWith("/pattern") Then
+                Dim input = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/pattern" + "@craftlootbot", "/pattern"), "").Trim
+                'Dim input = "A _ _ _ _ _ _ _ - _ _ _ _ _ _ _ _ _ _ e"
+                input = input.Replace(" ", "")
+                Dim first_letter = input.First
+                Dim last_letter = input.Last
+                Dim words() = input.Split("-")
+                'words(0).Where(Function(s) s.Equals("_")).Count
+                Dim pattern = "[A-z0-9òàèéìù'-]"
+                Dim reg As String = "^" + first_letter
+                For Each w In words
+                    reg += pattern + "{" + w.Where(Function(s) s.Equals("_"c)).Count.ToString + "} "
+                Next
+                reg = reg.Remove(reg.Length - 1)
+                reg += last_letter + "$"
+                Dim regex As New Regex(reg)
+                Dim matching = ItemIds.Where(Function(p) regex.IsMatch(p.Value.name))
+                Dim o As String = ""
+                For Each i In matching
+                    o &= i.Value.name + vbCrLf
+                Next
+                a = api.SendTextMessageAsync(message.Chat.Id, o).Result
             ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/kill") Then
                 kill = True
                 Dim ex As New Exception("PROCESSO TERMINATO SU RICHIESTA")
