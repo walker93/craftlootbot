@@ -828,7 +828,7 @@ Module Module1
                     a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString).Result
                 End If
 #End Region
-            ElseIf message.Text.ToLower.StartsWith("/help") Then
+            ElseIf message.Text.ToLower.StartsWith(If(message.Chat.Type = ChatType.Private, "/help", "/help@craftlootbot")) Then
                 a = api.SendTextMessageAsync(message.Chat.Id, help_builder.ToString,,,, creaHelpKeyboard, ParseMode.Markdown).Result
             ElseIf message.Text.ToLower.StartsWith("/stats") Then
 #Region "stats"
@@ -958,8 +958,8 @@ Module Module1
                 If builder.ToString = "" Then builder.AppendLine("Nessun oggetto craftabile con l'offset specificato")
                 answerLongMessage(builder.ToString, message.Chat.Id)
 #End Region
-            ElseIf message.Text.StartsWith("/pattern") Then
-                Dim input = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/pattern" + "@craftlootbot", "/pattern"), "").Trim
+            ElseIf message.Text.StartsWith("/dungeon") Then
+                Dim input = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/dungeon" + "@craftlootbot", "/dungeon"), "").Trim
                 input = input.Replace(" ", "")
                 Dim first_letter = input.First
                 Dim last_letter = input.Last
