@@ -960,12 +960,10 @@ Module Module1
 #End Region
             ElseIf message.Text.StartsWith("/pattern") Then
                 Dim input = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/pattern" + "@craftlootbot", "/pattern"), "").Trim
-                'Dim input = "A _ _ _ _ _ _ _ - _ _ _ _ _ _ _ _ _ _ e"
                 input = input.Replace(" ", "")
                 Dim first_letter = input.First
                 Dim last_letter = input.Last
                 Dim words() = input.Split("-")
-                'words(0).Where(Function(s) s.Equals("_")).Count
                 Dim pattern = "[A-z0-9òàèéìù'-]"
                 Dim reg As String = "^" + first_letter
                 For Each w In words
@@ -977,9 +975,9 @@ Module Module1
                 Dim matching = ItemIds.Where(Function(p) regex.IsMatch(p.Value.name))
                 Dim o As String = ""
                 For Each i In matching
-                    o &= i.Value.name + vbCrLf
+                    o &= "`" + i.Value.name + "`" + vbCrLf
                 Next
-                a = api.SendTextMessageAsync(message.Chat.Id, o).Result
+                a = api.SendTextMessageAsync(message.Chat.Id, o,,,,, ParseMode.Markdown).Result
             ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/kill") Then
                 kill = True
                 Dim ex As New Exception("PROCESSO TERMINATO SU RICHIESTA")
