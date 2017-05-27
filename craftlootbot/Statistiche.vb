@@ -43,7 +43,6 @@
 
         'leggo statistiche personali
         Dim personal_lines As String() = IO.File.ReadAllLines(personal_file)
-
         For Each line In personal_lines
             Dim split As String() = line.Split("=")
             PersonalStats.Add(split(0), split(1))

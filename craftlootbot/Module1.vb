@@ -960,6 +960,10 @@ Module Module1
 #End Region
             ElseIf message.Text.StartsWith("/dungeon") Then
                 Dim input = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/dungeon" + "@craftlootbot", "/dungeon"), "").Trim
+                If input = "" Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci il pattern dopo il comando. Es: '/dungeon S _ _ _ _ - _ _ _ _ _ e'").Result
+                    Exit Sub
+                End If
                 input = input.Replace(" ", "")
                 Dim first_letter = input.First
                 Dim last_letter = input.Last
@@ -976,6 +980,29 @@ Module Module1
                 Dim o As String = ""
                 For Each i In matching
                     o &= "`" + i.Value.name + "`" + vbCrLf
+                Next
+                a = api.SendTextMessageAsync(message.Chat.Id, o,,,,, ParseMode.Markdown).Result
+            ElseIf message.Text.StartsWith("/ispezione") Then
+                Dim input = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/ispezione" + "@craftlootbot", "/ispezione"), "").Trim
+                If input = "" Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci il pattern dopo il comando. Es: '/ispezione _ o _ a _ d o'").Result
+                    Exit Sub
+                End If
+                Dim letters = alphabet.ToList
+                For Each cha In input
+                    If letters.Contains(cha.ToString.ToUpper) Then
+                        letters.Remove(cha.ToString.ToUpper)
+                    End If
+                Next
+                Dim pattern = "[" + String.Join("", letters) + "]{1}"
+                input = input.ToUpper.Replace(" ", "").Replace("_", pattern)
+                Dim reg As String = "^" + input + "$"
+                Dim regex As New Regex(reg, RegexOptions.IgnoreCase)
+                Dim dic = IO.File.ReadAllText("dictionary.txt").Split(" "c, vbLf)
+                Dim matching = dic.Where(Function(p) regex.IsMatch(p))
+                Dim o As String = ""
+                For Each i In matching
+                    o &= "`" + i.ToLower + "`" + vbCrLf
                 Next
                 a = api.SendTextMessageAsync(message.Chat.Id, o,,,,, ParseMode.Markdown).Result
             ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/kill") Then

@@ -276,4 +276,5 @@ Public Module MyExtensions
         If Not IO.File.Exists("rifugi/crafts.json") Then Return ""
         Return IO.File.ReadAllText("rifugi/crafts.json")
     End Function
+
 End Module
