@@ -241,6 +241,24 @@ Public Module MyExtensions
         Return rex.IsMatch(text)
     End Function
 
+    Function isDungeon(text As String) As Boolean
+        If text.Contains("senti tremare il pavimento ed una gabbia ti circonda lentamente") Then
+            If text.Contains(" _ ") Then
+                Return True
+            End If
+        End If
+        Return False
+    End Function
+
+    Function isIspezione(text As String) As Boolean
+        If text.Contains("Sul portone del rifugio vi è una piccola pulsantiera con degli spazi vuoti") Then
+            If text.Contains(" _ ") Then
+                Return True
+            End If
+        End If
+        Return False
+    End Function
+
     'dati due dizionari(item, quantità) restituisce un nuovo dizionario contenente gli oggetti del secondo che sono contenuti nel primo
     Function ConfrontaDizionariItem(zaino As Dictionary(Of Item, Integer), cerco As Dictionary(Of Item, Integer)) As Dictionary(Of Item, Integer)
         Dim res As New Dictionary(Of Item, Integer)
@@ -277,4 +295,33 @@ Public Module MyExtensions
         Return IO.File.ReadAllText("rifugi/crafts.json")
     End Function
 
+    Function getDungeonItems(input As String) As IEnumerable(Of KeyValuePair(Of Integer, Item))
+        Dim first_letter = input.First
+        Dim last_letter = input.Last
+        Dim words() = input.Split("-")
+        Dim pattern = "[A-z0-9òàèéìù'-]"
+        Dim reg As String = "^" + first_letter
+        For Each w In words
+            reg += pattern + "{" + w.Where(Function(s) s.Equals("_"c)).Count.ToString + "} "
+        Next
+        reg = reg.Remove(reg.Length - 1)
+        reg += last_letter + "$"
+        Dim regex As New Regex(reg)
+        Return ItemIds.Where(Function(p) regex.IsMatch(p.Value.name))
+    End Function
+
+    Function getIspezioneWords(input As String) As IEnumerable(Of String)
+        Dim letters = alphabet.ToList
+        For Each cha In input
+            If letters.Contains(cha.ToString.ToUpper) Then
+                letters.Remove(cha.ToString.ToUpper)
+            End If
+        Next
+        Dim pattern = "[" + String.Join("", letters) + "]{1}"
+        input = input.ToUpper.Replace(" ", "").Replace("_", pattern)
+        Dim reg As String = "^" + input + "$"
+        Dim regex As New Regex(reg, RegexOptions.IgnoreCase)
+        Dim dic = IO.File.ReadAllText("dictionary.txt").Split(" "c, vbLf)
+        Return dic.Where(Function(p) regex.IsMatch(p))
+    End Function
 End Module

@@ -511,6 +511,26 @@ Module Module1
                 Dim matches As MatchCollection = rex.Matches(message.Text)
                 Dim res = rex.Replace(message.Text, "> $2 ($1)")
                 a = api.SendTextMessageAsync(message.Chat.Id, res).Result
+            ElseIf isDungeon(message.Text) Then
+                Dim start_index = message.Text.IndexOf("ultima di una parola di Lootia:") + 1
+                Dim end_index = message.Text.IndexOf("Puoi fare un tentativo per cercare di fuggire") - 1
+                Dim input = message.Text.Substring(start_index + "ultima di una parola di Lootia:".Length, end_index - (start_index + "ultima di una parola di Lootia:".Length)).Trim
+                Dim matching = getDungeonItems(input)
+                Dim o As String = ""
+                For Each i In matching
+                    o &= "`" + i.Value.name + "`" + vbCrLf
+                Next
+                a = api.SendTextMessageAsync(message.Chat.Id, o,,,,, ParseMode.Markdown).Result
+            ElseIf isIspezione(message.Text) Then
+                Dim start_index = message.Text.IndexOf("🗝") + 1
+                Dim end_index = message.Text.IndexOf("Esplora") - 1
+                Dim input = message.Text.Substring(start_index + 1, end_index - start_index).Trim
+                Dim matching = getIspezioneWords(input)
+                Dim o As String = ""
+                For Each i In matching
+                    o &= "`" + i.ToLower + "`" + vbCrLf
+                Next
+                a = api.SendTextMessageAsync(message.Chat.Id, o,,,,, ParseMode.Markdown).Result
             Else
                 Console.WriteLine("{0} {1} {2} from: {3}", Now.ToShortDateString, Now.ToShortTimeString, message.Text, message.From.Username)
             End If
@@ -959,52 +979,34 @@ Module Module1
                 answerLongMessage(builder.ToString, message.Chat.Id)
 #End Region
             ElseIf message.Text.StartsWith("/dungeon") Then
+#Region "Dungeon"
                 Dim input = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/dungeon" + "@craftlootbot", "/dungeon"), "").Trim
+                input = input.Replace(" ", "")
                 If input = "" Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci il pattern dopo il comando. Es: '/dungeon S _ _ _ _ - _ _ _ _ _ e'").Result
                     Exit Sub
                 End If
-                input = input.Replace(" ", "")
-                Dim first_letter = input.First
-                Dim last_letter = input.Last
-                Dim words() = input.Split("-")
-                Dim pattern = "[A-z0-9òàèéìù'-]"
-                Dim reg As String = "^" + first_letter
-                For Each w In words
-                    reg += pattern + "{" + w.Where(Function(s) s.Equals("_"c)).Count.ToString + "} "
-                Next
-                reg = reg.Remove(reg.Length - 1)
-                reg += last_letter + "$"
-                Dim regex As New Regex(reg)
-                Dim matching = ItemIds.Where(Function(p) regex.IsMatch(p.Value.name))
                 Dim o As String = ""
+                Dim matching = getDungeonItems(input)
                 For Each i In matching
                     o &= "`" + i.Value.name + "`" + vbCrLf
                 Next
                 a = api.SendTextMessageAsync(message.Chat.Id, o,,,,, ParseMode.Markdown).Result
+#End Region
             ElseIf message.Text.StartsWith("/ispezione") Then
+#Region "ispezione"
                 Dim input = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/ispezione" + "@craftlootbot", "/ispezione"), "").Trim
                 If input = "" Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci il pattern dopo il comando. Es: '/ispezione _ o _ a _ d o'").Result
                     Exit Sub
                 End If
-                Dim letters = alphabet.ToList
-                For Each cha In input
-                    If letters.Contains(cha.ToString.ToUpper) Then
-                        letters.Remove(cha.ToString.ToUpper)
-                    End If
-                Next
-                Dim pattern = "[" + String.Join("", letters) + "]{1}"
-                input = input.ToUpper.Replace(" ", "").Replace("_", pattern)
-                Dim reg As String = "^" + input + "$"
-                Dim regex As New Regex(reg, RegexOptions.IgnoreCase)
-                Dim dic = IO.File.ReadAllText("dictionary.txt").Split(" "c, vbLf)
-                Dim matching = dic.Where(Function(p) regex.IsMatch(p))
+                Dim matching = getIspezioneWords(input)
                 Dim o As String = ""
                 For Each i In matching
                     o &= "`" + i.ToLower + "`" + vbCrLf
                 Next
                 a = api.SendTextMessageAsync(message.Chat.Id, o,,,,, ParseMode.Markdown).Result
+#End Region
             ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/kill") Then
                 kill = True
                 Dim ex As New Exception("PROCESSO TERMINATO SU RICHIESTA")
