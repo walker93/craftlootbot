@@ -16,6 +16,7 @@
     Public olderZaini_limit As Integer = 30 'giorni
     Public inline_history_limit As Integer = 20 'numero massimo di cronologia inline da salvare per ogni utente
     Public alphabet As String() = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"}
+    Public Italian_dictionary As String()
     'Legge da file impostazioni e inizializza variabili
     Sub initializeVariables()
         If Not IO.File.Exists(settings_file) Then
@@ -58,6 +59,8 @@
 
         init_rifugiMatch()
         init_prezzoscrigni()
+
+        Italian_dictionary = IO.File.ReadAllText("dictionary.txt").Split(" "c, vbLf)
     End Sub
 
     Sub init_prezzoscrigni()

@@ -321,7 +321,7 @@ Public Module MyExtensions
         input = input.ToUpper.Replace(" ", "").Replace("_", pattern)
         Dim reg As String = "^" + input + "$"
         Dim regex As New Regex(reg, RegexOptions.IgnoreCase)
-        Dim dic = IO.File.ReadAllText("dictionary.txt").Split(" "c, vbLf)
-        Return dic.Where(Function(p) regex.IsMatch(p))
+
+        Return Italian_dictionary.Where(Function(p) regex.IsMatch(p))
     End Function
 End Module

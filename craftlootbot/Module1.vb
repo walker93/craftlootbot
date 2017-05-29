@@ -516,6 +516,10 @@ Module Module1
                 Dim end_index = message.Text.IndexOf("Puoi fare un tentativo per cercare di fuggire") - 1
                 Dim input = message.Text.Substring(start_index + "ultima di una parola di Lootia:".Length, end_index - (start_index + "ultima di una parola di Lootia:".Length)).Trim
                 Dim matching = getDungeonItems(input)
+                If matching.Count = 0 Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Nessun risultato trovato :(").Result
+                    Exit Sub
+                End If
                 Dim o As String = ""
                 For Each i In matching
                     o &= "`" + i.Value.name + "`" + vbCrLf
@@ -525,7 +529,12 @@ Module Module1
                 Dim start_index = message.Text.IndexOf("🗝") + 1
                 Dim end_index = message.Text.IndexOf("Esplora") - 1
                 Dim input = message.Text.Substring(start_index + 1, end_index - start_index).Trim
+                StampaDebug("pattern: " + input)
                 Dim matching = getIspezioneWords(input)
+                If matching.Count = 0 Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Nessun risultato trovato :(").Result
+                    Exit Sub
+                End If
                 Dim o As String = ""
                 For Each i In matching
                     o &= "`" + i.ToLower + "`" + vbCrLf
