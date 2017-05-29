@@ -997,6 +997,10 @@ Module Module1
                 End If
                 Dim o As String = ""
                 Dim matching = getDungeonItems(input)
+                If matching.Count = 0 Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Nessun risultato trovato :(").Result
+                    Exit Sub
+                End If
                 For Each i In matching
                     o &= "`" + i.Value.name + "`" + vbCrLf
                 Next
@@ -1010,6 +1014,10 @@ Module Module1
                     Exit Sub
                 End If
                 Dim matching = getIspezioneWords(input)
+                If matching.Count = 0 Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Nessun risultato trovato :(").Result
+                    Exit Sub
+                End If
                 Dim o As String = ""
                 For Each i In matching
                     o &= "`" + i.ToLower + "`" + vbCrLf
