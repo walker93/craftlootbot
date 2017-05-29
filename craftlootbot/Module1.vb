@@ -519,12 +519,15 @@ Module Module1
                 If matching.Count = 0 Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Nessun risultato trovato :(").Result
                     Exit Sub
+                ElseIf matching.Count > 15 Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Troppi risultati, affina la ricerca").Result
+                    Exit Sub
                 End If
                 Dim o As String = ""
                 For Each i In matching
                     o &= "`" + i.Value.name + "`" + vbCrLf
                 Next
-                a = api.SendTextMessageAsync(message.Chat.Id, o,,,,, ParseMode.Markdown).Result
+                answerLongMessage(o, message.Chat.Id, ParseMode.Markdown)
             ElseIf isIspezione(message.Text) Then
                 Dim start_index = message.Text.IndexOf("🗝") + 1
                 Dim end_index = message.Text.IndexOf("Esplora") - 1
@@ -534,12 +537,15 @@ Module Module1
                 If matching.Count = 0 Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Nessun risultato trovato :(").Result
                     Exit Sub
+                ElseIf matching.Count > 15 Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Troppi risultati, affina la ricerca").Result
+                    Exit Sub
                 End If
                 Dim o As String = ""
                 For Each i In matching
                     o &= "`" + i.ToLower + "`" + vbCrLf
                 Next
-                a = api.SendTextMessageAsync(message.Chat.Id, o,,,,, ParseMode.Markdown).Result
+                answerLongMessage(o, message.Chat.Id, ParseMode.Markdown)
             Else
                 Console.WriteLine("{0} {1} {2} from: {3}", Now.ToShortDateString, Now.ToShortTimeString, message.Text, message.From.Username)
             End If
@@ -1000,11 +1006,14 @@ Module Module1
                 If matching.Count = 0 Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Nessun risultato trovato :(").Result
                     Exit Sub
+                ElseIf matching.Count > 15 Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Troppi risultati, affina la ricerca").Result
+                    Exit Sub
                 End If
                 For Each i In matching
                     o &= "`" + i.Value.name + "`" + vbCrLf
                 Next
-                a = api.SendTextMessageAsync(message.Chat.Id, o,,,,, ParseMode.Markdown).Result
+                answerLongMessage(o, message.Chat.Id)
 #End Region
             ElseIf message.Text.StartsWith("/ispezione") Then
 #Region "ispezione"
@@ -1017,12 +1026,15 @@ Module Module1
                 If matching.Count = 0 Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Nessun risultato trovato :(").Result
                     Exit Sub
+                ElseIf matching.Count > 15 Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Troppi risultati, affina la ricerca").Result
+                    Exit Sub
                 End If
                 Dim o As String = ""
                 For Each i In matching
                     o &= "`" + i.ToLower + "`" + vbCrLf
                 Next
-                a = api.SendTextMessageAsync(message.Chat.Id, o,,,,, ParseMode.Markdown).Result
+                answerLongMessage(o, message.Chat.Id)
 #End Region
             ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/kill") Then
                 kill = True
