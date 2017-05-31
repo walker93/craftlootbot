@@ -115,19 +115,21 @@
         rifugiMatch.Add("rifugio 6")
     End Sub
 
-    'restituisce url craft per un determinato ID
-    Function getCraftUrl(id As Integer)
-        Return CRAFT_URL + id.ToString + "/needed"
-    End Function
+#Region "Deprecated"
+    ''restituisce url craft per un determinato ID
+    'Function getCraftUrl(id As Integer)
+    '    Return CRAFT_URL + id.ToString + "/needed"
+    'End Function
 
-    'restituisce url info per un determinato ID
-    Function getItemUrl(id As Integer)
-        Return ITEM_URL + id.ToString
-    End Function
-    'restituisce url info per un determinato nome
-    Function getItemUrl(name As String)
-        Return ITEM_URL + name
-    End Function
+    ''restituisce url info per un determinato ID
+    'Function getItemUrl(id As Integer)
+    '    Return ITEM_URL + id.ToString
+    'End Function
+    ''restituisce url info per un determinato nome
+    'Function getItemUrl(name As String)
+    '    Return ITEM_URL + name
+    'End Function
+#End Region
 
     'restituisce url giocatore per un determinato username
     Function getPlayerUrl(User As String) As String
