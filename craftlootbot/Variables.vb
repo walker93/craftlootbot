@@ -17,6 +17,8 @@
     Public inline_history_limit As Integer = 20 'numero massimo di cronologia inline da salvare per ogni utente
     Public alphabet As String() = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"}
     Public Italian_dictionary As String()
+    Public team_members As New List(Of String)
+
     'Legge da file impostazioni e inizializza variabili
     Sub initializeVariables()
         If Not IO.File.Exists(settings_file) Then
@@ -59,6 +61,8 @@
 
         init_rifugiMatch()
         init_prezzoscrigni()
+
+        init_teamMembers()
 
         Italian_dictionary = IO.File.ReadAllText("dictionary.txt").Split(" "c, vbLf)
     End Sub
@@ -113,6 +117,12 @@
         rifugiMatch.Add("rifugio 4")
         rifugiMatch.Add("rifugio 5")
         rifugiMatch.Add("rifugio 6")
+    End Sub
+
+    Sub init_teamMembers()
+        Dim team_file = "team.dat"
+        If Not IO.File.Exists(team_file) Then IO.File.WriteAllText(team_file, "")
+        team_members.AddRange(IO.File.ReadAllLines(team_file))
     End Sub
 
 #Region "Deprecated"

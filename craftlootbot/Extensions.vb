@@ -324,4 +324,9 @@ Public Module MyExtensions
 
         Return Italian_dictionary.Where(Function(p) regex.IsMatch(p))
     End Function
+
+    Sub saveTeamMembers()
+        Dim team_file = "team.dat"
+        IO.File.WriteAllLines(team_file, team_members)
+    End Sub
 End Module

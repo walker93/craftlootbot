@@ -507,11 +507,14 @@ Module Module1
                 End If
 #End Region
             ElseIf isAperturaScrigno(message.Text) Then
+#Region "Apertura scrigno"
                 Dim rex As New Regex("\> ([0-9]+)x ([A-z 0-9òàèéìù'-]+) \(([A-Z]+)\)")
                 Dim matches As MatchCollection = rex.Matches(message.Text)
                 Dim res = rex.Replace(message.Text, "> $2 ($1)")
                 a = api.SendTextMessageAsync(message.Chat.Id, res).Result
-            ElseIf isDungeon(message.Text) Then
+#End Region
+            ElseIf isDungeon(message.Text) AndAlso team_members.Contains(message.From.Username) Then
+#Region "Parola dungeon"
                 Dim start_index = message.Text.IndexOf("ultima di una parola di Lootia:") + 1
                 Dim end_index = message.Text.IndexOf("Puoi fare un tentativo per cercare di fuggire") - 1
                 Dim input = message.Text.Substring(start_index + "ultima di una parola di Lootia:".Length, end_index - (start_index + "ultima di una parola di Lootia:".Length)).Trim
@@ -528,7 +531,9 @@ Module Module1
                     o &= "`" + i.Value.name + "`" + vbCrLf
                 Next
                 answerLongMessage(o, message.Chat.Id, ParseMode.Markdown)
-            ElseIf isIspezione(message.Text) Then
+#End Region
+            ElseIf isIspezione(message.Text) AndAlso team_members.Contains(message.From.Username) Then
+#Region "Gnomo Ispezione"
                 Dim start_index = message.Text.IndexOf("🗝") + 1
                 Dim end_index = message.Text.IndexOf("Esplora") - 1
                 Dim input = message.Text.Substring(start_index + 1, end_index - start_index).Trim
@@ -546,9 +551,11 @@ Module Module1
                     o &= "`" + i.ToLower + "`" + vbCrLf
                 Next
                 answerLongMessage(o, message.Chat.Id, ParseMode.Markdown)
+#End Region
             Else
                 Console.WriteLine("{0} {1} {2} from: {3}", Now.ToShortDateString, Now.ToShortTimeString, message.Text, message.From.Username)
             End If
+
             'COMANDI
             If message.Text.ToLower.StartsWith("/salvazaino") Then
 #Region "salvazaino"
@@ -880,12 +887,14 @@ Module Module1
                 a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString,,,,, ParseMode.Markdown).Result
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/db") Then
+#Region "Aggiorno DB"
                 Dim builder As New Text.StringBuilder
                 builder.AppendLine(download_items())
                 builder.AppendLine(download_crafts())
                 builder.AppendLine(Leggo_Items())
                 builder.AppendLine(Leggo_Crafts())
                 a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString).Result
+#End Region
             ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/classifica") Then
                 notificaPremio()
             ElseIf message.Text.StartsWith("/info") Then
@@ -993,7 +1002,7 @@ Module Module1
                 If builder.ToString = "" Then builder.AppendLine("Nessun oggetto craftabile con l'offset specificato")
                 answerLongMessage(builder.ToString, message.Chat.Id)
 #End Region
-            ElseIf message.Text.StartsWith("/dungeon") Then
+            ElseIf team_members.Contains(message.From.Username) AndAlso message.Text.StartsWith("/dungeon") Then
 #Region "Dungeon"
                 Dim input = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/dungeon" + "@craftlootbot", "/dungeon"), "").Trim
                 input = input.Replace(" ", "")
@@ -1015,7 +1024,7 @@ Module Module1
                 Next
                 answerLongMessage(o, message.Chat.Id)
 #End Region
-            ElseIf message.Text.StartsWith("/ispezione") Then
+            ElseIf team_members.Contains(message.From.Username) AndAlso message.Text.StartsWith("/ispezione") Then
 #Region "ispezione"
                 Dim input = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/ispezione" + "@craftlootbot", "/ispezione"), "").Trim
                 If input = "" Then
@@ -1035,6 +1044,72 @@ Module Module1
                     o &= "`" + i.ToLower + "`" + vbCrLf
                 Next
                 answerLongMessage(o, message.Chat.Id)
+#End Region
+            ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/addmember") Then
+#Region "/addmember"
+                Dim member = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/addmember" + "@craftlootbot", "/addmember"), "").Trim
+                If member = "" Then
+                    If Not IsNothing(message.ReplyToMessage) Then
+                        If team_members.Contains(message.ReplyToMessage.From.Username) Then
+                            a = api.SendTextMessageAsync(message.Chat.Id, "Il giocatore " + message.ReplyToMessage.From.Username + "  è già nel team!").Result
+                            Exit Sub
+                        End If
+                        If checkPlayer(message.ReplyToMessage.From.Username) Then
+                            team_members.Add(message.ReplyToMessage.From.Username)
+                            a = api.SendTextMessageAsync(message.Chat.Id, "Il giocatore " + message.ReplyToMessage.From.Username + "  è stato aggiunto!").Result
+                        Else
+                            a = api.SendTextMessageAsync(message.Chat.Id, "Il giocatore " + message.ReplyToMessage.From.Username + " non è un giocatore di Loot bot!").Result
+                        End If
+                    Else
+                        a = api.SendTextMessageAsync(message.Chat.Id, "Rispondi a un messaggio o specifica un username").Result
+                    End If
+                Else
+                    Dim lines() = member.Split(vbLf)
+                    Dim reply As String = ""
+                    For Each m In lines
+                        If team_members.Contains(m) Then
+                            reply += "Già presente: " + m + vbCrLf
+                            Continue For
+                        End If
+                        If checkPlayer(m) Then
+                            team_members.Add(m)
+                            reply += "Aggiunto: " + m + vbCrLf
+                        Else
+                            reply += m + " non è un giocatore di Loot bot" + vbCrLf
+                        End If
+                    Next
+                    a = api.SendTextMessageAsync(message.Chat.Id, reply).Result
+                End If
+                saveTeamMembers()
+#End Region
+            ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/removemember") Then
+#Region "/removemember"
+                Dim member = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/removemember" + "@craftlootbot", "/removemember"), "").Trim
+                If member = "" Then
+                    If Not IsNothing(message.ReplyToMessage) Then
+                        If team_members.Contains(message.ReplyToMessage.From.Username) Then
+                            team_members.Remove(message.ReplyToMessage.From.Username)
+                            a = api.SendTextMessageAsync(message.Chat.Id, "Il giocatore " + message.ReplyToMessage.From.Username + "  è stato rimosso!").Result
+                        Else
+                            a = api.SendTextMessageAsync(message.Chat.Id, "Il giocatore " + message.ReplyToMessage.From.Username + " non è del team!").Result
+                        End If
+                    Else
+                        a = api.SendTextMessageAsync(message.Chat.Id, "Rispondi a un messaggio o specifica un username").Result
+                    End If
+                Else
+                    Dim lines() = member.Split(vbCrLf)
+                    Dim reply As String = ""
+                    For Each m In lines
+                        If team_members.Contains(m) Then
+                            team_members.Remove(m)
+                            reply += "Rimosso: " + m + vbCrLf
+                        Else
+                            reply += m + " non è un membro del team" + vbCrLf
+                        End If
+                    Next
+                    a = api.SendTextMessageAsync(message.Chat.Id, reply).Result
+                End If
+                saveTeamMembers()
 #End Region
             ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/kill") Then
                 kill = True
