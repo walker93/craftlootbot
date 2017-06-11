@@ -50,6 +50,7 @@ Public Module MyExtensions
 
     'ottiene oggetti necessari al craft
     Function requestCraft(id As Integer) As Integer()
+        If Not CraftIds.ContainsKey(id) Then Return {}
         Dim craft As IDCraft = CraftIds(id)
         Dim required_ids() As Integer = {craft.material_1, craft.material_2, craft.material_3}
         Return required_ids

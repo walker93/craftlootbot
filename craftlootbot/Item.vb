@@ -138,9 +138,7 @@ Public Class Item
 
     'ricorsione per conteggio necro
     Sub contaUsi(necro As Integer, ByRef count As Integer)
-        Dim craft As IDCraft = CraftIds(necro)
-        Dim required_ids() As Integer = {craft.material_1, craft.material_2, craft.material_3}
-        'StampaDebug(ItemIds(necro).name)
+        Dim required_ids() As Integer = requestCraft(necro)
         If required_ids.Contains(id) Then count += 1
         For Each i In required_ids
             If isCraftable(i) Then
@@ -151,8 +149,7 @@ Public Class Item
 
     'ricorsione per punti craft e costo
     Sub contaCosto(item_id As Integer, ByRef spesa As Integer, ByRef punticraft As Integer, ByRef costoBase As Integer, Optional prezzi_dic As Dictionary(Of Item, Integer) = Nothing)
-        Dim craft As IDCraft = CraftIds(item_id)
-        Dim required_ids() As Integer = {craft.material_1, craft.material_2, craft.material_3}
+        Dim required_ids() As Integer = requestCraft(item_id)
         Dim ite As Item
         For Each i In required_ids
             ite = ItemIds(i)

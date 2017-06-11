@@ -165,7 +165,7 @@ Module Module1
                     Dim content As New InputMessageContents.InputTextMessageContent
                     If Tasks(i) Is Nothing Then Continue For
                     Dim result = Tasks(i).Result
-                    content.MessageText = result.Key
+                    content.MessageText = If(result.Key <> "", result.Key, "Possiedo già tutti gli oggetti necessari")
                     Dim f = matching_items(i).Value
                     Dim article = New InlineQueryResults.InlineQueryResultArticle
                     Dim costo As Integer = If(rarity_value.ContainsKey(matching_items(i).Key.rarity), rarity_value(matching_items(i).Key.rarity), 0)
