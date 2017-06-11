@@ -7,19 +7,19 @@ Module Database
                 download_items()
                 download_crafts()
             Catch e As AggregateException
-                Console.WriteLine("Errori durante l'aggiornamento: " + e.InnerException.Message)
+                Console.WriteLine("Errori durante l'aggiornamento (Download): " + e.InnerException.Message)
             Catch e As Exception
-                Console.WriteLine("Errori durante l'aggiornamento: " + e.Message)
+                Console.WriteLine("Errori durante l'aggiornamento (Download): " + e.Message)
             End Try
             Try
                 Leggo_Items()
                 Leggo_Crafts()
                 Threading.Thread.Sleep(update_db_timeout * 60 * 60 * 1000)
             Catch e As AggregateException
-                Console.WriteLine("Errori durante l'aggiornamento: " + e.InnerException.Message)
+                Console.WriteLine("Errori durante l'aggiornamento (Lettura): " + e.InnerException.Message)
                 Threading.Thread.Sleep(60 * 1000)
             Catch e As Exception
-                Console.WriteLine("Errori durante l'aggiornamento: " + e.Message)
+                Console.WriteLine("Errori durante l'aggiornamento (Lettura): " + e.Message)
                 Threading.Thread.Sleep(60 * 1000)
             End Try
         End While
@@ -64,6 +64,13 @@ Module Database
         jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
         Dim rif() As Item = jsonres.res
         For Each it As Item In rif
+            ItemIds.Add(it.id, it)
+        Next
+        'aggiungo halloween
+        res = getHalloweenItemsJSON()
+        jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
+        Dim hall() As Item = jsonres.res
+        For Each it As Item In hall
             ItemIds.Add(it.id, it)
         Next
         'Aggiorno items

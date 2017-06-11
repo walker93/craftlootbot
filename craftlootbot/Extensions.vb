@@ -290,6 +290,11 @@ Public Module MyExtensions
         Return IO.File.ReadAllText("rifugi/items.json")
     End Function
 
+    Function getHalloweenItemsJSON() As String
+        If Not IO.File.Exists("halloween.json") Then Return ""
+        Return IO.File.ReadAllText("halloween.json")
+    End Function
+
     Function getRifugiCraftsJSON() As String
         If Not IO.File.Exists("rifugi/crafts.json") Then Return ""
         Return IO.File.ReadAllText("rifugi/crafts.json")
