@@ -171,12 +171,17 @@ Module Module1
                     Dim costo As Integer = If(rarity_value.ContainsKey(matching_items(i).Key.rarity), rarity_value(matching_items(i).Key.rarity), 0)
                     Dim punti As Integer = If(rarity_craft.ContainsKey(matching_items(i).Key.rarity), rarity_craft(matching_items(i).Key.rarity), 0)
                     Dim costoBase As Integer = 0 'matching_items(i).value
+                    Dim oggbase As Integer = 0
                     article.Id = f + matching_items(i).Key.id.ToString
                     article.InputMessageContent = content
                     article.Title = "Cerco per " + matching_items(i).Key.name
-                    matching_items(i).Key.contaCosto(matching_items(i).Key.id, costo, punti, costoBase)
+                    matching_items(i).Key.contaCosto(matching_items(i).Key.id, costo, punti, costoBase, oggbase)
 
-                    article.Description = If(content.MessageText.Contains("Possiedo"), "Hai già tutti gli oggetti " + If(IsNothing(f), "", f).ToUpper, "Hai bisogno di " + result.Value.ToString + If(result.Value = 1, " oggetto ", " oggetti ") + If(IsNothing(f), "", f).ToUpper)
+                    article.Description = If(content.MessageText.Contains("Possiedo"), "Hai già tutti gli oggetti" &
+                        If(IsNothing(f), "", " " & f).ToUpper, "Hai bisogno di " + result.Value.ToString &
+                        If(result.Value = 1, " oggetto", " oggetti") &
+                        If(IsNothing(f), "", " " & f).ToUpper) & " su " & oggbase.ToString + " totali."
+
                     article.Description += vbCrLf + "Costo craft: " + prettyCurrency(costo) + ", Punti craft: " + punti.ToString
                     res.Add(article)
                 Next
@@ -244,9 +249,9 @@ Module Module1
         Dim CraftList As New List(Of Item)
         Dim zainoDic_copy As New Dictionary(Of Item, Integer)
         Dim gia_possiedi As New Dictionary(Of Item, Integer)
-        Dim spesa As Integer = 0
+
         Dim zainoDic As New Dictionary(Of Item, Integer)
-        Dim it As New Item
+
         Dim zaino As String = ""
         If IO.File.Exists("zaini/" + id.ToString + ".txt") Then
             zaino = IO.File.ReadAllText("zaini/" + id.ToString + ".txt")
@@ -933,7 +938,7 @@ Module Module1
                     Dim s_tot As Integer = If(rarity_value.ContainsKey(rarity), rarity_value(rarity), 0)
                     Dim pc_tot As Integer = If(rarity_craft.ContainsKey(rarity), rarity_craft(rarity), 0)
                     Dim costoBase As Integer = 0
-
+                    Dim oggBase As Integer = 0
                     Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
                     Dim zaino As String = ""
                     If IO.File.Exists(path) Then
@@ -952,12 +957,13 @@ Module Module1
                         prezzi = IO.File.ReadAllText("prezzi/" + message.From.Id.ToString + ".txt")
                         prezzi_dic = parsePrezzoNegozi(prezzi)
                     End If
-                    ItemIds(id).contaCosto(id, s_tot, pc_tot, costoBase, prezzi_dic)
+                    ItemIds(id).contaCosto(id, s_tot, pc_tot, costoBase, oggBase, prezzi_dic)
                     builder.AppendLine(ItemIds(id).name + ":").AppendLine()
                     builder.Append("Punti craft mancanti / totali: ").AppendLine(punti_craft.ToString + "/" + pc_tot.ToString)
                     builder.Append("Costo craft mancante / totale: ").AppendLine(prettyCurrency(spesa) + "/" + prettyCurrency(s_tot))
                     builder.Append("Valore stimato con i prezzi salvati: ").AppendLine(prettyCurrency(costoBase))
                     builder.Append("Valore corrente stimato: ").AppendLine(prettyCurrency(ItemIds(id).estimate))
+                    builder.Append("Totale oggetti base necessario al craft: ").AppendLine(oggBase)
                     a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString).Result
                 Else
                     a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
@@ -1280,21 +1286,12 @@ Module Module1
     End Function
 
     Function getCraftListText(dic As Dictionary(Of Item, Integer), oggetti() As Integer, zaino As Dictionary(Of Item, Integer), ByRef gia_possiedi As Dictionary(Of Item, Integer), spesa As Integer, punti_craft As Integer) As String
-
-        Dim sor As New SortedDictionary(Of Item, Integer)(New Item.ItemComparer)
-        For Each pair In dic
-            sor.Add(pair.Key, pair.Value)
-        Next
-        Dim sortedDictionary As Dictionary(Of Item, Integer) = sor.Reverse.ToDictionary(Function(p) p.Key, Function(p) p.Value)
+        Dim sortedDictionary = dic.OrderByDescending(Of String)(Function(x) x.Key.rarity, New Item.ItemComparer).ThenBy(Function(x) x.Key.name).ToDictionary(Of Item, Integer)(Function(o) o.Key, Function(n) n.Value)
         Dim buildernecessari As New Text.StringBuilder()
         Dim builderposseduti As New Text.StringBuilder()
         builderposseduti.AppendLine()
         If zaino.Count > 0 Then builderposseduti.AppendLine("Già possiedi: ")
         For Each pos In gia_possiedi
-            'For i = 1 To pos.Value
-            '    If rarity_value.ContainsKey(pos.Key.rarity) Then spesa -= rarity_value.Item(pos.Key.rarity)
-
-            'Next
             With builderposseduti
                 .Append("> ")
                 .Append(pos.Key.name)

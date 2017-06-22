@@ -34,11 +34,12 @@ Public Class Item
             Dim spesa As Integer = If(rarity_value.ContainsKey(rarity), rarity_value(rarity), 0)
             Dim punti_craft As Integer = If(rarity_craft.ContainsKey(rarity), rarity_craft(rarity), 0)
             Dim costoBase As Integer = 0
-
-            contaCosto(id, spesa, punti_craft, costoBase)
+            Dim oggBase As Integer = 0
+            contaCosto(id, spesa, punti_craft, costoBase, oggBase)
             builder.Append("Costo per il Craft: ").AppendLine(prettyCurrency(spesa))
             builder.Append("Valore oggetti base + costo craft: ").AppendLine(prettyCurrency(costoBase + spesa))
             builder.Append("Punti craft guadagnati: ").AppendLine(punti_craft)
+            builder.Append("Numero oggetti base necessari: ").AppendLine(oggBase)
         End If
         If power > 0 Then
                 builder.Append("Danno: +").AppendLine(power)
@@ -148,7 +149,7 @@ Public Class Item
     End Sub
 
     'ricorsione per punti craft e costo
-    Sub contaCosto(item_id As Integer, ByRef spesa As Integer, ByRef punticraft As Integer, ByRef costoBase As Integer, Optional prezzi_dic As Dictionary(Of Item, Integer) = Nothing)
+    Sub contaCosto(item_id As Integer, ByRef spesa As Integer, ByRef punticraft As Integer, ByRef costoBase As Integer, ByRef oggBase As Integer, Optional prezzi_dic As Dictionary(Of Item, Integer) = Nothing)
         Dim required_ids() As Integer = requestCraft(item_id)
         Dim ite As Item
         For Each i In required_ids
@@ -156,19 +157,21 @@ Public Class Item
             If isCraftable(i) Then
                 If rarity_value.ContainsKey(ite.rarity) Then spesa += rarity_value.Item(ite.rarity)
                 If rarity_craft.ContainsKey(ite.rarity) Then punticraft += rarity_craft.Item(ite.rarity)
-                contaCosto(i, spesa, punticraft, costoBase)
+                contaCosto(i, spesa, punticraft, costoBase, oggBase)
             Else
                 If Not IsNothing(prezzi_dic) AndAlso prezzi_dic.ContainsKey(ite) AndAlso prezzi_dic(ite) > 0 Then
                     costoBase += prezzi_dic(ite)
                 Else
                     costoBase += ite.value
                 End If
+                oggBase += 1
             End If
         Next
     End Sub
 
     Public Class ItemComparer
         Implements IComparer(Of Item)
+        Implements IComparer(Of String)
         Dim rarity_string As New List(Of String)
         Dim a() As String = {"C", "NC", "R", "UR", "L", "E", "UE", "S", "U", "X"}
         Public Function Compare(x As Item, y As Item) As Integer Implements IComparer(Of Item).Compare
@@ -179,6 +182,13 @@ Public Class Item
                 If (x.id < y.id) Then Return -1
                 If x.id > y.id Then Return 1
             End If
+            Return 0
+        End Function
+        Public Function RarityCompare(x As String, y As String) As Integer Implements IComparer(Of String).Compare
+            If rarity_string.Count = 0 Then rarity_string = a.ToList
+            If rarity_string.IndexOf(x) < rarity_string.IndexOf(y) Then Return -1
+            If rarity_string.IndexOf(x) > rarity_string.IndexOf(y) Then Return 1
+            If rarity_string.IndexOf(x) = rarity_string.IndexOf(y) Then Return 0
             Return 0
         End Function
     End Class
