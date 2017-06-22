@@ -1450,15 +1450,16 @@ Module Module1
 
     Function getVendiText(vendi As Dictionary(Of Item, Integer), zaino As Dictionary(Of Item, Integer), oggetti() As Integer) As String
         Dim builder As New Text.StringBuilder()
-        Dim sor As New SortedDictionary(Of Item, Integer)(New Item.ItemComparer)
+        'Dim sor As New SortedDictionary(Of Item, Integer)(New Item.ItemComparer)
         Dim ogg_string()
         For Each i In oggetti
             ogg_string.Add(ItemIds(i).name)
         Next
-        For Each pair In vendi
-            sor.Add(pair.Key, pair.Value)
-        Next
-        Dim sortedDictionary As Dictionary(Of Item, Integer) = sor.Reverse.ToDictionary(Function(p) p.Key, Function(p) p.Value)
+        'For Each pair In vendi
+        '    sor.Add(pair.Key, pair.Value)
+        'Next
+        Dim sortedDictionary = vendi.OrderByDescending(Of String)(Function(x) x.Key.rarity, New Item.ItemComparer).ThenBy(Function(x) x.Key.name).ToDictionary(Of Item, Integer)(Function(o) o.Key, Function(n) n.Value) 'As Dictionary(Of Item, Integer) = sor.Reverse.ToDictionary(Function(p) p.Key, Function(p) p.Value)
+
         If sortedDictionary.Count > 0 Then
             builder.AppendLine(String.Format("Ecco la lista degli oggetti non necessari per craftare {0}:", String.Join(", ", ogg_string)))
             For Each it In sortedDictionary
