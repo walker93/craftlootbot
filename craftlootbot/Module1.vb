@@ -902,7 +902,7 @@ Module Module1
 #End Region
             ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/classifica") Then
                 notificaPremio()
-            ElseIf message.Text.StartsWith("/info") Then
+            ElseIf message.Text.ToLower.StartsWith("/info") Then
 #Region "/info"
                 item = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/info" + "@craftlootbot", "/info"), "").Trim
                 If item = "" Then
@@ -919,7 +919,7 @@ Module Module1
                     a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
                 End If
 #End Region
-            ElseIf message.Text.StartsWith("/stima") Then
+            ElseIf message.Text.tolower.StartsWith("/stima") Then
 #Region "/stima"
                 item = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/stima" + "@craftlootbot", "/stima"), "").Trim
                 If item = "" Then
@@ -1008,6 +1008,30 @@ Module Module1
                 If builder.ToString = "" Then builder.AppendLine("Nessun oggetto craftabile con l'offset specificato")
                 answerLongMessage(builder.ToString, message.Chat.Id)
 #End Region
+            ElseIf message.Text.ToLower.StartsWith("/xml") Then
+                item = message.Text.ToLower.Replace("/xml", "").Trim
+                If item = "" Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto che vuoi ottenere").Result
+                    Exit Sub
+                End If
+                id = getItemId(item)
+                api.SendChatActionAsync(message.Chat.Id, ChatAction.UploadDocument)
+                Dim name As String = getFileName()
+                Dim xml As String = "<?xml version='1.0' encoding='UTF-8'?>" + vbNewLine + ItemToXML(id)
+                a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, xml, item, ".xml"),,, message.MessageId).Result
+            ElseIf message.Text.ToLower.StartsWith("/html") Then
+                item = message.Text.ToLower.Replace("/html", "").Trim
+                If item = "" Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto che vuoi ottenere").Result
+                    Exit Sub
+                End If
+                Dim Header As String = "<head><style>body{padding:20px}div{margin-top:10px;border:0 solid #000;padding:5px;border-left-width:1px}input:checked+label+div{display:none}input:checked+label:after{content:'(...)'}label{background-color:#d3d3d3;box-shadow:inset 0 2px 3px rgba(255,255,255,.2),inset 0 -2px 3px rgba(0,0,0,.2);border-radius:4px;font-size:16px;display:inline-block;padding:2px 5px;cursor:pointer}</style></head>"
+                id = getItemId(item)
+                api.SendChatActionAsync(message.Chat.Id, ChatAction.UploadDocument)
+                Dim name As String = getFileName()
+                Dim counter = 0
+                Dim html As String = Header + vbNewLine + ItemToHTML(id, counter) + "</body>"
+                a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, html, item, ".html"),,, message.MessageId).Result
             ElseIf team_members.Contains(message.From.Username) AndAlso message.Text.StartsWith("/dungeon") Then
 #Region "Dungeon"
                 Dim input = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/dungeon" + "@craftlootbot", "/dungeon"), "").Trim
@@ -1750,4 +1774,45 @@ Module Module1
         End While
     End Sub
 
+    Function ItemToXML(id As Integer) As String
+        Dim it = ItemIds(id)
+        Dim builder As New Text.StringBuilder
+        Dim prop() = GetType(Item).GetProperties
+        builder.Append("<item name=""")
+        'For Each p In prop
+        '    builder.Append("<" + p.Name + ">").Append(p.GetValue(it)).Append("</" + p.Name + ">").AppendLine()
+        'Next
+        builder.Append(it.name).Append("""" + ">")
+
+        If isCraftable(id) Then
+            builder.AppendLine().AppendLine("<required_items>")
+            Dim craft = requestCraft(id)
+            For Each c In craft
+                builder.Append(ItemToXML(c))
+            Next
+            builder.AppendLine("</required_items>")
+        End If
+        builder.AppendLine("</item>")
+        Return builder.ToString
+    End Function
+
+    Function ItemToHTML(id As Integer, ByRef counter As Integer) As String
+
+        Dim it = ItemIds(id)
+        Dim input As String = "<input type='checkbox' style='display: none' id=CBXX>"
+        Dim label As String = "<label for=CBXX>ITEM_NAME</label>"
+        Dim builder As New Text.StringBuilder
+        builder.AppendLine(input.Replace("XX", counter.ToString))
+        builder.AppendLine(label.Replace("XX", counter.ToString).Replace("ITEM_NAME", it.name))
+        If isCraftable(id) Then
+            builder.AppendLine("<div>")
+            Dim craft = requestCraft(id)
+            For Each c In craft
+                counter += 1
+                builder.Append(ItemToHTML(c, counter))
+            Next
+            builder.AppendLine("</div>")
+        End If
+        Return builder.ToString
+    End Function
 End Module
