@@ -1025,7 +1025,7 @@ Module Module1
                     a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto che vuoi ottenere").Result
                     Exit Sub
                 End If
-                Dim Header As String = "<head><style>body{padding:20px}div{margin-top:10px;border:0 solid #000;padding:5px;border-left-width:1px}input:checked+label+div{display:none}input:checked+label:after{content:'(...)'}label{background-color:#d3d3d3;box-shadow:inset 0 2px 3px rgba(255,255,255,.2),inset 0 -2px 3px rgba(0,0,0,.2);border-radius:4px;font-size:16px;display:inline-block;padding:2px 5px;cursor:pointer}</style></head>"
+                Dim Header As String = "<head><style>body{padding:20px}div{margin-top:5px;border-left:1px solid #000;padding:5px}label.leaf{border:none}input:checked+label+div{display:none}input:checked+label:after{content:' (...)'}label{font-size:16px;padding:2px 5px;cursor:pointer;display:block;border-bottom:1px dashed #000;text-decoration:none}</style></head>"
                 id = getItemId(item)
                 api.SendChatActionAsync(message.Chat.Id, ChatAction.UploadDocument)
                 Dim name As String = getFileName()
@@ -1797,14 +1797,13 @@ Module Module1
     End Function
 
     Function ItemToHTML(id As Integer, ByRef counter As Integer) As String
-
         Dim it = ItemIds(id)
         Dim input As String = "<input type='checkbox' style='display: none' id=CBXX>"
-        Dim label As String = "<label for=CBXX>ITEM_NAME</label>"
+        Dim label As String = "<label FOR_INPUT CLASS_NAME>ITEM_NAME</label>"
         Dim builder As New Text.StringBuilder
-        builder.AppendLine(input.Replace("XX", counter.ToString))
-        builder.AppendLine(label.Replace("XX", counter.ToString).Replace("ITEM_NAME", it.name))
         If isCraftable(id) Then
+            builder.AppendLine(input.Replace("XX", counter.ToString))
+            builder.AppendLine(label.Replace("FOR_INPUT", "for=CB" & counter.ToString).Replace("ITEM_NAME", it.name).Replace("CLASS_NAME", ""))
             builder.AppendLine("<div>")
             Dim craft = requestCraft(id)
             For Each c In craft
@@ -1812,6 +1811,8 @@ Module Module1
                 builder.Append(ItemToHTML(c, counter))
             Next
             builder.AppendLine("</div>")
+        Else
+            builder.AppendLine(label.Replace("FOR_INPUT", "").Replace("ITEM_NAME", it.name).Replace("CLASS_NAME", "class='leaf'"))
         End If
         Return builder.ToString
     End Function
