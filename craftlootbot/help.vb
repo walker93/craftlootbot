@@ -15,6 +15,8 @@ Module help
     Public vendi_bilder As New StringBuilder
     Public creanegozi_builder As New StringBuilder
     Public info_builder As New StringBuilder
+    Public stima_builder As New StringBuilder
+    Public xmlhtml_builder As New StringBuilder
 
     Function process_help(text As String) As String
         Dim builder As New StringBuilder
@@ -43,6 +45,10 @@ Module help
                 builder.Append(creanegozi_builder.ToString)
             Case "info"
                 builder.Append(info_builder.ToString)
+            Case "stima"
+                builder.Append(stima_builder.ToString)
+            Case "html-xml"
+                builder.Append(xmlhtml_builder.ToString)
             Case Else
                 builder.Append("Comando non riconosciuto.")
         End Select
@@ -52,7 +58,7 @@ Module help
 
     Sub init_help()
         With help_builder
-            .AppendLine("*GUIDA:*")
+            .AppendLine("*GUIDA COMANDI:*")
             .AppendLine("> '/lista <oggetto/i>' per ricevere la lista dei materiali base necessari al craft degli oggetti inseriti.")
             .AppendLine("> '/albero <oggetto>' per ricevere un file di testo contenente l'albero dei craft dell'oggetto inserito.")
             .AppendLine("> '/salvazaino' per salvare lo zaino diviso in più messaggi, copia o inoltralo senza nessun comando se è un singolo messaggio.")
@@ -61,10 +67,18 @@ Module help
             .AppendLine("> '/craft <oggetto/i>' per ricevere un file di testo contenente stringhe da copiare e incollare, per craftare tutti gli oggetti necessari fino agli oggetti inseriti.")
             .AppendLine("> '/base <rarità>' per ricevere un elenco di tutti gli oggetti base per la rarità inserita, per ogni oggetto è indicata la quantità che possiedi.")
             .AppendLine("> '/vendi <oggetto/i>' per ottenere una lista di oggetti che puoi vendere in quanto non necessari per craftare gli oggetti inseriti.")
-            .AppendLine("> '/creanegozi' o '/creanegozi <oggetto/i>' per ricevere dei comandi /negozio da inoltrare a @lootbotplus")
+            .AppendLine("> '/creanegozi' o '/creanegozi <oggetto/i>' per ricevere dei comandi /negozio da inoltrare a @lootplusbot")
             .AppendLine("> '/info <oggetto/i>' per ricevere informazioni utili sugli oggetti inseriti.")
             .AppendLine("> '/stats' per ottenere statistiche sull'utilizzo del bot.")
+            .AppendLine("> '/stima <oggetto>' per ricevere info su costi, punti craft e valore di un oggetto tenendo presente il vostro zaino.")
+            .AppendLine("> '/xml <oggetto>' o '/html <oggetto>' per ricevere un file XML o HTML con la struttura ad albero dei craft dell'oggetto inserito.")
             .AppendLine("> '@craftlootbot <rarità> <oggetto>' in qualsiasi chat o gruppo per inviare rapidamente la lista dei materiali che stai cercando, la rarità è opzionale.")
+            .AppendLine()
+            .AppendLine("*GUIDA INOLTRI:*")
+            .AppendLine("> Se inoltri uno zaino, verrà salvato.")
+            .AppendLine("> Se inoltri un messaggio prezzi per il comando '/creanegozi', verranno salvati.")
+            .AppendLine("> Se inoltri un messaggio di apertura scrigni, verrà convertito in uno zaino pronto per essere salvato.")
+            .AppendLine("> Se inoltri un messaggio ottenuto da /lista o /vendi, il bot restituirà i comandi /ricerca da inoltrare a @lootplusbot per conoscerne il prezzo.")
             .AppendLine()
             .AppendLine("Per specificare più oggetti esclusivamente nei comandi che lo supportano è necessario separarli con una virgola.")
 
@@ -161,6 +175,16 @@ Module help
             .AppendLine("Con questo comando sarà possibile visualizzare alcune informazioni utili sugli oggetti, molte delle quali disponibili anche in lootbot, altre invece esclusive di craftlootbot.")
             .AppendLine("Ad esempio sarà visualizzato il costo di craft, i punti craft guadagnati craftandolo, e il numero di utilizzi all'interno del set necro.")
         End With
+        With stima_builder
+            .AppendLine("*Stima oggetti:*")
+            .AppendLine("Con questo comando sarà possibile visualizzare alcune informazioni come i punti craft, il costo per il craft, il valore dell'oggetto ecc.")
+        End With
+        With xmlhtml_builder
+            .AppendLine("*XML - HTML:*")
+            .AppendLine("Con questi comandi sarà possibile ottenere un file rispettivamente .xml o .html contenente l'albero dei craft dell'oggetto inserito.")
+            .AppendLine("Il comando HTML dispone anche di una semplice interfaccia grafica che permette di aprire o chiudere i vari craft per facilitare la lettura. Sia da PC che da smartphone.")
+            .AppendLine("E' possibile fare lo stesso con il comando /xml all'interno di un editor testuale avanzato come Notepad++")
+        End With
     End Sub
 
     Function creaHelpKeyboard() As ReplyMarkups.InlineKeyboardMarkup
@@ -176,14 +200,18 @@ Module help
         Dim base_button As New InlineKeyboardButton("🔤 Base 🔤", "base")
         Dim vendi_button As New InlineKeyboardButton("🏪 Vendi 🏪", "vendi")
         Dim creanegozi_button As New InlineKeyboardButton("💸 CreaNegozi 💸", "creanegozi")
-        Dim riepilogo_button As New InlineKeyboardButton("⬅️ Riepilogo ⬅️", "riepilogo")
         Dim info_button As New InlineKeyboardButton("ℹ️ Info ℹ️", "info")
+        Dim stima_button As New InlineKeyboardButton("📈 Stima 📈", "stima")
+        Dim xmlHtml_button As New InlineKeyboardButton("🌐 XML / HTML 🌐", "html-xml")
+        Dim riepilogo_button As New InlineKeyboardButton("⬅️ Riepilogo ⬅️", "riepilogo")
+
         Dim row1() As InlineKeyboardButton
         Dim row2() As InlineKeyboardButton
         Dim row3() As InlineKeyboardButton
         Dim row4() As InlineKeyboardButton
         Dim row5() As InlineKeyboardButton
         Dim row6() As InlineKeyboardButton
+        Dim row7() As InlineKeyboardButton
 
         row1.Add(lista_button)
         row1.Add(albero_button)
@@ -201,7 +229,10 @@ Module help
         row5.Add(creanegozi_button)
 
         row6.Add(info_button)
-        row6.Add(riepilogo_button)
+        row6.Add(stima_button)
+
+        row7.Add(xmlHtml_button)
+        row7.Add(riepilogo_button)
 
         keyboardbuttons.Add(row1)
         keyboardbuttons.Add(row2)
@@ -209,6 +240,7 @@ Module help
         keyboardbuttons.Add(row4)
         keyboardbuttons.Add(row5)
         keyboardbuttons.Add(row6)
+        keyboardbuttons.Add(row7)
         keyboard.InlineKeyboard = keyboardbuttons
         Return keyboard
     End Function

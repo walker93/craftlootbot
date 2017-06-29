@@ -23,6 +23,8 @@
         stats.Add("creanegozi", New Tuple(Of String, ULong)("Creazioni di negozi ricevute", 0))
         stats.Add("info", New Tuple(Of String, ULong)("Informazioni oggetti inviate", 0))
         stats.Add("stima", New Tuple(Of String, ULong)("Stime di oggetti valutate", 0))
+        stats.Add("xml", New Tuple(Of String, ULong)("Alberi in formato XML inviati", 0))
+        stats.Add("html", New Tuple(Of String, ULong)("Alberi in formato HTML inviati", 0))
         stats.Add("totale", New Tuple(Of String, ULong)("Totale comandi processati", 0))
         stats.Add("zaini", New Tuple(Of String, ULong)("Zaini attualmente salvati", 0))
 

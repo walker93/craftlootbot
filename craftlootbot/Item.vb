@@ -30,7 +30,7 @@ Public Class Item
         builder.Append("Craftabile: ").AppendLine(If(craftable = 1, "Si", "No"))
 
         builder.Append("Numero di usi per il set Necro: ").AppendLine(countNecro)
-        If craftable Then
+        If craftable AndAlso CraftIds.ContainsKey(id) Then
             Dim spesa As Integer = If(rarity_value.ContainsKey(rarity), rarity_value(rarity), 0)
             Dim punti_craft As Integer = If(rarity_craft.ContainsKey(rarity), rarity_craft(rarity), 0)
             Dim costoBase As Integer = 0
@@ -74,7 +74,7 @@ Public Class Item
                 If dragon_power > 0 Then builder.Append("Categoria: ").AppendLine("Equipaggiamento Drago")
         End Select
         If category > 0 Then builder.Append("Descrizione: ").AppendLine(description)
-        If craftable Then
+        If craftable AndAlso CraftIds.ContainsKey(id) Then
             builder.AppendLine.AppendLine("Necessari:")
             builder.Append("> ").Append(ItemIds(CraftIds(id).material_1).name).AppendLine(" (" + ItemIds(CraftIds(id).material_1).rarity + ")")
             builder.Append("> ").Append(ItemIds(CraftIds(id).material_2).name).AppendLine(" (" + ItemIds(CraftIds(id).material_2).rarity + ")")
@@ -88,7 +88,7 @@ Public Class Item
     Function getRelatedItemsIDs() As Integer()
         Dim items As Integer()
         'necessari
-        If craftable Then
+        If craftable AndAlso CraftIds.ContainsKey(id) Then
             items.Add(ItemIds(CraftIds(id).material_1).id)
             items.Add(ItemIds(CraftIds(id).material_2).id)
             items.Add(ItemIds(CraftIds(id).material_3).id)
