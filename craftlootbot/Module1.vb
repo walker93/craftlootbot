@@ -4,6 +4,7 @@ Imports Telegram.Bot.Types.Enums
 Imports Newtonsoft
 Imports System.Net
 Imports System.Text.RegularExpressions
+Imports craftlootbot
 
 Module Module1
     Dim WithEvents api As TelegramBotClient
@@ -155,7 +156,7 @@ Module Module1
                 Dim Tasks(limit) As Task(Of KeyValuePair(Of String, Integer))
                 For i = 0 To limit
                     Dim pair = matching_items(i)
-                    If Not isCraftable(pair.key.id) Then Continue For
+                    If Not isCraftable(pair.Key.id) Then Continue For
 
                     Tasks(i) = Task.Factory.StartNew(Function() As KeyValuePair(Of String, Integer)
                                                          Return task_getMessageText(pair.Key, InlineQuery.From.Id, ct, pair.Value)
@@ -481,6 +482,12 @@ Module Module1
                     a = api.SendTextMessageAsync(message.Chat.Id, getConfrontoText(ListaDic, result),,,, creaNULLKeyboard).Result
                     stati.Remove(message.From.Id)
                     confronti.Remove(message.From.Id)
+                Else
+                    Dim ParsedDic = parseListaoVendi(message.Text)
+                    Dim commands = getRicercaText(ParsedDic)
+                    For Each ricerca In commands
+                        a = api.SendTextMessageAsync(message.Chat.Id, ricerca).Result
+                    Next
                 End If
 #End Region
             ElseIf isPrezziNegozi(message.Text) Then
@@ -503,6 +510,7 @@ Module Module1
                     End If
                     zainoDic = parseZaino(zaino)
                     Dim cercotext = parseCerca(confronti.Item(message.From.Id))
+                    If cercotext.Count = 0 Then cercotext = parseListaoVendi(confronti(message.From.Id))
                     Dim result = ConfrontaDizionariItem(zainoDic, cercotext)
                     a = api.SendTextMessageAsync(message.Chat.Id, getConfrontoText(cercotext, result),,,, creaNULLKeyboard).Result
                     stati.Remove(message.From.Id)
@@ -547,7 +555,7 @@ Module Module1
                 If matching.Count = 0 Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Nessun risultato trovato :(").Result
                     Exit Sub
-                ElseIf matching.Count > 15 Then
+                ElseIf matching.Count > 20 Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Troppi risultati, affina la ricerca").Result
                     Exit Sub
                 End If
@@ -919,7 +927,7 @@ Module Module1
                     a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
                 End If
 #End Region
-            ElseIf message.Text.tolower.StartsWith("/stima") Then
+            ElseIf message.Text.ToLower.StartsWith("/stima") Then
 #Region "/stima"
                 item = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/stima" + "@craftlootbot", "/stima"), "").Trim
                 If item = "" Then
@@ -1009,6 +1017,7 @@ Module Module1
                 answerLongMessage(builder.ToString, message.Chat.Id)
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/xml") Then
+#Region "/XML"
                 item = message.Text.ToLower.Replace("/xml", "").Trim
                 If item = "" Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto che vuoi ottenere").Result
@@ -1019,19 +1028,22 @@ Module Module1
                 Dim name As String = getFileName()
                 Dim xml As String = "<?xml version='1.0' encoding='UTF-8'?>" + vbNewLine + ItemToXML(id)
                 a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, xml, item, ".xml"),,, message.MessageId).Result
+#End Region
             ElseIf message.Text.ToLower.StartsWith("/html") Then
+#Region "/HTML"
                 item = message.Text.ToLower.Replace("/html", "").Trim
                 If item = "" Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto che vuoi ottenere").Result
                     Exit Sub
                 End If
-                Dim Header As String = "<head><style>body{padding:20px}div{margin-top:5px;border-left:1px solid #000;padding:5px}label.leaf{border:none}input:checked+label+div{display:none}input:checked+label:after{content:' (...)'}label{font-size:16px;padding:2px 5px;cursor:pointer;display:block;border-bottom:1px dashed #000;text-decoration:none}</style></head>"
+                Dim Header As String = "<head><style>body{padding:20px}div{margin-bottom:5px;margin-left:8px;border-left:1px solid #000;padding:5px}label.leaf{border:none;cursor: default;font-weight: normal}input:checked+label+div{display:none}input:checked+label:before{content:'+ '}input+label:before{content:'- '}label{font-size:16px;padding:2px 5px;cursor:pointer;display:block;font-weight:700}</style></head>"
                 id = getItemId(item)
                 api.SendChatActionAsync(message.Chat.Id, ChatAction.UploadDocument)
                 Dim name As String = getFileName()
                 Dim counter = 0
                 Dim html As String = Header + vbNewLine + ItemToHTML(id, counter) + "</body>"
                 a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, html, item, ".html"),,, message.MessageId).Result
+#End Region
             ElseIf team_members.Contains(message.From.Username) AndAlso message.Text.StartsWith("/dungeon") Then
 #Region "Dungeon"
                 Dim input = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/dungeon" + "@craftlootbot", "/dungeon"), "").Trim
@@ -1065,7 +1077,7 @@ Module Module1
                 If matching.Count = 0 Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Nessun risultato trovato :(").Result
                     Exit Sub
-                ElseIf matching.Count > 15 Then
+                ElseIf matching.Count > 20 Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Troppi risultati, affina la ricerca").Result
                     Exit Sub
                 End If
@@ -1173,6 +1185,8 @@ Module Module1
         End Try
 #End Region
     End Sub
+
+
 
     Sub getNeededItemsList(id As Integer, ByRef CraftList As List(Of Item), ByRef zaino As Dictionary(Of Item, Integer), ByRef possiedi As Dictionary(Of Item, Integer), ByRef spesa As Integer, ByRef punti_craft As Integer)
         Dim rows As Integer() = requestCraft(id)
@@ -1554,6 +1568,26 @@ Module Module1
         builder.Remove(builder.Length - 1, 1)
         'builder.Append("#")
         If Not builder.ToString.Trim = "/negozio" Then res.Add(builder.ToString)
+        Return res
+    End Function
+
+    Function getRicercaText(parsedDic As Dictionary(Of Item, Integer)) As List(Of String)
+        Dim res As New List(Of String)
+        Dim builder As New Text.StringBuilder("/ricerca ")
+        Dim i_counter = 1
+        For Each it In parsedDic
+            If i_counter >= 3 Then
+                i_counter = 0
+                builder.Append(it.Key.name) '.Append(", ")
+                If Not builder.ToString.Trim = "/ricerca" Then res.Add(builder.ToString)
+                builder.Clear.Append("/ricerca ")
+            Else
+                builder.Append(it.Key.name).Append(", ")
+            End If
+            i_counter += 1
+        Next
+        builder.Remove(builder.Length - 2, 2)
+        If Not builder.ToString.Trim = "/ricerca" Then res.Add(builder.ToString)
         Return res
     End Function
 #End Region
