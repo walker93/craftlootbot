@@ -336,4 +336,52 @@ Public Module MyExtensions
         Dim team_file = "team.dat"
         IO.File.WriteAllLines(team_file, team_members)
     End Sub
+
+    Function getPrezziStringFromURL(url As Uri) As String
+        Dim handler As New Http.HttpClientHandler
+        If handler.SupportsAutomaticDecompression() Then
+            handler.AutomaticDecompression = DecompressionMethods.Deflate Or DecompressionMethods.GZip
+        End If
+        Dim client As New Http.HttpClient(handler)
+        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "text/html")
+        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "text/plain")
+        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate")
+        Try
+            Dim resultText = client.GetStringAsync(url).Result
+            If isPrezziNegozi(resultText) Then Return resultText
+            Return ""
+        Catch ex As Exception
+            Return ""
+        End Try
+    End Function
+
+    'Function isPrezziStringFromURL(url As Uri) As Boolean
+    '    Dim handler As New Http.HttpClientHandler
+    '    If handler.SupportsAutomaticDecompression() Then
+    '        handler.AutomaticDecompression = DecompressionMethods.Deflate Or DecompressionMethods.GZip
+    '    End If
+    '    Dim client As New Http.HttpClient(handler)
+    '    client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "text/html")
+    '    client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "text/plain")
+    '    client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate")
+    '    Try
+    '        Dim resultText = client.GetStringAsync(url).Result
+    '        If isPrezziNegozi(resultText) Then Return True
+    '        Return False
+    '    Catch ex As Exception
+    '        Return False
+    '    End Try
+    'End Function
+
+    Function checkLink(link As String) As Uri
+        Dim URL As Uri
+        Try
+            URL = New Uri(link, UriKind.Absolute)
+            Return URL
+        Catch ex As Exception
+            Return Nothing
+        End Try
+        Return Nothing
+    End Function
+
 End Module

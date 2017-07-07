@@ -1044,6 +1044,22 @@ Module Module1
                 Dim html As String = Header + vbNewLine + ItemToHTML(id, counter) + "</body>"
                 a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, html, item, ".html"),,, message.MessageId).Result
 #End Region
+            ElseIf message.Text.ToLower.StartsWith("/setprezzi") Then
+#Region "/setprezzi"
+                Dim link = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/setprezzi" + "@craftlootbot", "/setprezzi"), "").Trim
+                Dim URLPrezzi = checkLink(link)
+                If IsNothing(URLPrezzi) Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Il link inserito non è valido").Result
+                Else
+                    If getPrezziStringFromURL(URLPrezzi) <> "" Then
+                        IO.File.WriteAllText("prezzi/" + message.From.Id.ToString + ".txt", URLPrezzi.ToString)
+                        Console.WriteLine("Salvato link prezzi di ID: " + message.From.Id.ToString)
+                        a = api.SendTextMessageAsync(message.Chat.Id, "Il link è stato salvato!").Result
+                    Else
+                        a = api.SendTextMessageAsync(message.Chat.Id, "Non ho trovato prezzi validi al link specificato.").Result
+                    End If
+                End If
+#End Region
             ElseIf team_members.Contains(message.From.Username) AndAlso message.Text.StartsWith("/dungeon") Then
 #Region "Dungeon"
                 Dim input = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/dungeon" + "@craftlootbot", "/dungeon"), "").Trim
@@ -1185,8 +1201,6 @@ Module Module1
         End Try
 #End Region
     End Sub
-
-
 
     Sub getNeededItemsList(id As Integer, ByRef CraftList As List(Of Item), ByRef zaino As Dictionary(Of Item, Integer), ByRef possiedi As Dictionary(Of Item, Integer), ByRef spesa As Integer, ByRef punti_craft As Integer)
         Dim rows As Integer() = requestCraft(id)
@@ -1587,7 +1601,7 @@ Module Module1
             i_counter += 1
         Next
         builder.Remove(builder.Length - 2, 2)
-        If Not builder.ToString.Trim = "/ricerca" Then res.Add(builder.ToString)
+        If Not builder.ToString.Trim = "/ricerc" Then res.Add(builder.ToString)
         Return res
     End Function
 #End Region
@@ -1683,6 +1697,8 @@ Module Module1
     'Date le impostazioni prezzi per i negozi, restituisco un dizionario(Oggetto, prezzo)
     Function parsePrezzoNegozi(text As String) As Dictionary(Of Item, Integer)
         Dim prezzo_dic As New Dictionary(Of Item, Integer)
+        Dim link = checkLink(text)
+        If Not IsNothing(link) Then text = getPrezziStringFromURL(link)
         Dim rex As New Regex("([A-z 0-9òàèéìù'-]+)\:([0-9]+)")
         Dim matches As MatchCollection = rex.Matches(text)
         For Each match As Match In matches
