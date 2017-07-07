@@ -1046,6 +1046,7 @@ Module Module1
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/setprezzi") Then
 #Region "/setprezzi"
+                api.SendChatActionAsync(message.Chat.Id, ChatAction.Typing)
                 Dim link = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/setprezzi" + "@craftlootbot", "/setprezzi"), "").Trim
                 Dim URLPrezzi = checkLink(link)
                 If IsNothing(URLPrezzi) Then
