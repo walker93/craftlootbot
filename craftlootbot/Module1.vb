@@ -1018,7 +1018,7 @@ Module Module1
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/xml") Then
 #Region "/XML"
-                item = message.Text.ToLower.Replace("/xml", "").Trim
+                item = message.Text.ToLower.Replace(If(message.Text.Contains("@craftlootbot"), "/xml" + "@craftlootbot", "/xml"), "").Trim
                 If item = "" Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto che vuoi ottenere").Result
                     Exit Sub
@@ -1031,7 +1031,7 @@ Module Module1
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/html") Then
 #Region "/HTML"
-                item = message.Text.ToLower.Replace("/html", "").Trim
+                item = message.Text.ToLower.Replace(If(message.Text.Contains("@craftlootbot"), "/html" + "@craftlootbot", "/html"), "").Trim
                 If item = "" Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto che vuoi ottenere").Result
                     Exit Sub
@@ -1047,7 +1047,7 @@ Module Module1
             ElseIf message.Text.ToLower.StartsWith("/setprezzi") Then
 #Region "/setprezzi"
                 api.SendChatActionAsync(message.Chat.Id, ChatAction.Typing)
-                Dim link = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/setprezzi" + "@craftlootbot", "/setprezzi"), "").Trim
+                Dim link = message.Text.ToLower.Replace(If(message.Text.Contains("@craftlootbot"), "/setprezzi" + "@craftlootbot", "/setprezzi"), "").Trim
                 Dim URLPrezzi = checkLink(link)
                 If IsNothing(URLPrezzi) Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Il link inserito non è valido").Result
