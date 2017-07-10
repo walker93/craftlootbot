@@ -4,6 +4,7 @@ Imports System.Runtime.CompilerServices
 Imports System.Text.RegularExpressions
 Imports Newtonsoft
 Imports Telegram.Bot.Types
+Imports Google.Apis.Drive.v3
 
 Public Module MyExtensions
     'Aggiunge elementi ad un array
@@ -337,17 +338,43 @@ Public Module MyExtensions
         IO.File.WriteAllLines(team_file, team_members)
     End Sub
 
+    Function getdriveFileID(url As Uri) As String
+        Dim q = url.Query.Split("=")
+        If q(0) = "?id" Then Return q(1)
+        Return Nothing
+    End Function
     Function getPrezziStringFromURL(url As Uri) As String
-        Dim handler As New Http.HttpClientHandler
-        If handler.SupportsAutomaticDecompression() Then
-            handler.AutomaticDecompression = DecompressionMethods.Deflate Or DecompressionMethods.GZip
-        End If
-        Dim client As New Http.HttpClient(handler)
-        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "text/html")
-        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "text/plain")
-        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate")
         Try
-            Dim resultText = client.GetStringAsync(url).Result
+            Dim resultText As String
+            If url.Host.Contains("drive.google.com") Then
+                Dim init As New Google.Apis.Services.BaseClientService.Initializer With {
+                    .ApiKey = Drive_API,
+                    .ApplicationName = "Craftlootbot"}
+                Dim s As New DriveService(init)
+                Dim f = s.Files.Get(getdriveFileID(url))
+                Dim stream As New IO.MemoryStream
+                Dim d = f.DownloadAsync(stream).Result
+                If d.Status <> Google.Apis.Download.DownloadStatus.Completed Then
+                    Dim export = s.Files.Export(getdriveFileID(url), "text/plain")
+                    stream = New IO.MemoryStream
+                    Dim e = export.DownloadAsync(stream).Result
+                    If e.Status <> Google.Apis.Download.DownloadStatus.Completed Then Return ""
+                End If
+                stream.Position = 0
+                Dim sr As New IO.StreamReader(stream)
+                resultText = sr.ReadToEnd
+            Else
+                Dim handler As New Http.HttpClientHandler
+                If handler.SupportsAutomaticDecompression() Then
+                    handler.AutomaticDecompression = DecompressionMethods.Deflate Or DecompressionMethods.GZip
+                End If
+                Dim client As New Http.HttpClient(handler)
+                client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "text/html")
+                client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "text/plain")
+                client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate")
+                resultText = client.GetStringAsync(url).Result
+            End If
+
             If isPrezziNegozi(resultText) Then Return resultText
             Return ""
         Catch ex As Exception

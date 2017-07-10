@@ -841,7 +841,14 @@ Module Module1
 #Region "ottieniprezzi"
                 If IO.File.Exists("prezzi/" + message.From.Id.ToString + ".txt") Then
                     Dim prezzi_text = IO.File.ReadAllText("prezzi/" + message.From.Id.ToString + ".txt")
-                    If prezzi_text.Length > 4096 Then
+                    Dim link = checkLink(prezzi_text)
+                    If Not isPrezziNegozi(prezzi_text) AndAlso Not IsNothing(link) Then
+                        prezzi_text = "I prezzi sono scaricati autonomamente dal link:" + vbCrLf + link.AbsoluteUri + vbCrLf + vbCrLf + "Il contenuto è:"
+                        a = api.SendTextMessageAsync(message.Chat.Id, prezzi_text, True).Result
+                        prezzi_text = getPrezziStringFromURL(link)
+                    End If
+
+                    If prezzi_text.Split(vbLf).Length > 15 Then
                         'invio file
                         Dim name As String = getFileName()
                         a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, prezzi_text, "Prezzi")).Result
@@ -849,6 +856,8 @@ Module Module1
                     Else
                         answerLongMessage(prezzi_text, message.Chat.Id)
                     End If
+
+
                 Else
                     a = api.SendTextMessageAsync(message.Chat.Id, "Non hai prezzi salvati al momento").Result
                 End If
@@ -1047,8 +1056,11 @@ Module Module1
             ElseIf message.Text.ToLower.StartsWith("/setprezzi") Then
 #Region "/setprezzi"
                 api.SendChatActionAsync(message.Chat.Id, ChatAction.Typing)
-                Dim link = message.Text.ToLower.Replace(If(message.Text.Contains("@craftlootbot"), "/setprezzi" + "@craftlootbot", "/setprezzi"), "").Trim
+                Dim link = message.Text.Replace(If(message.Text.ToLower.Contains("@craftlootbot"), "/setprezzi" + "@craftlootbot", "/setprezzi"), "").Trim
+                Dim args = message.Text.Split(" ")
+                link = If(args(1), "")
                 Dim URLPrezzi = checkLink(link)
+                ' https://drive.google.com/open?id=0BwncXt4cfJK8d2Q3cVJURml2Szg
                 If IsNothing(URLPrezzi) Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Il link inserito non è valido").Result
                 Else
