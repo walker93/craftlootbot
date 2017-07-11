@@ -254,7 +254,7 @@ Public Module MyExtensions
     End Function
 
     Function isIspezione(text As String) As Boolean
-        If text.Contains("Sul portone del rifugio vi è una piccola pulsantiera con degli spazi vuoti") Then
+        If text.Contains("Sul portone del rifugio") Then
             If text.Contains(" _ ") Then
                 Return True
             End If
@@ -339,10 +339,20 @@ Public Module MyExtensions
     End Sub
 
     Function getdriveFileID(url As Uri) As String
+        'FORMATO GDRIVE  drive.google.com/open?id=0BwncXt4cfJK8d2Q3cVJURml2Szg
         Dim q = url.Query.Split("=")
         If q(0) = "?id" Then Return q(1)
         Return Nothing
     End Function
+
+    Function convertDropboxLink(url As Uri) As Uri
+        Try
+            Return New Uri(url.AbsoluteUri.Replace("dl=0", "dl=1"))
+        Catch ex As Exception
+            Return url
+        End Try
+    End Function
+
     Function getPrezziStringFromURL(url As Uri) As String
         Try
             Dim resultText As String
@@ -364,6 +374,7 @@ Public Module MyExtensions
                 Dim sr As New IO.StreamReader(stream)
                 resultText = sr.ReadToEnd
             Else
+                If url.Host.Contains("dropbox.com") Then url = convertDropboxLink(url)
                 Dim handler As New Http.HttpClientHandler
                 If handler.SupportsAutomaticDecompression() Then
                     handler.AutomaticDecompression = DecompressionMethods.Deflate Or DecompressionMethods.GZip

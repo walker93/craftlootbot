@@ -1060,7 +1060,7 @@ Module Module1
                 Dim args = message.Text.Split(" ")
                 link = If(args(1), "")
                 Dim URLPrezzi = checkLink(link)
-                ' https://drive.google.com/open?id=0BwncXt4cfJK8d2Q3cVJURml2Szg
+
                 If IsNothing(URLPrezzi) Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Il link inserito non è valido").Result
                 Else
@@ -1182,6 +1182,15 @@ Module Module1
                 End If
                 saveTeamMembers()
 #End Region
+            ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/getmembers") Then
+#Region "/getmembers"
+                Dim res As String = ""
+                For Each member In team_members
+                    res &= member + vbCrLf
+                Next
+                a = api.SendTextMessageAsync(message.Chat.Id, res).Result
+#End Region
+
             ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/kill") Then
                 kill = True
                 Dim ex As New Exception("PROCESSO TERMINATO SU RICHIESTA")
