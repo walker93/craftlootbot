@@ -156,14 +156,7 @@ Module help
             .AppendLine("*Creazione Negozi:*")
             .AppendLine("Permette di creare negozi velocemente partendo dal proprio zaino oppure, specificando uno o più oggetti, dalla lista oggetti non necessari per quegli oggetti.")
             .AppendLine("I negozi creati saranno impostati come privati. Il bot dopo che avrà inviato tutti i negozi, invierà anche il comando per cambiare la privacy a tutti i negozi, nel caso si volesse utilizzare.")
-            .AppendLine("Il prezzo inserito di default è il prezzo base, è possibile inviare un messaggio per impostare il prezzo che si vuole agli oggetti. I prezzi saranno salvati per non doverli inviare ogni volta.")
-            .AppendLine("Se si imposta un prezzo minore o uguale a 0, quell'oggetto verrà escluso dalla vendita. Gli oggetti craftati oppure di rarità UE e superiore sono automaticamente esclusi.")
-            .AppendLine("Il formato da utilizzare è: ")
-            .AppendLine("Vetro:100")
-            .AppendLine("Pozione Piccola:0")
-            .AppendLine("Acqua:150")
-            .AppendLine("E' possibile farsi inviare la lista dei prezzi salvati tramite il comando /ottieniprezzi.")
-            .AppendLine("E' possibile cancellare i prezzi salvati tramite il comando /cancellaprezzi.")
+            .AppendLine("Tutta la guida su come si possono salvare e utilizzare i prezzi è disponibile qui: http://telegra.ph/Guida-impostazione-prezzi-per-craftlootbot-07-11")
         End With
         With base_builder
             .AppendLine("*Lista oggetti base:*")
