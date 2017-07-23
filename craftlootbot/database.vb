@@ -55,34 +55,36 @@ Module Database
     End Function
 
     Function Leggo_Items() As String
+
         Console.WriteLine("Aggiorno Items")
-        Dim res
-        Dim jsonres
-        ItemIds.Clear()
-        'aggiungo rifugi
-        res = getRifugiItemsJSON()
-        jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
-        Dim rif() As Item = jsonres.res
-        For Each it As Item In rif
-            ItemIds.Add(it.id, it)
-        Next
-        'aggiungo halloween
-        res = getHalloweenItemsJSON()
-        jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
-        Dim hall() As Item = jsonres.res
-        For Each it As Item In hall
-            ItemIds.Add(it.id, it)
-        Next
-        'Aggiorno items
-        res = IO.File.ReadAllText("items.json")
+            Dim res
+            Dim jsonres
+            ItemIds.Clear()
+            'aggiungo rifugi
+            res = getRifugiItemsJSON()
+            jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
+            Dim rif() As Item = jsonres.res
+            For Each it As Item In rif
+                ItemIds.Add(it.id, it)
+            Next
+            'aggiungo halloween
+            res = getHalloweenItemsJSON()
+            jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
+            Dim hall() As Item = jsonres.res
+            For Each it As Item In hall
+                ItemIds.Add(it.id, it)
+            Next
+            'Aggiorno items
+            res = IO.File.ReadAllText("items.json")
         jsonres = Json.JsonConvert.DeserializeObject(Of ItemResponse)(res)
         Dim res_items = jsonres.res
         For Each it As Item In res_items
             ItemIds.Add(it.id, it)
         Next
         Console.WriteLine("Numero di oggetti: " + ItemIds.Count.ToString)
-        Console.WriteLine("Terminato aggiornamento")
+            Console.WriteLine("Terminato aggiornamento")
         Return "Numero di oggetti: " + ItemIds.Count.ToString
+
     End Function
     Function Leggo_Crafts() As String
         Console.WriteLine("Aggiorno Crats")

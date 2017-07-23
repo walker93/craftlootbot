@@ -9,7 +9,6 @@ Public Class Item
     Public Property value As Integer
     Public Property estimate As Integer
     Public Property craftable As Integer
-    Public Property searchable As Integer
     Public Property reborn As Integer
     Public Property power As Integer
     Public Property power_armor As Integer
@@ -17,6 +16,8 @@ Public Class Item
     Public Property dragon_power As Integer
     Public Property critical As Integer
     Public Property category As Integer
+    Public Property cons As Integer
+    Public Property allow_sell As Integer
     Public Property rarity_name As String
 
     Public Overrides Function ToString() As String
@@ -27,9 +28,8 @@ Public Class Item
         builder.Append("Rinascita richiesta: ").AppendLine(If(reborn - 1 = 0, "Base", getstars()))
         builder.Append("Prezzo base: ").AppendLine(prettyCurrency(value))
         If Not IsNothing(estimate) Then builder.Append("Valore corrente stimato: ").AppendLine(prettyCurrency(estimate))
-        builder.Append("Craftabile: ").AppendLine(If(craftable = 1, "Si", "No"))
-
         builder.Append("Numero di usi per il set Necro: ").AppendLine(countNecro)
+
         If craftable AndAlso CraftIds.ContainsKey(id) Then
             Dim spesa As Integer = If(rarity_value.ContainsKey(rarity), rarity_value(rarity), 0)
             Dim punti_craft As Integer = If(rarity_craft.ContainsKey(rarity), rarity_craft(rarity), 0)
@@ -41,19 +41,21 @@ Public Class Item
             builder.Append("Punti craft guadagnati: ").AppendLine(punti_craft)
             builder.Append("Numero oggetti base necessari: ").AppendLine(oggBase)
         End If
+        builder.Append("Craftabile: ").AppendLine(If(craftable, "Si", "No"))
+        builder.Append("Vendita consentita: ").AppendLine(If(allow_sell, "Si", "No"))
         If power > 0 Then
-                builder.Append("Danno: +").AppendLine(power)
-                builder.Append("Critico: ").Append(critical).AppendLine("%")
-            End If
-            If power_armor < 0 Then
-                builder.Append("Difesa: ").AppendLine(power_armor)
-                builder.Append("Critico: ").Append(critical).AppendLine("%")
-            End If
-            If power_shield < 0 Then
-                builder.Append("Difesa: ").AppendLine(power_shield)
-                builder.Append("Critico: ").Append(critical).AppendLine("%")
-            End If
-            If dragon_power <> 0 Then builder.Append("Danno/Difesa: ").AppendLine(If(dragon_power > 0, "+" + dragon_power.ToString, "-" + dragon_power.ToString))
+            builder.Append("Danno: +").AppendLine(power)
+            builder.Append("Critico: ").Append(critical).AppendLine("%")
+        End If
+        If power_armor < 0 Then
+            builder.Append("Difesa: ").AppendLine(power_armor)
+            builder.Append("Critico: ").Append(critical).AppendLine("%")
+        End If
+        If power_shield < 0 Then
+            builder.Append("Difesa: ").AppendLine(power_shield)
+            builder.Append("Critico: ").Append(critical).AppendLine("%")
+        End If
+        If dragon_power <> 0 Then builder.Append("Danno/Difesa: ").AppendLine(If(dragon_power > 0, "+" + dragon_power.ToString, "-" + dragon_power.ToString))
         Select Case category
             Case 1
                 builder.Append("Categoria: ")
@@ -73,7 +75,8 @@ Public Class Item
                 If power_shield < 0 Then builder.Append("Categoria: ").AppendLine("Scudo")
                 If dragon_power > 0 Then builder.Append("Categoria: ").AppendLine("Equipaggiamento Drago")
         End Select
-        If category > 0 Then builder.Append("Descrizione: ").AppendLine(description)
+        If Not IsNothing(description) Then builder.Append("Descrizione: ").AppendLine(description)
+
         If craftable AndAlso CraftIds.ContainsKey(id) Then
             builder.AppendLine.AppendLine("Necessari:")
             builder.Append("> ").Append(ItemIds(CraftIds(id).material_1).name).AppendLine(" (" + ItemIds(CraftIds(id).material_1).rarity + ")")
@@ -81,7 +84,7 @@ Public Class Item
             builder.Append("> ").Append(ItemIds(CraftIds(id).material_3).name).AppendLine(" (" + ItemIds(CraftIds(id).material_3).rarity + ")")
         End If
         builder.AppendLine.Append(stampaUsi)
-            Return builder.ToString
+        Return builder.ToString
     End Function
 
     'restituisce ID necessari e usi

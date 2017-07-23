@@ -717,6 +717,8 @@ Module Module1
                 Dim name As String = getFileName()
                 a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, getcraftText(CraftTree, gia_possiedi, item_ids.ToArray), "Lista Craft"),,, message.MessageId).Result
                 IO.File.Delete(name)
+
+                'answerLongMessage(getcraftText(CraftTree, gia_possiedi, item_ids.ToArray, True), message.Chat.Id)
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/vendi") Then
 #Region "vendi"
@@ -1056,11 +1058,13 @@ Module Module1
             ElseIf message.Text.ToLower.StartsWith("/setprezzi") Then
 #Region "/setprezzi"
                 api.SendChatActionAsync(message.Chat.Id, ChatAction.Typing)
-                Dim link = message.Text.Replace(If(message.Text.ToLower.Contains("@craftlootbot"), "/setprezzi" + "@craftlootbot", "/setprezzi"), "").Trim
+                'Dim link '= message.Text.Replace(If(message.Text.ToLower.Contains("@craftlootbot"), "/setprezzi" + "@craftlootbot", "/setprezzi"), "").Trim
                 Dim args = message.Text.Split(" ")
-                link = If(args(1), "")
-                Dim URLPrezzi = checkLink(link)
-
+                If args.Length <= 1 Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci un link.").Result
+                    Exit Sub
+                End If
+                Dim URLPrezzi = checkLink(args(1))
                 If IsNothing(URLPrezzi) Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Il link inserito non è valido").Result
                 Else
@@ -1072,6 +1076,10 @@ Module Module1
                         a = api.SendTextMessageAsync(message.Chat.Id, "Non ho trovato prezzi validi al link specificato.").Result
                     End If
                 End If
+#End Region
+            ElseIf message.Text.ToLower.StartsWith("/setequip") Then
+#Region "/setequip"
+
 #End Region
             ElseIf team_members.Contains(message.From.Username) AndAlso message.Text.StartsWith("/dungeon") Then
 #Region "Dungeon"
@@ -1209,7 +1217,7 @@ Module Module1
                     Leggo_Items()
                     Leggo_Crafts()
                 Catch
-                    Console.WriteLine("Impossibile aggiornare dizionario")
+                    Console.WriteLine("Impossibile aggiornare database")
                     Exit Sub
                 End Try
             End If
@@ -1451,7 +1459,7 @@ Module Module1
         Return builder.ToString
     End Function
 
-    Function getcraftText(list As List(Of KeyValuePair(Of Item, Integer)), ByRef possiedi As Dictionary(Of Item, Integer), oggetti() As Integer) As String
+    Function getcraftText(list As List(Of KeyValuePair(Of Item, Integer)), ByRef possiedi As Dictionary(Of Item, Integer), oggetti() As Integer, Optional tick As Boolean = False) As String
         Dim builder As New Text.StringBuilder
         Dim ogg_string()
         For Each i In oggetti
@@ -1463,11 +1471,11 @@ Module Module1
         builder.Append(vbCrLf)
         'Dim sorted = From pair In list
         'Order By pair.Value Descending
-        Dim sorted = list.OrderByDescending(Of Integer)(Function(x) x.Value).ThenBy(Of String)(Function(p) p.Key.name).Select(Of KeyValuePair(Of Item, Integer))(Function(o) o)
+        Dim sorted = list.OrderByDescending(Function(x) x.Value).ThenBy(Function(p) p.Key.name).Select(Function(o) o)
         'Dim sortedDictionary = sorted.ToList()
         For Each craft In sorted
             If isCraftable(craft.Key.id) Then
-                builder.Append("Crea " + craft.Key.name)
+                builder.Append(If(tick, "`", "") + "Crea " + craft.Key.name + If(tick, "`", ""))
                 builder.Append(vbCrLf)
             End If
         Next

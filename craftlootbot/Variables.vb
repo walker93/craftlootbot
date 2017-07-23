@@ -33,7 +33,7 @@
                 Case "debug"
                     debug = If(split(1) = 1, True, False)
                 Case "stat_timeout"
-                    stat_timeout = split(1) 'se debug ogni 2 minuti
+                    stat_timeout = split(1)
                 Case "update_db_timeout"
                     update_db_timeout = split(1)
                 Case "inline_message_row_limit"
