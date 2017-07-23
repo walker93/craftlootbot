@@ -422,4 +422,62 @@ Public Module MyExtensions
         Return Nothing
     End Function
 
+    Sub saveEquip(items As List(Of Integer), UserID As Integer)
+        IO.Directory.CreateDirectory("equip")
+        Dim text As New Text.StringBuilder
+        Dim path = "equip/" + UserID.ToString + ".txt"
+        For Each id In items
+            Dim it = ItemIds(id)
+            Dim type = it.getEquipType
+            text.Append(type.ToString).Append(":").AppendLine(id)
+        Next
+        IO.File.WriteAllText(path, text.ToString)
+    End Sub
+
+    Function getEquip(UserID As Integer) As Integer()
+        Dim path = "equip/" + UserID.ToString + ".txt"
+        Dim lines = IO.File.ReadAllLines(path)
+        Dim res As Integer()
+        For Each line In lines
+            res.Add(line.Split(":")(1))
+        Next
+        Return res
+    End Function
+
+    Function HasEquip(UserID As Integer) As Boolean
+        Dim path = "equip/" + UserID.ToString + ".txt"
+        If IO.File.Exists(path) Then Return True
+        Return False
+    End Function
+
+    Function HasZaino(UserID As Integer) As Boolean
+        Dim path = "zaini/" + UserID.ToString + ".txt"
+        If IO.File.Exists(path) Then Return True
+        Return False
+    End Function
+    'message.From.id
+    'ottengo zaino e aggiungo l'equipaggiamento
+    Function getZaino(UserID As Integer) As Dictionary(Of Item, Integer)
+        Dim Zaino_path As String = "zaini/" + UserID.ToString + ".txt"
+        Dim Equip_path As String = "equip/" + UserID.ToString + ".txt"
+        Dim zaino As String = ""
+        If HasZaino(UserID) Then
+            zaino = IO.File.ReadAllText(Zaino_path)
+        End If
+        Dim zainoDic = parseZaino(zaino)
+        If IO.File.Exists(Equip_path) Then
+            Dim equip = getEquip(UserID)
+            If equip.Length > 0 Then
+                For Each eq In equip
+                    If zainoDic.ContainsKey(ItemIds(eq)) Then
+                        zainoDic(ItemIds(eq)) += 1
+                    Else
+                        zainoDic.Add(ItemIds(eq), 1)
+                    End If
+                Next
+            End If
+        End If
+        Return zainoDic
+    End Function
+
 End Module

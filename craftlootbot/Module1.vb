@@ -251,15 +251,15 @@ Module Module1
         Dim zainoDic_copy As New Dictionary(Of Item, Integer)
         Dim gia_possiedi As New Dictionary(Of Item, Integer)
 
-        Dim zainoDic As New Dictionary(Of Item, Integer)
+        Dim zainoDic As Dictionary(Of Item, Integer) 'As New Dictionary(Of Item, Integer)
 
-        Dim zaino As String = ""
-        If IO.File.Exists("zaini/" + id.ToString + ".txt") Then
-            zaino = IO.File.ReadAllText("zaini/" + id.ToString + ".txt")
-        Else
-            Return New KeyValuePair(Of String, Integer)("", -1)
-        End If
-        zainoDic = parseZaino(zaino)
+        'Dim zaino As String = ""
+        'If IO.File.Exists("zaini/" + id.ToString + ".txt") Then
+        '    zaino = IO.File.ReadAllText("zaini/" + id.ToString + ".txt")
+        'Else
+        '    Return New KeyValuePair(Of String, Integer)("", -1)
+        'End If
+        zainoDic = getZaino(id)
         zainoDic_copy = zainoDic
 
         task_getNeededItemsList(item.id, CraftList, zainoDic_copy, gia_possiedi, ct)
@@ -501,14 +501,14 @@ Module Module1
 #Region "utilizza zaino ricevuto"
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) AndAlso message.Chat.Type = ChatType.Private Then
                     Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
-                    Dim zaino As String = ""
-                    If IO.File.Exists(path) Then
-                        zaino = IO.File.ReadAllText(path)
+                    'Dim zaino As String = ""
+                    If HasZaino(message.From.Id) Then
+                        'zaino = IO.File.ReadAllText(path)
                     Else
                         a = api.SendTextMessageAsync(message.Chat.Id, "Per utilizzare il tuo zaino, devi averne uno salvato." + vbCrLf + "Inoltra il tuo zaino di seguito.").Result
                         Exit Sub
                     End If
-                    zainoDic = parseZaino(zaino)
+                    zainoDic = getZaino(message.From.Id)
                     Dim cercotext = parseCerca(confronti.Item(message.From.Id))
                     If cercotext.Count = 0 Then cercotext = parseListaoVendi(confronti(message.From.Id))
                     Dim result = ConfrontaDizionariItem(zainoDic, cercotext)
@@ -620,12 +620,12 @@ Module Module1
                     a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci la rarità.").Result
                     Exit Sub
                 End If
-                Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
-                Dim zaino As String = ""
-                If IO.File.Exists(path) Then
-                    zaino = IO.File.ReadAllText(path)
-                End If
-                zainoDic = parseZaino(zaino)
+                'Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
+                'Dim zaino As String = ""
+                'If IO.File.Exists(path) Then
+                '    zaino = IO.File.ReadAllText(path)
+                'End If
+                zainoDic = getZaino(message.From.Id)
                 a = api.SendTextMessageAsync(message.Chat.Id, getBaseText(rarity, zainoDic)).Result
 #End Region
             ElseIf message.Text.ToLower.Trim.Equals("/confronta") Then
@@ -650,13 +650,13 @@ Module Module1
 #Region "lista"
                 Dim item_ids = checkInputItems(message.Text.ToLower.Trim, message.Chat.Id, "/lista")
                 If item_ids.Count = 0 Then Exit Sub
-                Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
-                Dim zaino As String = ""
-                If IO.File.Exists(path) Then
-                    zaino = IO.File.ReadAllText(path)
-                End If
+                'Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
+                'Dim zaino As String = ""
+                'If IO.File.Exists(path) Then
+                '    zaino = IO.File.ReadAllText(path)
+                'End If
                 api.SendChatActionAsync(message.Chat.Id, ChatAction.Typing)
-                zainoDic = parseZaino(zaino)
+                zainoDic = getZaino(message.From.Id)
                 Dim zainoDic_copy = zainoDic
                 For Each i In item_ids
                     getNeededItemsList(i, CraftList, zainoDic_copy, gia_possiedi, spesa, punti_craft)
@@ -675,18 +675,18 @@ Module Module1
                 End If
                 id = getItemId(item)
                 Dim prof As Integer = -1
-                Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
-                Dim zaino As String = ""
-                If IO.File.Exists(path) Then
-                    zaino = IO.File.ReadAllText(path)
-                End If
+                'Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
+                'Dim zaino As String = ""
+                'If IO.File.Exists(path) Then
+                ' zaino = IO.File.ReadAllText(path)
+                'End If
                 If id <> -1 Then
                     If Not isCraftable(id) Then
                         Dim e = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è craftabile").Result
                         Exit Sub
                     End If
                     api.SendChatActionAsync(message.Chat.Id, ChatAction.UploadDocument)
-                    zainoDic = parseZaino(zaino)
+                    zainoDic = getZaino(message.From.Id)
                     getNeededItemsTree(id, prof, CraftTree, zainoDic, gia_possiedi, spesa)
                     If rarity_value.ContainsKey(ItemIds.Item(id).rarity) Then spesa += rarity_value.Item(ItemIds.Item(id).rarity)
                     Dim name As String = getFileName()
@@ -701,13 +701,13 @@ Module Module1
                 Dim item_ids = checkInputItems(message.Text.ToLower.Trim, message.Chat.Id, "/craft")
                 If item_ids.Count = 0 Then Exit Sub
                 Dim prof As Integer = -1
-                Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
-                Dim zaino As String = ""
-                If IO.File.Exists(path) Then
-                    zaino = IO.File.ReadAllText(path)
-                End If
+                'Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
+                'Dim zaino As String = ""
+                'If IO.File.Exists(path) Then
+                '    zaino = IO.File.ReadAllText(path)
+                'End If
                 api.SendChatActionAsync(message.Chat.Id, ChatAction.UploadDocument)
-                zainoDic = parseZaino(zaino)
+                zainoDic = getZaino(message.From.Id)
                 Dim zainoDic_copy = zainoDic
                 For Each i In item_ids
                     prof = -1
@@ -724,16 +724,16 @@ Module Module1
 #Region "vendi"
                 Dim item_ids = checkInputItems(message.Text.ToLower.Trim, message.Chat.Id, "/vendi")
                 If item_ids.Count = 0 Then Exit Sub
-                Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
-                Dim zaino As String = ""
-                If IO.File.Exists(path) Then
-                    zaino = IO.File.ReadAllText(path)
+                'Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
+                'Dim zaino As String = ""
+                If HasZaino(message.From.Id) Then
+                    'zaino = IO.File.ReadAllText(path)
                 Else
                     a = api.SendTextMessageAsync(message.Chat.Id, "Per utilizzare questa funzione devi prima salvare il tuo zaino.").Result
                     Exit Sub
                 End If
                 api.SendChatActionAsync(message.Chat.Id, ChatAction.Typing)
-                zainoDic = parseZaino(zaino)
+                zainoDic = getZaino(message.From.Id)
                 Dim zainoDic_copy = zainoDic
                 For Each i In item_ids
                     getNeededItemsList(i, CraftList, zainoDic_copy, gia_possiedi, spesa, punti_craft)
@@ -745,7 +745,7 @@ Module Module1
             ElseIf message.Text.ToLower.StartsWith("/svuota") Then
 #Region "Svuota"
                 Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
-                If IO.File.Exists(path) Then
+                If HasZaino(message.From.Id) Then
                     IO.File.Delete(path)
                     a = api.SendTextMessageAsync(message.Chat.Id, "Lo zaino è stato svuotato.").Result
                 Else
@@ -762,58 +762,58 @@ Module Module1
                     a = api.SendTextMessageAsync(message.Chat.Id, "Non hai prezzi salvati al momento.").Result
                 End If
 #End Region
-            ElseIf message.Text.ToLower.StartsWith("/rinascita") Then
-#Region "rinascita"
-                Dim args() As String = message.Text.Split(" ")
-                If args.Length < 3 Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci tutti i parametri richiesti!").Result
-                    Exit Sub
-                End If
-                Dim user As String = args(1)
-                If Not checkPlayer(user) Or user.ToLower.Trim = message.From.Username.ToLower.Trim Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "L'utente inserito non è valido.").Result
-                    Exit Sub
-                End If
-                Dim oggetto As String = message.Text.Substring(message.Text.LastIndexOf(user) + user.Length + 1).Trim
-                Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
-                id = getItemId(oggetto)
-                If id <> -1 Then
-                    ItemIds.TryGetValue(id, it)
-                Else
-                    a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
-                End If
-                Dim zaino As String = ""
-                If IO.File.Exists(path) Then
-                    zaino = IO.File.ReadAllText(path)
-                End If
-                If zaino = "" Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Devi salvare lo zaino prima di usare questa funzione.").Result
-                    Exit Sub
-                End If
-                zainoDic = parseZaino(zaino)
-                If zainoDic.ContainsKey(it) Then
-                    zainoDic.Remove(it)
-                Else
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Non possiedi l'oggetto di scambio inserito.").Result
-                    Exit Sub
-                End If
-                Dim name As String = getFileName()
-                a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, creaScambi(zainoDic, oggetto, user), "Lista Scambi"),,, message.MessageId).Result
-                IO.File.Delete(name)
-#End Region
+                '            ElseIf message.Text.ToLower.StartsWith("/rinascita") Then
+                '#Region "rinascita"
+                '                Dim args() As String = message.Text.Split(" ")
+                '                If args.Length < 3 Then
+                '                    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci tutti i parametri richiesti!").Result
+                '                    Exit Sub
+                '                End If
+                '                Dim user As String = args(1)
+                '                If Not checkPlayer(user) Or user.ToLower.Trim = message.From.Username.ToLower.Trim Then
+                '                    a = api.SendTextMessageAsync(message.Chat.Id, "L'utente inserito non è valido.").Result
+                '                    Exit Sub
+                '                End If
+                '                Dim oggetto As String = message.Text.Substring(message.Text.LastIndexOf(user) + user.Length + 1).Trim
+                '                Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
+                '                id = getItemId(oggetto)
+                '                If id <> -1 Then
+                '                    ItemIds.TryGetValue(id, it)
+                '                Else
+                '                    a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
+                '                End If
+                '                Dim zaino As String = ""
+                '                If IO.File.Exists(path) Then
+                '                    zaino = IO.File.ReadAllText(path)
+                '                End If
+                '                If zaino = "" Then
+                '                    a = api.SendTextMessageAsync(message.Chat.Id, "Devi salvare lo zaino prima di usare questa funzione.").Result
+                '                    Exit Sub
+                '                End If
+                '                zainoDic = parseZaino(zaino)
+                '                If zainoDic.ContainsKey(it) Then
+                '                    zainoDic.Remove(it)
+                '                Else
+                '                    a = api.SendTextMessageAsync(message.Chat.Id, "Non possiedi l'oggetto di scambio inserito.").Result
+                '                    Exit Sub
+                '                End If
+                '                Dim name As String = getFileName()
+                '                a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, creaScambi(zainoDic, oggetto, user), "Lista Scambi"),,, message.MessageId).Result
+                '                IO.File.Delete(name)
+                '#End Region
             ElseIf message.Text.ToLower.StartsWith("/creanegozi") Then
 #Region "creanegozi"
-                Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
-                Dim zaino As String = ""
+                'Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
+                'Dim zaino As String = ""
                 Dim result As New Dictionary(Of Item, Integer)
-                If IO.File.Exists(path) Then
-                    zaino = IO.File.ReadAllText(path)
-                End If
-                If zaino = "" Then
+                'If IO.File.Exists(path) Then
+                '    zaino = IO.File.ReadAllText(path)
+                'End If
+                If Not HasZaino(message.From.Id) Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Devi salvare lo zaino prima di usare questa funzione.").Result
                     Exit Sub
                 End If
-                zainoDic = parseZaino(zaino)
+                zainoDic = getZaino(message.From.Id)
                 Dim item_ids = checkInputItems(message.Text.Trim.ToLower, message.Chat.Id, "/creanegozi")
                 If item_ids.Count = 0 Then
                     'Uso lo zaino per creare i negozi
@@ -958,13 +958,13 @@ Module Module1
                     Dim pc_tot As Integer = If(rarity_craft.ContainsKey(rarity), rarity_craft(rarity), 0)
                     Dim costoBase As Integer = 0
                     Dim oggBase As Integer = 0
-                    Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
-                    Dim zaino As String = ""
-                    If IO.File.Exists(path) Then
-                        zaino = IO.File.ReadAllText(path)
-                    End If
+                    'Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
+                    'Dim zaino As String = ""
+                    'If IO.File.Exists(path) Then
+                    '    zaino = IO.File.ReadAllText(path)
+                    'End If
                     api.SendChatActionAsync(message.Chat.Id, ChatAction.Typing)
-                    zainoDic = parseZaino(zaino)
+                    zainoDic = getZaino(message.From.Id)
                     Dim zainoDic_copy = zainoDic
                     getNeededItemsList(id, CraftList, zainoDic_copy, gia_possiedi, spesa, punti_craft)
                     If rarity_value.ContainsKey(ItemIds.Item(id).rarity) Then spesa += rarity_value.Item(ItemIds.Item(id).rarity)
@@ -1079,7 +1079,40 @@ Module Module1
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/setequip") Then
 #Region "/setequip"
+                Dim message_text = message.Text.ToLower.Trim
+                Dim comando = "/setequip"
+                Dim items = message_text.Replace(If(message_text.Contains("@craftlootbot"), comando + "@craftlootbot", comando), "").Split(",").Where(Function(p) p <> "").ToList
+                Dim item_ids As New List(Of Integer)
+                If items.Count = 0 Then
+                    If HasEquip(message.From.Id) Then
+                        IO.File.Delete("equip/" + message.From.Id.ToString + ".txt")
+                        a = api.SendTextMessageAsync(message.Chat.Id, "Equipaggiamento eliminato").Result
+                    Else
+                        a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto o gli oggetti che vuoi impostare equipaggiati, al momento non hai impostato nulla").Result
+                    End If
+                    Exit Sub
+                End If
+                For Each i In items
+                    i = i.Trim
+                    Dim temp_id = getItemId(i)
+                    If temp_id = -1 Then
+                        a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto " + i + " non è stato riconosciuto, verrà saltato.").Result
+                        Continue For
+                    End If
+                    If ItemIds(temp_id).getEquipType < 0 Then
+                        Dim e = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto " + i + " non è equipaggiabile, verrà saltato.").Result
+                        Continue For
+                    End If
+                    item_ids.Add(temp_id)
+                Next
+                If item_ids.Count = 0 Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Nessuno degli oggetti inseriti è valido, riprova.").Result
+                    Exit Sub
+                End If
 
+                'ora posso salvare
+                saveEquip(item_ids, message.From.Id)
+                a = api.SendTextMessageAsync(message.Chat.Id, "Equipaggiamento salvato").Result
 #End Region
             ElseIf team_members.Contains(message.From.Username) AndAlso message.Text.StartsWith("/dungeon") Then
 #Region "Dungeon"
@@ -1372,7 +1405,7 @@ Module Module1
         Dim buildernecessari As New Text.StringBuilder()
         Dim builderposseduti As New Text.StringBuilder()
         builderposseduti.AppendLine()
-        If zaino.Count > 0 Then builderposseduti.AppendLine("Già possiedi: ")
+        If gia_possiedi.Count > 0 Then builderposseduti.AppendLine("Già possiedi: ")
         For Each pos In gia_possiedi
             With builderposseduti
                 .Append("> ")
@@ -1688,6 +1721,7 @@ Module Module1
                 Continue For
             End Try
         Next
+
         Return quantità
     End Function
 

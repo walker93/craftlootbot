@@ -70,10 +70,12 @@ Public Class Item
                 builder.Append("Categoria: ")
                 builder.AppendLine("Consumabili")
             Case Else
-                If power > 0 Then builder.Append("Categoria: ").AppendLine("Arma")
-                If power_armor < 0 Then builder.Append("Categoria: ").AppendLine("Armatura")
-                If power_shield < 0 Then builder.Append("Categoria: ").AppendLine("Scudo")
-                If dragon_power > 0 Then builder.Append("Categoria: ").AppendLine("Equipaggiamento Drago")
+                Dim equip = getEquipType()
+                If equip = Equip.ARMA Then builder.Append("Categoria: ").AppendLine("Arma")
+                If equip = Equip.ARMATURA Then builder.Append("Categoria: ").AppendLine("Armatura")
+                If equip = Equip.SCUDO Then builder.Append("Categoria: ").AppendLine("Scudo")
+                If equip = Equip.SELLA Then builder.Append("Categoria: ").AppendLine("Sella Drago")
+                If equip = Equip.ARTIGLI Then builder.Append("Categoria: ").AppendLine("Artigli Drago")
         End Select
         If Not IsNothing(description) Then builder.Append("Descrizione: ").AppendLine(description)
 
@@ -171,6 +173,15 @@ Public Class Item
             End If
         Next
     End Sub
+
+    Public Function getEquipType() As Equip
+        If power > 0 Then Return Equip.ARMA
+        If power_armor < 0 Then Return Equip.ARMATURA
+        If power_shield < 0 Then Return Equip.SCUDO
+        If dragon_power > 0 Then Return Equip.ARTIGLI
+        If dragon_power < 0 Then Return Equip.SELLA
+        Return Equip.NONE
+    End Function
 
     Public Class ItemComparer
         Implements IComparer(Of Item)

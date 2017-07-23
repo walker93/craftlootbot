@@ -1,4 +1,4 @@
-﻿Module Variables
+﻿Public Module Variables
     Public CRAFT_URL As String
     Public ITEM_URL As String
     Public PLAYER_URL As String
@@ -18,6 +18,16 @@
     Public alphabet As String() = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"}
     Public Italian_dictionary As String()
     Public team_members As New List(Of String)
+
+    Public Enum Equip
+        ARMA = 0
+        ARMATURA = 1
+        SCUDO = 2
+        ARTIGLI = 3
+        SELLA = 4
+
+        NONE = -1
+    End Enum
 
     'Legge da file impostazioni e inizializza variabili
     Sub initializeVariables()
