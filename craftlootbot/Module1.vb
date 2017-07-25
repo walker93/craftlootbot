@@ -1405,7 +1405,7 @@ Module Module1
         Dim buildernecessari As New Text.StringBuilder()
         Dim builderposseduti As New Text.StringBuilder()
         builderposseduti.AppendLine()
-        If gia_possiedi.Count > 0 Then builderposseduti.AppendLine("Già possiedi: ")
+        If zaino.Count > 0 OrElse gia_possiedi.Count > 0 Then builderposseduti.AppendLine("Già possiedi: ")
         For Each pos In gia_possiedi
             With builderposseduti
                 .Append("> ")

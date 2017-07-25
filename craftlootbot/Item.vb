@@ -70,13 +70,14 @@ Public Class Item
                 builder.Append("Categoria: ")
                 builder.AppendLine("Consumabili")
             Case Else
-                Dim equip = getEquipType()
-                If equip = Equip.ARMA Then builder.Append("Categoria: ").AppendLine("Arma")
-                If equip = Equip.ARMATURA Then builder.Append("Categoria: ").AppendLine("Armatura")
-                If equip = Equip.SCUDO Then builder.Append("Categoria: ").AppendLine("Scudo")
-                If equip = Equip.SELLA Then builder.Append("Categoria: ").AppendLine("Sella Drago")
-                If equip = Equip.ARTIGLI Then builder.Append("Categoria: ").AppendLine("Artigli Drago")
         End Select
+        Dim equip = getEquipType()
+        If equip = Equip.ARMA Then builder.Append("Equip: ").AppendLine("Arma")
+        If equip = Equip.ARMATURA Then builder.Append("Equip: ").AppendLine("Armatura")
+        If equip = Equip.SCUDO Then builder.Append("Equip: ").AppendLine("Scudo")
+        If equip = Equip.SELLA Then builder.Append("Equip: ").AppendLine("Sella Drago")
+        If equip = Equip.ARTIGLI Then builder.Append("Equip: ").AppendLine("Artigli Drago")
+
         If Not IsNothing(description) Then builder.Append("Descrizione: ").AppendLine(description)
 
         If craftable AndAlso CraftIds.ContainsKey(id) Then
