@@ -620,11 +620,6 @@ Module Module1
                     a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci la rarità.").Result
                     Exit Sub
                 End If
-                'Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
-                'Dim zaino As String = ""
-                'If IO.File.Exists(path) Then
-                '    zaino = IO.File.ReadAllText(path)
-                'End If
                 zainoDic = getZaino(message.From.Id)
                 a = api.SendTextMessageAsync(message.Chat.Id, getBaseText(rarity, zainoDic)).Result
 #End Region
@@ -762,45 +757,6 @@ Module Module1
                     a = api.SendTextMessageAsync(message.Chat.Id, "Non hai prezzi salvati al momento.").Result
                 End If
 #End Region
-                '            ElseIf message.Text.ToLower.StartsWith("/rinascita") Then
-                '#Region "rinascita"
-                '                Dim args() As String = message.Text.Split(" ")
-                '                If args.Length < 3 Then
-                '                    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci tutti i parametri richiesti!").Result
-                '                    Exit Sub
-                '                End If
-                '                Dim user As String = args(1)
-                '                If Not checkPlayer(user) Or user.ToLower.Trim = message.From.Username.ToLower.Trim Then
-                '                    a = api.SendTextMessageAsync(message.Chat.Id, "L'utente inserito non è valido.").Result
-                '                    Exit Sub
-                '                End If
-                '                Dim oggetto As String = message.Text.Substring(message.Text.LastIndexOf(user) + user.Length + 1).Trim
-                '                Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
-                '                id = getItemId(oggetto)
-                '                If id <> -1 Then
-                '                    ItemIds.TryGetValue(id, it)
-                '                Else
-                '                    a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
-                '                End If
-                '                Dim zaino As String = ""
-                '                If IO.File.Exists(path) Then
-                '                    zaino = IO.File.ReadAllText(path)
-                '                End If
-                '                If zaino = "" Then
-                '                    a = api.SendTextMessageAsync(message.Chat.Id, "Devi salvare lo zaino prima di usare questa funzione.").Result
-                '                    Exit Sub
-                '                End If
-                '                zainoDic = parseZaino(zaino)
-                '                If zainoDic.ContainsKey(it) Then
-                '                    zainoDic.Remove(it)
-                '                Else
-                '                    a = api.SendTextMessageAsync(message.Chat.Id, "Non possiedi l'oggetto di scambio inserito.").Result
-                '                    Exit Sub
-                '                End If
-                '                Dim name As String = getFileName()
-                '                a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, creaScambi(zainoDic, oggetto, user), "Lista Scambi"),,, message.MessageId).Result
-                '                IO.File.Delete(name)
-                '#End Region
             ElseIf message.Text.ToLower.StartsWith("/creanegozi") Then
 #Region "creanegozi"
                 'Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
@@ -1035,10 +991,14 @@ Module Module1
                     Exit Sub
                 End If
                 id = getItemId(item)
-                api.SendChatActionAsync(message.Chat.Id, ChatAction.UploadDocument)
-                Dim name As String = getFileName()
-                Dim xml As String = "<?xml version='1.0' encoding='UTF-8'?>" + vbNewLine + ItemToXML(id)
-                a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, xml, item, ".xml"),,, message.MessageId).Result
+                If id <> -1 Then
+                    api.SendChatActionAsync(message.Chat.Id, ChatAction.UploadDocument)
+                    Dim name As String = getFileName()
+                    Dim xml As String = "<?xml version='1.0' encoding='UTF-8'?>" + vbNewLine + ItemToXML(id)
+                    a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, xml, item, ".xml"),,, message.MessageId).Result
+                Else
+                    a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
+                End If
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/html") Then
 #Region "/HTML"
@@ -1049,11 +1009,15 @@ Module Module1
                 End If
                 Dim Header As String = "<head><style>body{padding:20px}div{margin-bottom:5px;margin-left:8px;border-left:1px solid #000;padding:5px}label.leaf{border:none;cursor: default;font-weight: normal}input:checked+label+div{display:none}input:checked+label:before{content:'+ '}input+label:before{content:'- '}label{font-size:16px;padding:2px 5px;cursor:pointer;display:block;font-weight:700}</style></head>"
                 id = getItemId(item)
-                api.SendChatActionAsync(message.Chat.Id, ChatAction.UploadDocument)
-                Dim name As String = getFileName()
-                Dim counter = 0
-                Dim html As String = Header + vbNewLine + ItemToHTML(id, counter) + "</body>"
-                a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, html, item, ".html"),,, message.MessageId).Result
+                If id <> -1 Then
+                    api.SendChatActionAsync(message.Chat.Id, ChatAction.UploadDocument)
+                    Dim name As String = getFileName()
+                    Dim counter = 0
+                    Dim html As String = Header + vbNewLine + ItemToHTML(id, counter) + "</body>"
+                    a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, html, item, ".html"),,, message.MessageId).Result
+                Else
+                    a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
+                End If
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/setprezzi") Then
 #Region "/setprezzi"
@@ -1545,19 +1509,16 @@ Module Module1
         Else
             builder.AppendLine(intestazione)
         End If
-        For Each item In ItemIds
-            If Not isCraftable(item.Key) Then
-                If item.Value.rarity = rarity Then
-                    builder.Append("> ")
-                    builder.Append(item.Value.name)
-                    If zaino.Count > 0 Then
-                        builder.Append(" (")
-                        builder.Append(If(zaino.ContainsKey(item.Value), zaino.Item(item.Value), 0))
-                        builder.Append(")")
-                    End If
-                    builder.AppendLine()
-                End If
+        Dim sublist = ItemIds.Where(Function(x) x.Value.rarity = rarity AndAlso Not isCraftable(x.Value.id)).OrderBy(Function(x) x.Value.name)
+        For Each item In sublist
+            builder.Append("> ")
+            builder.Append(item.Value.name)
+            If zaino.Count > 0 Then
+                builder.Append(" (")
+                builder.Append(If(zaino.ContainsKey(item.Value), zaino.Item(item.Value), 0))
+                builder.Append(")")
             End If
+            builder.AppendLine()
         Next
         If builder.ToString = intestazione + Environment.NewLine Then builder.AppendLine("Non ci sono oggetti base per questa rarità.")
         Return builder.ToString

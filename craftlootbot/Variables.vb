@@ -25,14 +25,14 @@
         SCUDO = 2
         ARTIGLI = 3
         SELLA = 4
-
+        TALISMANO = 5
         NONE = -1
     End Enum
 
     'Legge da file impostazioni e inizializza variabili
     Sub initializeVariables()
         If Not IO.File.Exists(settings_file) Then
-            IO.File.WriteAllText(settings_file, "base_url=http://fenixweb.net:3300/api/v1/")
+            IO.File.WriteAllText(settings_file, "base_url=http://fenixweb.net:3300/api/v2/" + Loot_Token + "/")
         End If
         Dim settings As String() = IO.File.ReadAllLines(settings_file)
         For Each line In settings

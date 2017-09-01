@@ -43,6 +43,12 @@ Public Class Item
         End If
         builder.Append("Craftabile: ").AppendLine(If(craftable, "Si", "No"))
         builder.Append("Vendita consentita: ").AppendLine(If(allow_sell, "Si", "No"))
+        Dim equip = getEquipType()
+        If equip = Equip.ARMA Then builder.Append("Equip: ").AppendLine("Arma")
+        If equip = Equip.ARMATURA Then builder.Append("Equip: ").AppendLine("Armatura")
+        If equip = Equip.SCUDO Then builder.Append("Equip: ").AppendLine("Scudo")
+        If equip = Equip.SELLA Then builder.Append("Equip: ").AppendLine("Sella Drago")
+        If equip = Equip.ARTIGLI Then builder.Append("Equip: ").AppendLine("Artigli Drago")
         If power > 0 Then
             builder.Append("Danno: +").AppendLine(power)
             builder.Append("Critico: ").Append(critical).AppendLine("%")
@@ -55,7 +61,7 @@ Public Class Item
             builder.Append("Difesa: ").AppendLine(power_shield)
             builder.Append("Critico: ").Append(critical).AppendLine("%")
         End If
-        If dragon_power <> 0 Then builder.Append("Danno/Difesa: ").AppendLine(If(dragon_power > 0, "+" + dragon_power.ToString, "-" + dragon_power.ToString))
+        If dragon_power <> 0 Then builder.Append("Danno/Difesa: ").AppendLine(If(dragon_power > 0, "+" + dragon_power.ToString, dragon_power.ToString))
         Select Case category
             Case 1
                 builder.Append("Categoria: ")
@@ -71,12 +77,6 @@ Public Class Item
                 builder.AppendLine("Consumabili")
             Case Else
         End Select
-        Dim equip = getEquipType()
-        If equip = Equip.ARMA Then builder.Append("Equip: ").AppendLine("Arma")
-        If equip = Equip.ARMATURA Then builder.Append("Equip: ").AppendLine("Armatura")
-        If equip = Equip.SCUDO Then builder.Append("Equip: ").AppendLine("Scudo")
-        If equip = Equip.SELLA Then builder.Append("Equip: ").AppendLine("Sella Drago")
-        If equip = Equip.ARTIGLI Then builder.Append("Equip: ").AppendLine("Artigli Drago")
 
         If Not IsNothing(description) Then builder.Append("Descrizione: ").AppendLine(description)
 
@@ -181,6 +181,7 @@ Public Class Item
         If power_shield < 0 Then Return Equip.SCUDO
         If dragon_power > 0 Then Return Equip.ARTIGLI
         If dragon_power < 0 Then Return Equip.SELLA
+        If name.ToLower.StartsWith("talismano ") Then Return Equip.TALISMANO
         Return Equip.NONE
     End Function
 
@@ -216,5 +217,3 @@ Public Class Item
         End Function
     End Class
 End Class
-
-

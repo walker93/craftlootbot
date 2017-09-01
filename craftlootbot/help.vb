@@ -17,6 +17,7 @@ Module help
     Public info_builder As New StringBuilder
     Public stima_builder As New StringBuilder
     Public xmlhtml_builder As New StringBuilder
+    Public setequip_builder As New StringBuilder
 
     Function process_help(text As String) As String
         Dim builder As New StringBuilder
@@ -49,6 +50,8 @@ Module help
                 builder.Append(stima_builder.ToString)
             Case "html-xml"
                 builder.Append(xmlhtml_builder.ToString)
+            Case "setequip"
+                builder.Append(setequip_builder.ToString)
             Case Else
                 builder.Append("Comando non riconosciuto.")
         End Select
@@ -72,6 +75,7 @@ Module help
             .AppendLine("> '/stats' per ottenere statistiche sull'utilizzo del bot.")
             .AppendLine("> '/stima <oggetto>' per ricevere info su costi, punti craft e valore di un oggetto tenendo presente il vostro zaino.")
             .AppendLine("> '/xml <oggetto>' o '/html <oggetto>' per ricevere un file XML o HTML con la struttura ad albero dei craft dell'oggetto inserito.")
+            .AppendLine("> '/setequip <oggetto/i>' per impostare il proprio equipaggiamento.")
             .AppendLine("> '@craftlootbot <rarità> <oggetto>' in qualsiasi chat o gruppo per inviare rapidamente la lista dei materiali che stai cercando, la rarità è opzionale.")
             .AppendLine()
             .AppendLine("*GUIDA INOLTRI:*")
@@ -178,6 +182,13 @@ Module help
             .AppendLine("Il comando HTML dispone anche di una semplice interfaccia grafica che permette di aprire o chiudere i vari craft per facilitare la lettura. Sia da PC che da smartphone.")
             .AppendLine("E' possibile fare lo stesso con il comando /xml all'interno di un editor testuale avanzato come Notepad++")
         End With
+        With setequip_builder
+            .AppendLine("*SetEquip:*")
+            .AppendLine("Con questo comando è possibile impostare il proprio equipaggiamento in modo da non doverlo aggiungere allo zaino manualmente o disequipaggiarlo prima di salvare lo zaino.")
+            .AppendLine("E' possibile inserire tutto l'equipaggiamento o solo una parte, nell'ordine che si preferisce.")
+            .AppendLine("Se viene inviato il comando senza oggetti di seguito verrà cancellato l'equipaggiamento attualmente salvato.")
+            .AppendLine("Usando questo comando il vecchio equipaggiamento viene sovrascritto.")
+        End With
     End Sub
 
     Function creaHelpKeyboard() As ReplyMarkups.InlineKeyboardMarkup
@@ -185,7 +196,7 @@ Module help
         Dim keyboardbuttons()() As InlineKeyboardButton
         Dim lista_button As New InlineKeyboardButton("📜 Lista 📜", "lista")
         Dim albero_button As New InlineKeyboardButton("🌲 Albero 🌲", "albero")
-        Dim rinascita_button As New InlineKeyboardButton("👼🏼 Rinascita 👼🏼", "rinascita")
+        'Dim rinascita_button As New InlineKeyboardButton("👼🏼 Rinascita 👼🏼", "rinascita")
         Dim inline_button As New InlineKeyboardButton("🔍 Inline 🔍", "inline")
         Dim zaino_button As New InlineKeyboardButton("🎒 Zaino 🎒", "zaino")
         Dim craft_button As New InlineKeyboardButton("🛠 Craft 🛠", "craft")
@@ -196,6 +207,7 @@ Module help
         Dim info_button As New InlineKeyboardButton("ℹ️ Info ℹ️", "info")
         Dim stima_button As New InlineKeyboardButton("📈 Stima 📈", "stima")
         Dim xmlHtml_button As New InlineKeyboardButton("🌐 XML / HTML 🌐", "html-xml")
+        Dim setequip_button As New InlineKeyboardButton("🗡 SetEquip 🗡", "setequip")
         Dim riepilogo_button As New InlineKeyboardButton("⬅️ Riepilogo ⬅️", "riepilogo")
 
         Dim row1() As InlineKeyboardButton
@@ -205,26 +217,28 @@ Module help
         Dim row5() As InlineKeyboardButton
         Dim row6() As InlineKeyboardButton
         Dim row7() As InlineKeyboardButton
+        'Dim row8() As InlineKeyboardButton
 
         row1.Add(lista_button)
         row1.Add(albero_button)
 
         row2.Add(zaino_button)
-        row2.Add(rinascita_button)
+        'row2.Add(rinascita_button)
+        row2.Add(craft_button)
 
-        row3.Add(craft_button)
         row3.Add(confronta_button)
+        row3.Add(inline_button)
 
-        row4.Add(inline_button)
         row4.Add(base_button)
+        row4.Add(vendi_button)
 
-        row5.Add(vendi_button)
         row5.Add(creanegozi_button)
+        row5.Add(info_button)
 
-        row6.Add(info_button)
         row6.Add(stima_button)
+        row6.Add(xmlHtml_button)
 
-        row7.Add(xmlHtml_button)
+        row7.add(setequip_button)
         row7.Add(riepilogo_button)
 
         keyboardbuttons.Add(row1)
@@ -234,6 +248,7 @@ Module help
         keyboardbuttons.Add(row5)
         keyboardbuttons.Add(row6)
         keyboardbuttons.Add(row7)
+        'keyboardbuttons.Add(row8)
         keyboard.InlineKeyboard = keyboardbuttons
         Return keyboard
     End Function
