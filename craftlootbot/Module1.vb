@@ -1722,8 +1722,10 @@ Module Module1
     'Date le impostazioni prezzi per i negozi, restituisco un dizionario(Oggetto, prezzo)
     Function parsePrezzoNegozi(text As String) As Dictionary(Of Item, Integer)
         Dim prezzo_dic As New Dictionary(Of Item, Integer)
-        Dim link = checkLink(text)
-        If Not IsNothing(link) Then text = getPrezziStringFromURL(link)
+        If Not isPrezziNegozi(text) Then
+            Dim link = checkLink(text)
+            If Not IsNothing(link) Then text = getPrezziStringFromURL(link)
+        End If
         Dim rex As New Regex("([A-z 0-9òàèéìù'-]+)\:([0-9]+)")
         Dim matches As MatchCollection = rex.Matches(text)
         For Each match As Match In matches
