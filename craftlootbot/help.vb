@@ -1,5 +1,6 @@
 ﻿Imports System.Text
 Imports Telegram.Bot.Types
+Imports Telegram.Bot.Types.InlineKeyboardButtons
 
 Module help
     'Inizializza Testo help
@@ -194,21 +195,21 @@ Module help
     Function creaHelpKeyboard() As ReplyMarkups.InlineKeyboardMarkup
         Dim keyboard As New ReplyMarkups.InlineKeyboardMarkup
         Dim keyboardbuttons()() As InlineKeyboardButton
-        Dim lista_button As New InlineKeyboardButton("📜 Lista 📜", "lista")
-        Dim albero_button As New InlineKeyboardButton("🌲 Albero 🌲", "albero")
+        Dim lista_button As New CallbackInlineButton("📜 Lista 📜", "lista")
+        Dim albero_button As New CallbackInlineButton("🌲 Albero 🌲", "albero")
         'Dim rinascita_button As New InlineKeyboardButton("👼🏼 Rinascita 👼🏼", "rinascita")
-        Dim inline_button As New InlineKeyboardButton("🔍 Inline 🔍", "inline")
-        Dim zaino_button As New InlineKeyboardButton("🎒 Zaino 🎒", "zaino")
-        Dim craft_button As New InlineKeyboardButton("🛠 Craft 🛠", "craft")
-        Dim confronta_button As New InlineKeyboardButton("📊 Confronta 📊", "confronta")
-        Dim base_button As New InlineKeyboardButton("🔤 Base 🔤", "base")
-        Dim vendi_button As New InlineKeyboardButton("🏪 Vendi 🏪", "vendi")
-        Dim creanegozi_button As New InlineKeyboardButton("💸 CreaNegozi 💸", "creanegozi")
-        Dim info_button As New InlineKeyboardButton("ℹ️ Info ℹ️", "info")
-        Dim stima_button As New InlineKeyboardButton("📈 Stima 📈", "stima")
-        Dim xmlHtml_button As New InlineKeyboardButton("🌐 XML / HTML 🌐", "html-xml")
-        Dim setequip_button As New InlineKeyboardButton("🗡 SetEquip 🗡", "setequip")
-        Dim riepilogo_button As New InlineKeyboardButton("⬅️ Riepilogo ⬅️", "riepilogo")
+        Dim inline_button As New CallbackInlineButton("🔍 Inline 🔍", "inline")
+        Dim zaino_button As New CallbackInlineButton("🎒 Zaino 🎒", "zaino")
+        Dim craft_button As New CallbackInlineButton("🛠 Craft 🛠", "craft")
+        Dim confronta_button As New CallbackInlineButton("📊 Confronta 📊", "confronta")
+        Dim base_button As New CallbackInlineButton("🔤 Base 🔤", "base")
+        Dim vendi_button As New CallbackInlineButton("🏪 Vendi 🏪", "vendi")
+        Dim creanegozi_button As New CallbackInlineButton("💸 CreaNegozi 💸", "creanegozi")
+        Dim info_button As New CallbackInlineButton("ℹ️ Info ℹ️", "info")
+        Dim stima_button As New CallbackInlineButton("📈 Stima 📈", "stima")
+        Dim xmlHtml_button As New CallbackInlineButton("🌐 XML / HTML 🌐", "html-xml")
+        Dim setequip_button As New CallbackInlineButton("🗡 SetEquip 🗡", "setequip")
+        Dim riepilogo_button As New CallbackInlineButton("⬅️ Riepilogo ⬅️", "riepilogo")
 
         Dim row1() As InlineKeyboardButton
         Dim row2() As InlineKeyboardButton
@@ -238,7 +239,7 @@ Module help
         row6.Add(stima_button)
         row6.Add(xmlHtml_button)
 
-        row7.add(setequip_button)
+        row7.Add(setequip_button)
         row7.Add(riepilogo_button)
 
         keyboardbuttons.Add(row1)
