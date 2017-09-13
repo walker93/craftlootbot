@@ -5,6 +5,7 @@ Imports System.Text.RegularExpressions
 Imports Newtonsoft
 Imports Telegram.Bot.Types
 Imports Google.Apis.Drive.v3
+Imports Telegram.Bot.Types.InlineKeyboardButtons
 
 Public Module MyExtensions
     'Aggiunge elementi ad un array
@@ -147,10 +148,10 @@ Public Module MyExtensions
     Function creaInlineKeyboard(query_text As String) As ReplyMarkups.InlineKeyboardMarkup
         Dim keyboard As New ReplyMarkups.InlineKeyboardMarkup
         Dim keyboardbuttons()() As InlineKeyboardButton
-        Dim button1 As New InlineKeyboardButton("Torna Inline")
-        Dim row1() As InlineKeyboardButton
-        button1.SwitchInlineQuery = query_text
-        button1.CallbackData = Nothing
+        Dim button1 As New SwitchInlineButton("Torna Inline", query_text)
+        Dim row1() As SwitchInlineButton
+        'button1.SwitchInlineQuery =
+        'button1.CallbackData = Nothing
         row1.Add(button1)
         keyboardbuttons.Add(row1)
         keyboard.InlineKeyboard = keyboardbuttons
@@ -165,7 +166,7 @@ Public Module MyExtensions
         'Dim rows As New List(Of InlineKeyboardButton())
 
         For Each i In ids
-            Dim button As New InlineKeyboardButton(ItemIds(i).name, "info_" + i.ToString)
+            Dim button As New CallbackInlineButton(ItemIds(i).name, "info_" + i.ToString)
             row.Add(button)
             If row.Count = 2 Then
                 keyboardbuttons.Add(row.ToArray)
