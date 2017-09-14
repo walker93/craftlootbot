@@ -1466,10 +1466,19 @@ Module Module1
 
         builder.Append(intestazione)
         builder.Append(vbCrLf)
-        'Dim sorted = From pair In list
-        'Order By pair.Value Descending
+
+
         Dim sorted = list.OrderByDescending(Function(x) x.Value).ThenBy(Function(p) p.Key.name).Select(Function(o) o)
-        'Dim sortedDictionary = sorted.ToList()
+        Dim newSorted As New List(Of KeyValuePair(Of Item, Integer))
+
+        For i = 0 To sorted.Count - 2
+            For y = i + 1 To sorted.Count - 1
+                If sorted(i).Key = sorted(y).Key Then
+
+                End If
+            Next
+        Next
+
         For Each craft In sorted
             If isCraftable(craft.Key.id) Then
                 builder.Append(If(tick, "`", "") + "Crea " + craft.Key.name + If(tick, "`", ""))

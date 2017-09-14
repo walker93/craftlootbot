@@ -185,6 +185,14 @@ Public Class Item
         Return Equip.NONE
     End Function
 
+    Public Shared Operator =(left As Item, right As Item)
+        Return left.id = right.id
+    End Operator
+
+    Public Shared Operator <>(left As Item, right As Item)
+        Return left.id <> right.id
+    End Operator
+
     Public Class ItemComparer
         Implements IComparer(Of Item)
         Implements IComparer(Of String)
