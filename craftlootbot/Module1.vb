@@ -98,6 +98,26 @@ Module Module1
                 Dim related = ItemIds(i).getRelatedItemsIDs
                 Dim e = api.EditMessageTextAsync(callback.Message.Chat.Id, callback.Message.MessageId, result, ParseMode.Markdown,, If(IsNothing(related), Nothing, creaInfoKeyboard(related))).Result
                 Dim a = api.AnswerCallbackQueryAsync(callback.Id,,,, 0).Result
+                'ElseIf callback.Data.StartsWith("craft_") Then
+                '    Dim ids = callback.Data.Replace("craft_", "").Split("_")
+                '    Dim item_ids = ids.Select(Of Integer)(Function(id) Integer.Parse(id))
+
+                '    If item_ids.Count = 0 Then Exit Sub
+                '    Dim prof As Integer = -1
+                '    Dim CraftTree As New List(Of KeyValuePair(Of Item, Integer))
+                '    Dim gia_possiedi As New Dictionary(Of Item, Integer)
+                '    Dim spesa As Integer
+                '    Dim zainoDic = getZaino(callback.Message.From.Id)
+                '    Dim zainoDic_copy = zainoDic
+                '    For Each i In item_ids
+                '        prof = -1
+                '        getCraftItemsTree(i, prof, CraftTree, zainoDic_copy, gia_possiedi)
+                '        If rarity_value.ContainsKey(ItemIds.Item(i).rarity) Then spesa += rarity_value.Item(ItemIds.Item(i).rarity)
+                '    Next
+                '    api.SendChatActionAsync(callback.Message.Chat.Id, ChatAction.UploadDocument)
+                '    Dim name As String = getFileName()
+                '    Dim a = api.SendDocumentAsync(callback.Message.Chat.Id, prepareFile(name, getcraftText(CraftTree, gia_possiedi, item_ids.ToArray), "Lista Craft")).Result
+                '    IO.File.Delete(name)
             Else
                 Dim result As String = process_help(callback.Data)
                 Dim e = api.EditMessageTextAsync(callback.Message.Chat.Id, callback.Message.MessageId, result, ParseMode.Markdown,, creaHelpKeyboard()).Result
@@ -696,12 +716,7 @@ Module Module1
                 Dim item_ids = checkInputItems(message.Text.ToLower.Trim, message.Chat.Id, "/craft")
                 If item_ids.Count = 0 Then Exit Sub
                 Dim prof As Integer = -1
-                'Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
-                'Dim zaino As String = ""
-                'If IO.File.Exists(path) Then
-                '    zaino = IO.File.ReadAllText(path)
-                'End If
-                api.SendChatActionAsync(message.Chat.Id, ChatAction.UploadDocument)
+
                 zainoDic = getZaino(message.From.Id)
                 Dim zainoDic_copy = zainoDic
                 For Each i In item_ids
@@ -709,11 +724,13 @@ Module Module1
                     getCraftItemsTree(i, prof, CraftTree, zainoDic_copy, gia_possiedi)
                     If rarity_value.ContainsKey(ItemIds.Item(i).rarity) Then spesa += rarity_value.Item(ItemIds.Item(i).rarity)
                 Next
+
+                answerLongMessage(getcraftText(CraftTree, gia_possiedi, item_ids.ToArray, True), message.Chat.Id)
+                api.SendChatActionAsync(message.Chat.Id, ChatAction.UploadDocument)
                 Dim name As String = getFileName()
-                a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, getcraftText(CraftTree, gia_possiedi, item_ids.ToArray), "Lista Craft"),,, message.MessageId).Result
+                a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, getcraftText(CraftTree, gia_possiedi, item_ids.ToArray), "Lista Craft")).Result
                 IO.File.Delete(name)
 
-                'answerLongMessage(getcraftText(CraftTree, gia_possiedi, item_ids.ToArray, True), message.Chat.Id)
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/vendi") Then
 #Region "vendi"
@@ -1468,23 +1485,27 @@ Module Module1
         builder.Append(vbCrLf)
 
 
-        Dim sorted = list.OrderByDescending(Function(x) x.Value).ThenBy(Function(p) p.Key.name).Select(Function(o) o)
-        Dim newSorted As New List(Of KeyValuePair(Of Item, Integer))
-
-        For i = 0 To sorted.Count - 2
-            For y = i + 1 To sorted.Count - 1
-                If sorted(i).Key = sorted(y).Key Then
-
+        Dim sorted = list.Where(Function(z) isCraftable(z.Key.id)).OrderByDescending(Function(x) x.Value).ThenBy(Function(p) p.Key.name).Select(Function(o) o).ToList
+        Dim newSorted As New Dictionary(Of Item, Integer)
+        'Dim counters() As Integer
+        If tick Then
+            For Each sort In sorted
+                If newSorted.ContainsKey(sort.Key) Then
+                    newSorted(sort.Key) += 1
+                Else
+                    newSorted.Add(sort.Key, 1)
                 End If
             Next
-        Next
-
-        For Each craft In sorted
-            If isCraftable(craft.Key.id) Then
-                builder.Append(If(tick, "`", "") + "Crea " + craft.Key.name + If(tick, "`", ""))
+            For Each craft In newSorted
+                builder.Append("`" + "Crea " + craft.Key.name + "`" + If(craft.Value > 1, " (x" + craft.Value.ToString + ")", ""))
                 builder.Append(vbCrLf)
-            End If
-        Next
+            Next
+        Else
+            For Each craft In sorted
+                builder.Append("Crea " + craft.Key.name)
+                builder.Append(vbCrLf)
+            Next
+        End If
         Return builder.ToString
     End Function
 
@@ -1780,7 +1801,7 @@ Module Module1
         Dim a = api.SendTextMessageAsync(1265775, reportBuilder.ToString,, True).Result
     End Sub
 
-    Function answerLongMessage(result As String, chatID As Long, Optional parse As ParseMode = ParseMode.Markdown) As Message
+    Function answerLongMessage(result As String, chatID As Long, Optional parse As ParseMode = ParseMode.Markdown, Optional replyMarckup As Telegram.Bot.Types.ReplyMarkups.IReplyMarkup = Nothing) As Message
         Dim a
         If result.Length > 4096 Then
             Dim valid_substring As String
@@ -1797,10 +1818,13 @@ Module Module1
             Loop While result <> "" And result <> Environment.NewLine
 
         Else
-            a = api.SendTextMessageAsync(chatID, result, parse).Result
+            a = api.SendTextMessageAsync(chatID, result, parse,,,, replyMarckup).Result
         End If
+
         Return a
     End Function
+
+    'TODO: creare un answerlongentities per inviare spezzando le entità
 
     Function checkInputItems(message_text As String, chat_id As Long, comando As String, Optional checkCraftable As Boolean = True) As List(Of Integer)
 

@@ -159,6 +159,21 @@ Public Module MyExtensions
     End Function
 
     'Crea tastiera con oggetti per /info
+    Function creaCraftKeyboard(ids() As Integer) As ReplyMarkups.InlineKeyboardMarkup
+        Dim keyboard As New ReplyMarkups.InlineKeyboardMarkup
+        Dim keyboardbuttons()() As InlineKeyboardButton
+        Dim row As New List(Of InlineKeyboardButton)
+        'Dim rows As New List(Of InlineKeyboardButton())
+
+        Dim button As New CallbackInlineButton("Apri file di testo", "craft_" + String.Join("_", ids))
+        row.Add(button)
+        keyboardbuttons.Add(row.ToArray)
+        keyboard.InlineKeyboard = keyboardbuttons
+        Return keyboard
+    End Function
+
+
+    'Crea tastiera con oggetti per /info
     Function creaInfoKeyboard(ids() As Integer) As ReplyMarkups.InlineKeyboardMarkup
         Dim keyboard As New ReplyMarkups.InlineKeyboardMarkup
         Dim keyboardbuttons()() As InlineKeyboardButton
