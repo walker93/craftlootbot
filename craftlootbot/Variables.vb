@@ -74,7 +74,7 @@
 
         init_teamMembers()
 
-        Italian_dictionary = IO.File.ReadAllText("dictionary.txt").Split(" "c, vbLf)
+        'Italian_dictionary = IO.File.ReadAllText("dictionary.txt").Split(" "c, vbLf)
     End Sub
 
     Sub init_prezzoscrigni()

@@ -565,26 +565,26 @@ Module Module1
                 Next
                 answerLongMessage(o, message.Chat.Id, ParseMode.Markdown)
 #End Region
-            ElseIf isIspezione(message.Text) AndAlso team_members.Contains(message.From.Username) Then
-#Region "Gnomo Ispezione"
-                Dim start_index = message.Text.IndexOf("🗝") + 1
-                Dim end_index = message.Text.IndexOf("Esplora") - 1
-                Dim input = message.Text.Substring(start_index + 1, end_index - start_index).Trim
-                StampaDebug("pattern: " + input)
-                Dim matching = getIspezioneWords(input)
-                If matching.Count = 0 Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Nessun risultato trovato :(").Result
-                    Exit Sub
-                ElseIf matching.Count > 20 Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Troppi risultati, affina la ricerca").Result
-                    Exit Sub
-                End If
-                Dim o As String = ""
-                For Each i In matching
-                    o &= "`" + i.ToLower + "`" + vbCrLf
-                Next
-                answerLongMessage(o, message.Chat.Id, ParseMode.Markdown)
-#End Region
+                '            ElseIf isIspezione(message.Text) AndAlso team_members.Contains(message.From.Username) Then
+                '#Region "Gnomo Ispezione"
+                '                Dim start_index = message.Text.IndexOf("🗝") + 1
+                '                Dim end_index = message.Text.IndexOf("Esplora") - 1
+                '                Dim input = message.Text.Substring(start_index + 1, end_index - start_index).Trim
+                '                StampaDebug("pattern: " + input)
+                '                Dim matching = getIspezioneWords(input)
+                '                If matching.Count = 0 Then
+                '                    a = api.SendTextMessageAsync(message.Chat.Id, "Nessun risultato trovato :(").Result
+                '                    Exit Sub
+                '                ElseIf matching.Count > 20 Then
+                '                    a = api.SendTextMessageAsync(message.Chat.Id, "Troppi risultati, affina la ricerca").Result
+                '                    Exit Sub
+                '                End If
+                '                Dim o As String = ""
+                '                For Each i In matching
+                '                    o &= "`" + i.ToLower + "`" + vbCrLf
+                '                Next
+                '                answerLongMessage(o, message.Chat.Id, ParseMode.Markdown)
+                '#End Region
             Else
                 Console.WriteLine("{0} {1} {2} from: {3}", Now.ToShortDateString, Now.ToShortTimeString, message.Text, message.From.Username)
             End If
@@ -724,11 +724,11 @@ Module Module1
                     getCraftItemsTree(i, prof, CraftTree, zainoDic_copy, gia_possiedi)
                     If rarity_value.ContainsKey(ItemIds.Item(i).rarity) Then spesa += rarity_value.Item(ItemIds.Item(i).rarity)
                 Next
-
-                answerLongMessage(getcraftText(CraftTree, gia_possiedi, item_ids.ToArray, True), message.Chat.Id)
+                Dim text_result As String = getcraftText(CraftTree, gia_possiedi, item_ids.ToArray, True)
+                answerTooEntities(text_result, message.Chat.Id, ParseMode.Markdown)
                 api.SendChatActionAsync(message.Chat.Id, ChatAction.UploadDocument)
                 Dim name As String = getFileName()
-                a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, getcraftText(CraftTree, gia_possiedi, item_ids.ToArray), "Lista Craft")).Result
+                a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, getcraftText(CraftTree, gia_possiedi, item_ids.ToArray), "Lista Craft"), "File di testo da usare su PC").Result
                 IO.File.Delete(name)
 
 #End Region
@@ -1117,27 +1117,27 @@ Module Module1
                 Next
                 answerLongMessage(o, message.Chat.Id)
 #End Region
-            ElseIf team_members.Contains(message.From.Username) AndAlso message.Text.StartsWith("/ispezione") Then
-#Region "ispezione"
-                Dim input = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/ispezione" + "@craftlootbot", "/ispezione"), "").Trim
-                If input = "" Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci il pattern dopo il comando. Es: '/ispezione _ o _ a _ d o'").Result
-                    Exit Sub
-                End If
-                Dim matching = getIspezioneWords(input)
-                If matching.Count = 0 Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Nessun risultato trovato :(").Result
-                    Exit Sub
-                ElseIf matching.Count > 20 Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Troppi risultati, affina la ricerca").Result
-                    Exit Sub
-                End If
-                Dim o As String = ""
-                For Each i In matching
-                    o &= "`" + i.ToLower + "`" + vbCrLf
-                Next
-                answerLongMessage(o, message.Chat.Id)
-#End Region
+                '            ElseIf team_members.Contains(message.From.Username) AndAlso message.Text.StartsWith("/ispezione") Then
+                '#Region "ispezione"
+                '                Dim input = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/ispezione" + "@craftlootbot", "/ispezione"), "").Trim
+                '                If input = "" Then
+                '                    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci il pattern dopo il comando. Es: '/ispezione _ o _ a _ d o'").Result
+                '                    Exit Sub
+                '                End If
+                '                Dim matching = getIspezioneWords(input)
+                '                If matching.Count = 0 Then
+                '                    a = api.SendTextMessageAsync(message.Chat.Id, "Nessun risultato trovato :(").Result
+                '                    Exit Sub
+                '                ElseIf matching.Count > 20 Then
+                '                    a = api.SendTextMessageAsync(message.Chat.Id, "Troppi risultati, affina la ricerca").Result
+                '                    Exit Sub
+                '                End If
+                '                Dim o As String = ""
+                '                For Each i In matching
+                '                    o &= "`" + i.ToLower + "`" + vbCrLf
+                '                Next
+                '                answerLongMessage(o, message.Chat.Id)
+                '#End Region
             ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/addmember") Then
 #Region "/addmember"
                 Dim member = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/addmember" + "@craftlootbot", "/addmember"), "").Trim
@@ -1801,7 +1801,7 @@ Module Module1
         Dim a = api.SendTextMessageAsync(1265775, reportBuilder.ToString,, True).Result
     End Sub
 
-    Function answerLongMessage(result As String, chatID As Long, Optional parse As ParseMode = ParseMode.Markdown, Optional replyMarckup As Telegram.Bot.Types.ReplyMarkups.IReplyMarkup = Nothing) As Message
+    Function answerLongMessage(result As String, chatID As Long, Optional parse As ParseMode = ParseMode.Markdown, Optional replyMarckup As ReplyMarkups.IReplyMarkup = Nothing) As Message
         Dim a
         If result.Length > 4096 Then
             Dim valid_substring As String
@@ -1825,6 +1825,26 @@ Module Module1
     End Function
 
     'TODO: creare un answerlongentities per inviare spezzando le entità
+
+    Function answerTooEntities(result As String, chatID As Long, parse As ParseMode, Optional replymarckup As ReplyMarkups.IReplyMarkup = Nothing) As Message
+        Dim lines = result.Split(Environment.NewLine)
+        Dim a
+        Dim iterations = 0
+        Dim sublines As IEnumerable(Of String)
+        Do
+            'If lines.Count > 99 Then
+            sublines = lines.Skip(99 * iterations).Take(99)
+            Dim text As String = String.Join("", sublines.ToArray).ToString
+            a = api.SendTextMessageAsync(chatID, text, parse,,,, replymarckup).Result
+            'Else
+            'Dim sublines = lines.Take(lines.co)
+            'a = api.SendTextMessageAsync(chatID, String.Join("", lines), parse,,,, replymarckup).Result
+            'End If
+            iterations += 1
+        Loop Until sublines.Count < 99
+        Return a
+    End Function
+
 
     Function checkInputItems(message_text As String, chat_id As Long, comando As String, Optional checkCraftable As Boolean = True) As List(Of Integer)
 

@@ -334,20 +334,20 @@ Public Module MyExtensions
         Return ItemIds.Where(Function(p) regex.IsMatch(p.Value.name))
     End Function
 
-    Function getIspezioneWords(input As String) As IEnumerable(Of String)
-        Dim letters = alphabet.ToList
-        For Each cha In input
-            If letters.Contains(cha.ToString.ToUpper) Then
-                letters.Remove(cha.ToString.ToUpper)
-            End If
-        Next
-        Dim pattern = "[" + String.Join("", letters) + "]{1}"
-        input = input.ToUpper.Replace(" ", "").Replace("_", pattern)
-        Dim reg As String = "^" + input + "$"
-        Dim regex As New Regex(reg, RegexOptions.IgnoreCase)
+    'Function getIspezioneWords(input As String) As IEnumerable(Of String)
+    '    Dim letters = alphabet.ToList
+    '    For Each cha In input
+    '        If letters.Contains(cha.ToString.ToUpper) Then
+    '            letters.Remove(cha.ToString.ToUpper)
+    '        End If
+    '    Next
+    '    Dim pattern = "[" + String.Join("", letters) + "]{1}"
+    '    input = input.ToUpper.Replace(" ", "").Replace("_", pattern)
+    '    Dim reg As String = "^" + input + "$"
+    '    Dim regex As New Regex(reg, RegexOptions.IgnoreCase)
 
-        Return Italian_dictionary.Where(Function(p) regex.IsMatch(p))
-    End Function
+    '    Return Italian_dictionary.Where(Function(p) regex.IsMatch(p))
+    'End Function
 
     Sub saveTeamMembers()
         Dim team_file = "team.dat"
