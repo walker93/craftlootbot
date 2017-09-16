@@ -163,11 +163,17 @@ Public Module MyExtensions
         Dim keyboard As New ReplyMarkups.InlineKeyboardMarkup
         Dim keyboardbuttons()() As InlineKeyboardButton
         Dim row As New List(Of InlineKeyboardButton)
+        'Dim row2 As New List(Of InlineKeyboardButton)
         'Dim rows As New List(Of InlineKeyboardButton())
 
-        Dim button As New CallbackInlineButton("Apri file di testo", "craft_" + String.Join("_", ids))
+        Dim button As New CallbackInlineButton("File di testo", "craftF_" + String.Join("_", ids))
+        Dim button2 As New CallbackInlineButton("Messaggio", "craftM_" + String.Join("_", ids))
+        'Dim buttonDelete As New CallbackInlineButton("Elimina messaggio", "DelMess")
         row.Add(button)
+        row.Add(button2)
+        'row2.Add(buttonDelete)
         keyboardbuttons.Add(row.ToArray)
+        'keyboardbuttons.Add(row2.ToArray)
         keyboard.InlineKeyboard = keyboardbuttons
         Return keyboard
     End Function

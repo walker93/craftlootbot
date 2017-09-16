@@ -98,26 +98,51 @@ Module Module1
                 Dim related = ItemIds(i).getRelatedItemsIDs
                 Dim e = api.EditMessageTextAsync(callback.Message.Chat.Id, callback.Message.MessageId, result, ParseMode.Markdown,, If(IsNothing(related), Nothing, creaInfoKeyboard(related))).Result
                 Dim a = api.AnswerCallbackQueryAsync(callback.Id,,,, 0).Result
-                'ElseIf callback.Data.StartsWith("craft_") Then
-                '    Dim ids = callback.Data.Replace("craft_", "").Split("_")
-                '    Dim item_ids = ids.Select(Of Integer)(Function(id) Integer.Parse(id))
+            ElseIf callback.Data.StartsWith("craftF_") Then
+                Dim ids = callback.Data.Replace("craftF_", "").Split("_")
+                Dim item_ids = ids.Select(Of Integer)(Function(id) Integer.Parse(id))
 
-                '    If item_ids.Count = 0 Then Exit Sub
-                '    Dim prof As Integer = -1
-                '    Dim CraftTree As New List(Of KeyValuePair(Of Item, Integer))
-                '    Dim gia_possiedi As New Dictionary(Of Item, Integer)
-                '    Dim spesa As Integer
-                '    Dim zainoDic = getZaino(callback.Message.From.Id)
-                '    Dim zainoDic_copy = zainoDic
-                '    For Each i In item_ids
-                '        prof = -1
-                '        getCraftItemsTree(i, prof, CraftTree, zainoDic_copy, gia_possiedi)
-                '        If rarity_value.ContainsKey(ItemIds.Item(i).rarity) Then spesa += rarity_value.Item(ItemIds.Item(i).rarity)
-                '    Next
-                '    api.SendChatActionAsync(callback.Message.Chat.Id, ChatAction.UploadDocument)
-                '    Dim name As String = getFileName()
-                '    Dim a = api.SendDocumentAsync(callback.Message.Chat.Id, prepareFile(name, getcraftText(CraftTree, gia_possiedi, item_ids.ToArray), "Lista Craft")).Result
-                '    IO.File.Delete(name)
+                If item_ids.Count = 0 Then Exit Sub
+                Dim prof As Integer = -1
+                Dim CraftTree As New List(Of KeyValuePair(Of Item, Integer))
+                Dim gia_possiedi As New Dictionary(Of Item, Integer)
+                Dim spesa As Integer
+                Dim zainoDic = getZaino(callback.Message.From.Id)
+                Dim zainoDic_copy = zainoDic
+                For Each i In item_ids
+                    prof = -1
+                    getCraftItemsTree(i, prof, CraftTree, zainoDic_copy, gia_possiedi)
+                    If rarity_value.ContainsKey(ItemIds.Item(i).rarity) Then spesa += rarity_value.Item(ItemIds.Item(i).rarity)
+                Next
+                api.SendChatActionAsync(callback.Message.Chat.Id, ChatAction.UploadDocument)
+                Dim name As String = getFileName()
+                Dim b = api.SendDocumentAsync(callback.Message.Chat.Id, prepareFile(name, getcraftText(CraftTree, gia_possiedi, item_ids.ToArray), "Lista Craft"))
+                Dim a = api.EditMessageTextAsync(callback.Message.Chat.Id, callback.Message.MessageId, "File in arrivo...").Result
+
+                Dim c = b.Result
+                IO.File.Delete(name)
+                Dim d = api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId).Result
+            ElseIf callback.Data.StartsWith("craftM_") Then
+                Dim ids = callback.Data.Replace("craftM_", "").Split("_")
+                Dim item_ids = ids.Select(Of Integer)(Function(id) Integer.Parse(id))
+                If item_ids.Count = 0 Then Exit Sub
+                Dim prof As Integer = -1
+                Dim CraftTree As New List(Of KeyValuePair(Of Item, Integer))
+                Dim gia_possiedi As New Dictionary(Of Item, Integer)
+                Dim spesa As Integer
+                Dim zainoDic = getZaino(callback.Message.From.Id)
+                Dim zainoDic_copy = zainoDic
+                zainoDic = getZaino(callback.Message.From.Id)
+                For Each i In item_ids
+                    prof = -1
+                    getCraftItemsTree(i, prof, CraftTree, zainoDic_copy, gia_possiedi)
+                    If rarity_value.ContainsKey(ItemIds.Item(i).rarity) Then spesa += rarity_value.Item(ItemIds.Item(i).rarity)
+                Next
+                Dim text_result As String = getcraftText(CraftTree, gia_possiedi, item_ids.ToArray, True)
+                answerTooEntities(text_result, callback.Message.Chat.Id, ParseMode.Markdown)
+                Dim a = api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId).Result
+            ElseIf callback.Data = "DelMess" Then
+                Dim a = api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId).Result
             Else
                 Dim result As String = process_help(callback.Data)
                 Dim e = api.EditMessageTextAsync(callback.Message.Chat.Id, callback.Message.MessageId, result, ParseMode.Markdown,, creaHelpKeyboard()).Result
@@ -717,19 +742,22 @@ Module Module1
                 If item_ids.Count = 0 Then Exit Sub
                 Dim prof As Integer = -1
 
-                zainoDic = getZaino(message.From.Id)
-                Dim zainoDic_copy = zainoDic
-                For Each i In item_ids
-                    prof = -1
-                    getCraftItemsTree(i, prof, CraftTree, zainoDic_copy, gia_possiedi)
-                    If rarity_value.ContainsKey(ItemIds.Item(i).rarity) Then spesa += rarity_value.Item(ItemIds.Item(i).rarity)
-                Next
-                Dim text_result As String = getcraftText(CraftTree, gia_possiedi, item_ids.ToArray, True)
-                answerTooEntities(text_result, message.Chat.Id, ParseMode.Markdown)
-                api.SendChatActionAsync(message.Chat.Id, ChatAction.UploadDocument)
-                Dim name As String = getFileName()
-                a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, getcraftText(CraftTree, gia_possiedi, item_ids.ToArray), "Lista Craft"), "File di testo da usare su PC").Result
-                IO.File.Delete(name)
+                a = api.SendTextMessageAsync(message.Chat.Id, "Scegli come ottenere la lista craft:",,,,, creaCraftKeyboard(item_ids.ToArray)).Result
+
+                'zainoDic = getZaino(message.From.Id)
+                'Dim zainoDic_copy = zainoDic
+                'For Each i In item_ids
+                '    prof = -1
+                '    getCraftItemsTree(i, prof, CraftTree, zainoDic_copy, gia_possiedi)
+                '    If rarity_value.ContainsKey(ItemIds.Item(i).rarity) Then spesa += rarity_value.Item(ItemIds.Item(i).rarity)
+                'Next
+                'Dim text_result As String = getcraftText(CraftTree, gia_possiedi, item_ids.ToArray, True)
+                'answerTooEntities(text_result, message.Chat.Id, ParseMode.Markdown)
+
+                'api.SendChatActionAsync(message.Chat.Id, ChatAction.UploadDocument)
+                'Dim name As String = getFileName()
+                'a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, getcraftText(CraftTree, gia_possiedi, item_ids.ToArray), "Lista Craft"), "File di testo da usare su PC").Result
+                'IO.File.Delete(name)
 
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/vendi") Then
@@ -1824,27 +1852,19 @@ Module Module1
         Return a
     End Function
 
-    'TODO: creare un answerlongentities per inviare spezzando le entità
-
     Function answerTooEntities(result As String, chatID As Long, parse As ParseMode, Optional replymarckup As ReplyMarkups.IReplyMarkup = Nothing) As Message
-        Dim lines = result.Split(Environment.NewLine)
+        Dim lines = result.Split(vbCrLf)
         Dim a
         Dim iterations = 0
         Dim sublines As IEnumerable(Of String)
         Do
-            'If lines.Count > 99 Then
             sublines = lines.Skip(99 * iterations).Take(99)
             Dim text As String = String.Join("", sublines.ToArray).ToString
             a = api.SendTextMessageAsync(chatID, text, parse,,,, replymarckup).Result
-            'Else
-            'Dim sublines = lines.Take(lines.co)
-            'a = api.SendTextMessageAsync(chatID, String.Join("", lines), parse,,,, replymarckup).Result
-            'End If
             iterations += 1
         Loop Until sublines.Count < 99
         Return a
     End Function
-
 
     Function checkInputItems(message_text As String, chat_id As Long, comando As String, Optional checkCraftable As Boolean = True) As List(Of Integer)
 
