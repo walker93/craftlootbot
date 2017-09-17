@@ -134,7 +134,7 @@ Module help
         End With
         With craft_builder
             .AppendLine("*Lista Craft:*")
-            .AppendLine("Permette di ricevere un file di testo contenente stringhe da copiare e incollare in lootbot, per craftare tutti gli oggetti necessari fino agli oggetti inseriti.")
+            .AppendLine("Permette di ricevere un file di testo o un messaggio contenente stringhe da copiare e incollare in lootbot, per craftare tutti gli oggetti necessari fino agli oggetti inseriti.")
             .AppendLine("Se hai lo zaino salvato, gli oggetti necessari che hai già craftato verranno esclusi dall'elenco.")
             .AppendLine("La lista è in ordine decrescente, dall'oggetto più semplice al più complesso, in questo modo puoi eseguire tutti i craft in sequenza uno alla volta.")
         End With

@@ -100,14 +100,14 @@ Module Module1
                 Dim a = api.AnswerCallbackQueryAsync(callback.Id,,,, 0).Result
             ElseIf callback.Data.StartsWith("craftF_") Then
                 Dim ids = callback.Data.Replace("craftF_", "").Split("_")
-                Dim item_ids = ids.Select(Of Integer)(Function(id) Integer.Parse(id))
+                Dim item_ids = ids.Select(Function(id) Integer.Parse(id))
 
                 If item_ids.Count = 0 Then Exit Sub
                 Dim prof As Integer = -1
                 Dim CraftTree As New List(Of KeyValuePair(Of Item, Integer))
                 Dim gia_possiedi As New Dictionary(Of Item, Integer)
                 Dim spesa As Integer
-                Dim zainoDic = getZaino(callback.Message.From.Id)
+                Dim zainoDic = getZaino(callback.From.Id)
                 Dim zainoDic_copy = zainoDic
                 For Each i In item_ids
                     prof = -1
@@ -124,15 +124,15 @@ Module Module1
                 Dim d = api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId).Result
             ElseIf callback.Data.StartsWith("craftM_") Then
                 Dim ids = callback.Data.Replace("craftM_", "").Split("_")
-                Dim item_ids = ids.Select(Of Integer)(Function(id) Integer.Parse(id))
+                Dim item_ids = ids.Select(Function(id) Integer.Parse(id))
                 If item_ids.Count = 0 Then Exit Sub
                 Dim prof As Integer = -1
                 Dim CraftTree As New List(Of KeyValuePair(Of Item, Integer))
                 Dim gia_possiedi As New Dictionary(Of Item, Integer)
                 Dim spesa As Integer
-                Dim zainoDic = getZaino(callback.Message.From.Id)
+                Dim zainoDic = getZaino(callback.From.Id)
                 Dim zainoDic_copy = zainoDic
-                zainoDic = getZaino(callback.Message.From.Id)
+
                 For Each i In item_ids
                     prof = -1
                     getCraftItemsTree(i, prof, CraftTree, zainoDic_copy, gia_possiedi)
@@ -1284,7 +1284,7 @@ Module Module1
                 If Not zaino.ContainsKey(item) Then
                     If rarity_value.ContainsKey(item.rarity) Then spesa += rarity_value.Item(item.rarity)
                     If rarity_craft.ContainsKey(item.rarity) Then punti_craft += rarity_craft.Item(item.rarity)
-                    StampaDebug(String.Format("Oggetto: {0}, +{1}={2}", item.name, If(rarity_craft.ContainsKey(item.rarity), rarity_craft.Item(item.rarity).ToString, "0"), punti_craft.ToString))
+                    'StampaDebug(String.Format("Oggetto: {0}, +{1}={2}", item.name, If(rarity_craft.ContainsKey(item.rarity), rarity_craft.Item(item.rarity).ToString, "0"), punti_craft.ToString))
 
                     getNeededItemsList(item.id, CraftList, zaino, possiedi, spesa, punti_craft)
                 Else
