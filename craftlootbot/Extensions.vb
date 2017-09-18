@@ -103,6 +103,14 @@ Public Module MyExtensions
         Return arr.ToArray
     End Function
 
+    'Creo File per Salvataggio Callback di /craft
+    Function createfile(text As String, UserID As Long)
+        IO.Directory.CreateDirectory("crafts")
+        Dim filename = UserID.ToString + "_" + getFileName()
+        IO.File.WriteAllText("crafts/" + filename, text)
+        Return filename
+    End Function
+
     'Crea tastiera per salvataggio zaino
     Function creaZainoKeyboard() As ReplyMarkups.ReplyKeyboardMarkup
         Dim keyboard As New ReplyMarkups.ReplyKeyboardMarkup
@@ -159,21 +167,19 @@ Public Module MyExtensions
     End Function
 
     'Crea tastiera con oggetti per /info
-    Function creaCraftKeyboard(ids() As Integer) As ReplyMarkups.InlineKeyboardMarkup
+    Function creaCraftKeyboard(ids() As Integer, UserID As Long) As ReplyMarkups.InlineKeyboardMarkup
         Dim keyboard As New ReplyMarkups.InlineKeyboardMarkup
         Dim keyboardbuttons()() As InlineKeyboardButton
         Dim row As New List(Of InlineKeyboardButton)
-        'Dim row2 As New List(Of InlineKeyboardButton)
-        'Dim rows As New List(Of InlineKeyboardButton())
+        Dim filename = createfile(String.Join("_", ids), UserID)
+        Dim button As New CallbackInlineButton("File di testo", "craftF_" + filename)
+        Dim button2 As New CallbackInlineButton("Messaggio", "craftM_" + filename)
 
-        Dim button As New CallbackInlineButton("File di testo", "craftF_" + String.Join("_", ids))
-        Dim button2 As New CallbackInlineButton("Messaggio", "craftM_" + String.Join("_", ids))
-        'Dim buttonDelete As New CallbackInlineButton("Elimina messaggio", "DelMess")
         row.Add(button)
         row.Add(button2)
-        'row2.Add(buttonDelete)
+
         keyboardbuttons.Add(row.ToArray)
-        'keyboardbuttons.Add(row2.ToArray)
+
         keyboard.InlineKeyboard = keyboardbuttons
         Return keyboard
     End Function

@@ -99,7 +99,13 @@ Module Module1
                 Dim e = api.EditMessageTextAsync(callback.Message.Chat.Id, callback.Message.MessageId, result, ParseMode.Markdown,, If(IsNothing(related), Nothing, creaInfoKeyboard(related))).Result
                 Dim a = api.AnswerCallbackQueryAsync(callback.Id,,,, 0).Result
             ElseIf callback.Data.StartsWith("craftF_") Then
-                Dim ids = callback.Data.Replace("craftF_", "").Split("_")
+                Dim text As String = ""
+                Try
+                    text = IO.File.ReadAllText("crafts/" + callback.Data.Replace("craftF_", ""))
+                Catch e As IO.FileNotFoundException
+                    Dim edit = api.EditMessageTextAsync(callback.Message.Chat.Id, callback.Message.MessageId, "La lista craft non è più disponibile!").Result
+                End Try
+                Dim ids = text.Split("_")
                 Dim item_ids = ids.Select(Function(id) Integer.Parse(id))
 
                 If item_ids.Count = 0 Then Exit Sub
@@ -122,8 +128,15 @@ Module Module1
                 Dim c = b.Result
                 IO.File.Delete(name)
                 Dim d = api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId).Result
+                IO.File.Delete("crafts/" + callback.Data.Replace("craftF_", ""))
             ElseIf callback.Data.StartsWith("craftM_") Then
-                Dim ids = callback.Data.Replace("craftM_", "").Split("_")
+                Dim text As String = ""
+                Try
+                    text = IO.File.ReadAllText("crafts/" + callback.Data.Replace("craftM_", ""))
+                Catch e As IO.FileNotFoundException
+                    Dim b = api.EditMessageTextAsync(callback.Message.Chat.Id, callback.Message.MessageId, "La lista craft non è più disponibile!").Result
+                End Try
+                Dim ids = text.Split("_")
                 Dim item_ids = ids.Select(Function(id) Integer.Parse(id))
                 If item_ids.Count = 0 Then Exit Sub
                 Dim prof As Integer = -1
@@ -141,6 +154,7 @@ Module Module1
                 Dim text_result As String = getcraftText(CraftTree, gia_possiedi, item_ids.ToArray, True)
                 answerTooEntities(text_result, callback.Message.Chat.Id, ParseMode.Markdown)
                 Dim a = api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId).Result
+                IO.File.Delete("crafts/" + callback.Data.Replace("craftM_", ""))
             ElseIf callback.Data = "DelMess" Then
                 Dim a = api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId).Result
             Else
@@ -742,7 +756,7 @@ Module Module1
                 If item_ids.Count = 0 Then Exit Sub
                 Dim prof As Integer = -1
 
-                a = api.SendTextMessageAsync(message.Chat.Id, "Scegli come ottenere la lista craft:",,,,, creaCraftKeyboard(item_ids.ToArray)).Result
+                a = api.SendTextMessageAsync(message.Chat.Id, "Scegli come ottenere la lista craft:",,,,, creaCraftKeyboard(item_ids.ToArray, message.From.Id)).Result
 
                 'zainoDic = getZaino(message.From.Id)
                 'Dim zainoDic_copy = zainoDic
@@ -1145,27 +1159,7 @@ Module Module1
                 Next
                 answerLongMessage(o, message.Chat.Id)
 #End Region
-                '            ElseIf team_members.Contains(message.From.Username) AndAlso message.Text.StartsWith("/ispezione") Then
-                '#Region "ispezione"
-                '                Dim input = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/ispezione" + "@craftlootbot", "/ispezione"), "").Trim
-                '                If input = "" Then
-                '                    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci il pattern dopo il comando. Es: '/ispezione _ o _ a _ d o'").Result
-                '                    Exit Sub
-                '                End If
-                '                Dim matching = getIspezioneWords(input)
-                '                If matching.Count = 0 Then
-                '                    a = api.SendTextMessageAsync(message.Chat.Id, "Nessun risultato trovato :(").Result
-                '                    Exit Sub
-                '                ElseIf matching.Count > 20 Then
-                '                    a = api.SendTextMessageAsync(message.Chat.Id, "Troppi risultati, affina la ricerca").Result
-                '                    Exit Sub
-                '                End If
-                '                Dim o As String = ""
-                '                For Each i In matching
-                '                    o &= "`" + i.ToLower + "`" + vbCrLf
-                '                Next
-                '                answerLongMessage(o, message.Chat.Id)
-                '#End Region
+
             ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/addmember") Then
 #Region "/addmember"
                 Dim member = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/addmember" + "@craftlootbot", "/addmember"), "").Trim
@@ -1241,8 +1235,22 @@ Module Module1
                 a = api.SendTextMessageAsync(message.Chat.Id, res).Result
 #End Region
 
+            ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/ripristino") Then
+                Dim member = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/ripristino" + "@craftlootbot", "/ripristino"), "").Trim
+                Dim userID As Integer = Integer.Parse(member)
+                If zaini.ContainsKey(userID) Then zaini.Remove(userID)
+                If stati.ContainsKey(userID) Then stati.Remove(userID)
+                If confronti.ContainsKey(userID) Then confronti.Remove(userID)
+                If IO.File.Exists("zaini/" + userID.ToString + ".txt") Then IO.File.Delete("zaini/" + userID.ToString + ".txt")
+                If IO.File.Exists("equip/" + userID.ToString + ".txt") Then IO.File.Delete("equip/" + userID.ToString + ".txt")
+                If IO.File.Exists("prezzi/" + userID.ToString + ".txt") Then IO.File.Delete("prezzi/" + userID.ToString + ".txt")
+                For Each file In IO.Directory.GetFiles("crafts")
+                    Dim info As New IO.FileInfo(file)
+                    If info.Name.StartsWith(userID) Then IO.File.Delete(file)
+                Next
+
             ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/kill") Then
-                kill = True
+                    kill = True
                 Dim ex As New Exception("PROCESSO TERMINATO SU RICHIESTA")
                 Throw ex
             End If
@@ -1911,6 +1919,12 @@ Module Module1
         While True
             Try
                 For Each file In IO.Directory.GetFiles("zaini/")
+                    If DateDiff(DateInterval.Day, IO.File.GetLastWriteTime(file), Date.Now) > olderZaini_limit Then
+                        IO.File.Delete(file)
+                        StampaDebug(file + " Cancellato!")
+                    End If
+                Next
+                For Each file In IO.Directory.GetFiles("crafts/")
                     If DateDiff(DateInterval.Day, IO.File.GetLastWriteTime(file), Date.Now) > olderZaini_limit Then
                         IO.File.Delete(file)
                         StampaDebug(file + " Cancellato!")

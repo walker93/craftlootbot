@@ -15,8 +15,8 @@
     Public CraftIds As New Dictionary(Of Integer, IDCraft)
     Public olderZaini_limit As Integer = 30 'giorni
     Public inline_history_limit As Integer = 20 'numero massimo di cronologia inline da salvare per ogni utente
-    Public alphabet As String() = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"}
-    Public Italian_dictionary As String()
+    ' Public alphabet As String() = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"}
+    ' Public Italian_dictionary As String()
     Public team_members As New List(Of String)
 
     Public Enum Equip
