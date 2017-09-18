@@ -1511,11 +1511,21 @@ Module Module1
 
     Function getcraftText(list As List(Of KeyValuePair(Of Item, Integer)), ByRef possiedi As Dictionary(Of Item, Integer), oggetti() As Integer, Optional tick As Boolean = False) As String
         Dim builder As New Text.StringBuilder
-        Dim ogg_string()
+        Dim ogg_string As New Dictionary(Of String, Integer)
         For Each i In oggetti
-            ogg_string.Add(ItemIds(i).name)
+            If ogg_string.ContainsKey(ItemIds(i).name) Then
+                ogg_string(ItemIds(i).name) += 1
+            Else
+                ogg_string.Add(ItemIds(i).name, 1)
+            End If
         Next
-        Dim intestazione As String = "Lista craft per " + String.Join(", ", ogg_string) + ": "
+        Dim intestazione As String
+        intestazione = "Lista craft per "
+        For Each it In ogg_string
+            intestazione += it.Value.ToString + "x " + it.Key + ", "
+        Next
+        intestazione = intestazione.Substring(0, intestazione.LastIndexOf(","))
+        intestazione += ": "
 
         builder.Append(intestazione)
         builder.Append(vbCrLf)
@@ -1533,13 +1543,30 @@ Module Module1
                 End If
             Next
             For Each craft In newSorted
-                builder.Append("`" + "Crea " + craft.Key.name + "`" + If(craft.Value > 1, " (x" + craft.Value.ToString + ")", ""))
-                builder.Append(vbCrLf)
+                Dim volte As Integer = Math.Truncate(craft.Value / 3)
+                Dim modulo As Integer = craft.Value Mod 3
+                If volte > 0 Then
+                    builder.Append("`" + "Crea " + craft.Key.name + ",3`" + If(volte > 1, " (x" + volte.ToString + ")", ""))
+                    builder.Append(vbCrLf)
+                End If
+                If modulo <> 0 Then builder.Append("`" + "Crea " + craft.Key.name + If(modulo > 1, "," + modulo.ToString, "") + "`").Append(vbCrLf) '+ If(craft.Value > 1, " (x" + craft.Value.ToString + ")", ""))
+
             Next
         Else
-            For Each craft In sorted
-                builder.Append("Crea " + craft.Key.name)
-                builder.Append(vbCrLf)
+            For Each sort In sorted
+                If newSorted.ContainsKey(sort.Key) Then
+                    newSorted(sort.Key) += 1
+                Else
+                    newSorted.Add(sort.Key, 1)
+                End If
+            Next
+            For Each craft In newSorted
+                Dim volte As Integer = Math.Truncate(craft.Value / 3)
+                Dim modulo As Integer = craft.Value Mod 3
+                For i = 1 To volte
+                    builder.Append("Crea " + craft.Key.name + ",3").Append(vbCrLf)
+                Next
+                If modulo <> 0 Then builder.Append("Crea " + craft.Key.name + If(modulo > 1, "," + modulo.ToString, "")).Append(vbCrLf)
             Next
         End If
         Return builder.ToString
