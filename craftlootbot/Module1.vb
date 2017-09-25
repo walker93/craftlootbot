@@ -713,9 +713,13 @@ Module Module1
                 zainoDic = getZaino(message.From.Id)
                 Dim zainoDic_copy = zainoDic
                 For Each i In item_ids
-                    getNeededItemsList(i, CraftList, zainoDic_copy, gia_possiedi, spesa, punti_craft)
-                    If rarity_value.ContainsKey(ItemIds.Item(i).rarity) Then spesa += rarity_value.Item(ItemIds.Item(i).rarity)
-                    If rarity_craft.ContainsKey(ItemIds.Item(i).rarity) Then punti_craft += rarity_craft.Item(ItemIds.Item(i).rarity)
+                    If Not zainoDic_copy.ContainsKey(ItemIds(i)) Then
+                        getNeededItemsList(i, CraftList, zainoDic_copy, gia_possiedi, spesa, punti_craft)
+                        If rarity_value.ContainsKey(ItemIds.Item(i).rarity) Then spesa += rarity_value.Item(ItemIds.Item(i).rarity)
+                        If rarity_craft.ContainsKey(ItemIds.Item(i).rarity) Then punti_craft += rarity_craft.Item(ItemIds.Item(i).rarity)
+                    Else
+                        gia_possiedi.Add(ItemIds(i), 1)
+                    End If
                 Next
                 Dim result As String = getCraftListText(createCraftCountList(CraftList), item_ids.ToArray, zainoDic, gia_possiedi, spesa, punti_craft)
                 answerLongMessage(result, message.Chat.Id)
@@ -1283,6 +1287,19 @@ Module Module1
     End Sub
 
     Sub getNeededItemsList(id As Integer, ByRef CraftList As List(Of Item), ByRef zaino As Dictionary(Of Item, Integer), ByRef possiedi As Dictionary(Of Item, Integer), ByRef spesa As Integer, ByRef punti_craft As Integer)
+        'controllo se si possiede l'oggetto
+        'Dim currItem As Item = ItemIds(id)
+        'If isCraftable(currItem.id) AndAlso zaino.ContainsKey(ItemIds(id)) Then
+        '    zaino.Item(currItem) -= 1
+        '    If zaino.Item(currItem) = 0 Then zaino.Remove(currItem)
+        '    If Not possiedi.ContainsKey(currItem) Then
+        '        possiedi.Add(currItem, 1)
+        '    Else
+        '        possiedi.Item(currItem) += 1
+        '    End If
+        '    Exit Sub
+        'End If
+        'Ricorsione sui figlio
         Dim rows As Integer() = requestCraft(id)
         If rows Is Nothing Then Exit Sub
         Dim item As Item
@@ -1292,8 +1309,6 @@ Module Module1
                 If Not zaino.ContainsKey(item) Then
                     If rarity_value.ContainsKey(item.rarity) Then spesa += rarity_value.Item(item.rarity)
                     If rarity_craft.ContainsKey(item.rarity) Then punti_craft += rarity_craft.Item(item.rarity)
-                    'StampaDebug(String.Format("Oggetto: {0}, +{1}={2}", item.name, If(rarity_craft.ContainsKey(item.rarity), rarity_craft.Item(item.rarity).ToString, "0"), punti_craft.ToString))
-
                     getNeededItemsList(item.id, CraftList, zaino, possiedi, spesa, punti_craft)
                 Else
                     zaino.Item(item) -= 1
