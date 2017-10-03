@@ -51,7 +51,7 @@ Module Module1
         Dim inlineHistory_thread As New Threading.Thread(New Threading.ThreadStart(AddressOf salva_inlineHistory))
         inlineHistory_thread.Start()
     End Sub
-
+    Dim cron As New Dictionary(Of Long, Long)
     Sub run()
         Dim updates() As Update
         Dim offset As Integer = 0
@@ -61,6 +61,8 @@ Module Module1
                 For Each up As Update In updates
                     Select Case up.Type
                         Case UpdateType.MessageUpdate
+                            'StampaDebug("Nuovo update: " + up.Message.MessageId.ToString)
+                            cron.Add(up.Message.MessageId, Now.Ticks)
                             Dim t As New Threading.Thread(New Threading.ParameterizedThreadStart(AddressOf process_Message))
                             t.Start(up.Message)
                         Case UpdateType.InlineQueryUpdate
@@ -458,6 +460,8 @@ Module Module1
             Dim it As New Item
             'Dim lootbot_id As ULong = 171514820
             Dim kill As Boolean = False
+            'StampaDebug("Nuovo Messaggio: " + message.From.Username)
+
 #Region "File prezzi"
             If message.Type = MessageType.DocumentMessage Then
                 'è un documento prezzi, lo scarico e lo salvo
@@ -488,7 +492,7 @@ Module Module1
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) AndAlso message.Chat.Type = ChatType.Private Then
                     'sta inviando più parti di zaino
                     zaini.Item(message.From.Id) += message.Text
-                    StampaDebug("Zaino diviso ricevuto.")
+                    StampaDebug("Zaino diviso ricevuto. ID:" + message.MessageId.ToString + " tempo: " + ((Now.Ticks - cron(message.MessageId)) / 10000).ToString)
                 ElseIf stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) AndAlso message.Chat.Type = ChatType.Private Then
                     'sta inviando zaino per confronto
                     Dim zaino = parseZaino(message.Text)
@@ -604,26 +608,6 @@ Module Module1
                 Next
                 answerLongMessage(o, message.Chat.Id, ParseMode.Markdown)
 #End Region
-                '            ElseIf isIspezione(message.Text) AndAlso team_members.Contains(message.From.Username) Then
-                '#Region "Gnomo Ispezione"
-                '                Dim start_index = message.Text.IndexOf("🗝") + 1
-                '                Dim end_index = message.Text.IndexOf("Esplora") - 1
-                '                Dim input = message.Text.Substring(start_index + 1, end_index - start_index).Trim
-                '                StampaDebug("pattern: " + input)
-                '                Dim matching = getIspezioneWords(input)
-                '                If matching.Count = 0 Then
-                '                    a = api.SendTextMessageAsync(message.Chat.Id, "Nessun risultato trovato :(").Result
-                '                    Exit Sub
-                '                ElseIf matching.Count > 20 Then
-                '                    a = api.SendTextMessageAsync(message.Chat.Id, "Troppi risultati, affina la ricerca").Result
-                '                    Exit Sub
-                '                End If
-                '                Dim o As String = ""
-                '                For Each i In matching
-                '                    o &= "`" + i.ToLower + "`" + vbCrLf
-                '                Next
-                '                answerLongMessage(o, message.Chat.Id, ParseMode.Markdown)
-                '#End Region
             Else
                 Console.WriteLine("{0} {1} {2} from: {3}", Now.ToShortDateString, Now.ToShortTimeString, message.Text, message.From.Username)
             End If
@@ -1259,6 +1243,7 @@ Module Module1
                 Throw ex
             End If
             aggiornastats(message.Text, message.From.Username)
+            If cron.ContainsKey(message.MessageId) Then cron.Remove(message.MessageId)
         Catch e As Exception
 #Region "exception handling"
             If e.Message = "PROCESSO TERMINATO SU RICHIESTA" Then
