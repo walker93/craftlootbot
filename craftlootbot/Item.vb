@@ -163,7 +163,7 @@ Public Class Item
             If isCraftable(i) Then
                 If rarity_value.ContainsKey(ite.rarity) Then spesa += rarity_value.Item(ite.rarity)
                 If rarity_craft.ContainsKey(ite.rarity) Then punticraft += rarity_craft.Item(ite.rarity)
-                contaCosto(i, spesa, punticraft, costoBase, oggBase)
+                contaCosto(i, spesa, punticraft, costoBase, oggBase, prezzi_dic)
             Else
                 If Not IsNothing(prezzi_dic) AndAlso prezzi_dic.ContainsKey(ite) AndAlso prezzi_dic(ite) > 0 Then
                     costoBase += prezzi_dic(ite)

@@ -508,4 +508,25 @@ Public Module MyExtensions
         Return zainoDic
     End Function
 
+    Function getIntestazioneMessaggio(static_intestazione As String, oggetti() As Integer) As String
+
+        Dim ogg_string As New Dictionary(Of String, Integer)
+        For Each i In oggetti
+            If ogg_string.ContainsKey(ItemIds(i).name) Then
+                ogg_string(ItemIds(i).name) += 1
+            Else
+                ogg_string.Add(ItemIds(i).name, 1)
+            End If
+        Next
+        Dim intestazione As String = static_intestazione
+
+        For Each it In ogg_string
+            intestazione += it.Value.ToString + "x " + it.Key + If(ogg_string.Keys.Last = it.Key, "", ", ")
+        Next
+        'If intestazione.Last = " " Then intestazione = intestazione.Substring(0, intestazione.Length - 2)
+        intestazione += ": "
+
+        Return intestazione
+    End Function
+
 End Module

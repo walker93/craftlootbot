@@ -849,7 +849,7 @@ Module Module1
                     Dim link = checkLink(prezzi_text)
                     If Not isPrezziNegozi(prezzi_text) AndAlso Not IsNothing(link) Then
                         prezzi_text = "I prezzi sono scaricati autonomamente dal link:" + vbCrLf + link.AbsoluteUri + vbCrLf + vbCrLf + "Il contenuto è:"
-                        a = api.SendTextMessageAsync(message.Chat.Id, prezzi_text, True).Result
+                        a = api.SendTextMessageAsync(message.Chat.Id, prezzi_text, , True).Result
                         prezzi_text = getPrezziStringFromURL(link)
                     End If
 
@@ -1431,11 +1431,8 @@ Module Module1
                 .AppendLine()
             End With
         Next
-        Dim ogg_string()
-        For Each i In oggetti
-            ogg_string.Add(ItemIds(i).name)
-        Next
-        Dim intestazione As String = "Lista oggetti necessari per " + String.Join(", ", ogg_string) + ": "
+        Dim intestazione As String = getIntestazioneMessaggio("Lista oggetti necessari per ", oggetti)
+
         buildernecessari.AppendLine(intestazione)
         Dim tot_necessari As Integer
         Dim necessari As Integer
@@ -1519,18 +1516,9 @@ Module Module1
                 ogg_string.Add(ItemIds(i).name, 1)
             End If
         Next
-        Dim intestazione As String
-        intestazione = "Lista craft per "
-        For Each it In ogg_string
-            intestazione += it.Value.ToString + "x " + it.Key + ", "
-        Next
-        intestazione = intestazione.Substring(0, intestazione.LastIndexOf(","))
-        intestazione += ": "
-
+        Dim intestazione As String = getIntestazioneMessaggio("Lista craft per ", oggetti)
         builder.Append(intestazione)
         builder.Append(vbCrLf)
-
-
         Dim sorted = list.Where(Function(z) isCraftable(z.Key.id)).OrderByDescending(Function(x) x.Value).ThenBy(Function(p) p.Key.name).Select(Function(o) o).ToList
         Dim newSorted As New Dictionary(Of Item, Integer)
         'Dim counters() As Integer
