@@ -166,7 +166,23 @@ Public Module MyExtensions
         Return keyboard
     End Function
 
-    'Crea tastiera con oggetti per /info
+    'Crea tastiera per messaggio errore
+    Function creaErrorInlineKeyboard() As ReplyMarkups.InlineKeyboardMarkup
+        Dim keyboard As New ReplyMarkups.InlineKeyboardMarkup
+        Dim keyboardbuttons()() As InlineKeyboardButton
+        Dim button1 As New CallbackInlineButton("CANCELLA DATI", "err_reset")
+        Dim button2 As New CallbackInlineButton("Non ripristinare i dati", "DelMess")
+        Dim row1() As CallbackInlineButton
+        Dim row2() As CallbackInlineButton
+        row1.Add(button1)
+        row2.Add(button2)
+        keyboardbuttons.Add(row1)
+        keyboardbuttons.Add(row2)
+        keyboard.InlineKeyboard = keyboardbuttons
+        Return keyboard
+    End Function
+
+    'Crea tastiera per /craft
     Function creaCraftKeyboard(ids() As Integer, UserID As Long) As ReplyMarkups.InlineKeyboardMarkup
         Dim keyboard As New ReplyMarkups.InlineKeyboardMarkup
         Dim keyboardbuttons()() As InlineKeyboardButton

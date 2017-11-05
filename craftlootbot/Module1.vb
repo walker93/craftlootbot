@@ -51,7 +51,7 @@ Module Module1
         Dim inlineHistory_thread As New Threading.Thread(New Threading.ThreadStart(AddressOf salva_inlineHistory))
         inlineHistory_thread.Start()
     End Sub
-    Dim cron As New Dictionary(Of Long, Long)
+    'Dim cron As New Dictionary(Of Long, Long)
     Sub run()
         Dim updates() As Update
         Dim offset As Integer = 0
@@ -62,7 +62,7 @@ Module Module1
                     Select Case up.Type
                         Case UpdateType.MessageUpdate
                             'StampaDebug("Nuovo update: " + up.Message.MessageId.ToString)
-                            cron.Add(up.Message.MessageId, Now.Ticks)
+                            'cron.Add(up.Message.MessageId, Now.Ticks)
                             Dim t As New Threading.Thread(New Threading.ParameterizedThreadStart(AddressOf process_Message))
                             t.Start(up.Message)
                         Case UpdateType.InlineQueryUpdate
@@ -87,6 +87,9 @@ Module Module1
             Catch ex As AggregateException
                 Threading.Thread.Sleep(20 * 1000)
                 Console.WriteLine("{0} {1} Error: {2}", Now.ToShortDateString, Now.ToShortTimeString, ex.InnerException.Message)
+            Catch ex As Exception
+                Threading.Thread.Sleep(20 * 1000)
+                Console.WriteLine("{0} {1} Error: {2}", Now.ToShortDateString, Now.ToShortTimeString, ex.Message)
             End Try
         End While
     End Sub
@@ -157,6 +160,24 @@ Module Module1
                 answerTooEntities(text_result, callback.Message.Chat.Id, ParseMode.Markdown)
                 Dim a = api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId).Result
                 IO.File.Delete("crafts/" + callback.Data.Replace("craftM_", ""))
+            ElseIf callback.Data = "err_reset" Then
+                Dim userID As Integer = callback.From.Id
+                Console.WriteLine("Ripristino richiesto per l'utente {0}", userID)
+                Dim report As New Text.StringBuilder("Ripristino eseguito!")
+                report.AppendLine()
+                If zaini.ContainsKey(userID) Then zaini.Remove(userID) : report.AppendLine("Salvataggio zaino interrotto.")
+                If stati.ContainsKey(userID) Then stati.Remove(userID) : report.AppendLine("Stato utente ripristinato.")
+                If confronti.ContainsKey(userID) Then confronti.Remove(userID) : report.AppendLine("Confronto interrotto.")
+                If IO.File.Exists("zaini/" + userID.ToString + ".txt") Then IO.File.Delete("zaini/" + userID.ToString + ".txt") : report.AppendLine("Zaino utente cancellato!")
+                If IO.File.Exists("equip/" + userID.ToString + ".txt") Then IO.File.Delete("equip/" + userID.ToString + ".txt") : report.AppendLine("Equipaggiamento utente cancellato!")
+                If IO.File.Exists("prezzi/" + userID.ToString + ".txt") Then IO.File.Delete("prezzi/" + userID.ToString + ".txt") : report.AppendLine("Prezzi utente cancellati!")
+                For Each file In IO.Directory.GetFiles("crafts")
+                    Dim info As New IO.FileInfo(file)
+                    If info.Name.StartsWith(userID) Then IO.File.Delete(file) : report.AppendLine("File '" + info.Name + "' cancellato!")
+                Next
+                Dim a = api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId).Result
+                Dim b = api.SendTextMessageAsync(callback.Message.Chat.Id, report.ToString,,,,, creaNULLKeyboard).Result
+
             ElseIf callback.Data = "DelMess" Then
                 Dim a = api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId).Result
             Else
@@ -492,7 +513,7 @@ Module Module1
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) AndAlso message.Chat.Type = ChatType.Private Then
                     'sta inviando più parti di zaino
                     zaini.Item(message.From.Id) += message.Text
-                    StampaDebug("Zaino diviso ricevuto. ID:" + message.MessageId.ToString + " tempo: " + ((Now.Ticks - cron(message.MessageId)) / 10000).ToString)
+                    StampaDebug("Zaino diviso ricevuto.") ' ID:" + message.MessageId.ToString + " tempo: " + ((Now.Ticks - cron(message.MessageId)) / 10000).ToString)
                 ElseIf stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) AndAlso message.Chat.Type = ChatType.Private Then
                     'sta inviando zaino per confronto
                     Dim zaino = parseZaino(message.Text)
@@ -1243,7 +1264,7 @@ Module Module1
                 Throw ex
             End If
             aggiornastats(message.Text, message.From.Username)
-            If cron.ContainsKey(message.MessageId) Then cron.Remove(message.MessageId)
+            'If cron.ContainsKey(message.MessageId) Then cron.Remove(message.MessageId)
         Catch e As Exception
 #Region "exception handling"
             If e.Message = "PROCESSO TERMINATO SU RICHIESTA" Then
@@ -1264,7 +1285,12 @@ Module Module1
                 Console.WriteLine(e.Message)
                 Dim a
                 sendReport(e, message)
-                a = api.SendTextMessageAsync(message.Chat.Id, "Si è verificato un errore, riprova tra qualche istante." + vbCrLf + "Una segnalazione è stata inviata automaticamente allo sviluppatore, potrebbe contattarti per avere più informazioni.",,,, , creaNULLKeyboard).Result
+                Dim mess_err As String = ""
+                mess_err += "Si è verificato un errore, riprova tra qualche istante." + vbCrLf
+                mess_err += "Una segnalazione è stata inviata automaticamente allo sviluppatore, potrebbe contattarti per avere più informazioni." + vbCrLf
+                mess_err += "Se l'errore persiste, può essere utile ripristinare i tuoi dati. Perderai tutti i tuoi dati salvati su craftlootbot, assicurati di poterli reperire nuovamente." + vbCrLf
+                mess_err += "Ripristinare?"
+                a = api.SendTextMessageAsync(message.Chat.Id, mess_err,,,, , creaErrorInlineKeyboard).Result
             Catch
             End Try
         End Try
@@ -1823,14 +1849,19 @@ Module Module1
     'invio report di errore allo sviluppatore
     Sub sendReport(ex As Exception, message As Message)
         Dim reportBuilder As New Text.StringBuilder
-        Dim hasZaino As String = If(IO.File.Exists("zaini/" + message.From.Id.ToString + ".txt"), "Si", "No")
-
+        Dim userID = message.From.Id
+        Dim hasZaino As String = If(IO.File.Exists("zaini/" + userID.ToString + ".txt"), "Si", "No")
+        Dim pending_actions As String = "Nessuna"
+        If zaini.ContainsKey(userID) Then pending_actions = "salvataggio zaino "
+        If stati.ContainsKey(userID) Then pending_actions += "stato corrente = " + stati(userID).ToString + " "
+        If confronti.ContainsKey(userID) Then pending_actions += "confronto"
         With reportBuilder
             .AppendLine("Comando: " + message.Text)
             .AppendLine("Da: " + message.From.Username)
-            .AppendLine("ID: " + message.From.Id.ToString)
+            .AppendLine("ID: " + userID.ToString)
             .AppendLine("Chat: " + [Enum].GetName(GetType(ChatType), message.Chat.Type))
             .AppendLine("Zaino salvato: " + hasZaino)
+            .AppendLine("Azioni in corso: " + pending_actions)
             .AppendLine("Metodo: " + If(ex.TargetSite.Name, "Sconosciuto") + ", " + If(ex.Source, "Sconosciuta"))
             .AppendLine("Eccezione: " + ex.Message)
             .AppendLine("Inner Exception: " + If(IsNothing(ex.InnerException), "Nessuna", ex.InnerException.Message))
