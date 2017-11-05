@@ -1259,7 +1259,7 @@ Module Module1
                 Next
 
             ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/kill") Then
-                    kill = True
+                kill = True
                 Dim ex As New Exception("PROCESSO TERMINATO SU RICHIESTA")
                 Throw ex
             End If
@@ -1932,18 +1932,34 @@ Module Module1
         End If
         For Each i In items
             i = i.Trim
-            Dim temp_id = getItemId(i)
+            'controllo e gestisco craft multipli
+            Dim split() = i.Split(":")
+            Dim name As String = split(0)
+            Dim quantity As Integer = 1
+            If split.Length > 2 Then
+                a = api.SendTextMessageAsync(chat_id, "L'oggetto " + name + " non è inserito nel formato corretto, verrà saltato.").Result
+                Continue For
+            End If
+            If split.Length = 2 Then
+                If Not Integer.TryParse(split(1), quantity) Then
+                    a = api.SendTextMessageAsync(chat_id, "La quantità " + split(1) + " è troppo elevata, l'oggetto " + name + " verrà saltato.").Result
+                    Continue For
+                End If
+            End If
+            Dim temp_id = getItemId(name)
             If temp_id = -1 Then
-                a = api.SendTextMessageAsync(chat_id, "L'oggetto " + i + " non è stato riconosciuto, verrà saltato.").Result
+                a = api.SendTextMessageAsync(chat_id, "L'oggetto " + name + " non è stato riconosciuto, verrà saltato.").Result
                 Continue For
             End If
             If checkCraftable Then
                 If Not isCraftable(temp_id) Then
-                    Dim e = api.SendTextMessageAsync(chat_id, "L'oggetto " + i + " non è craftabile, verrà saltato.").Result
+                    Dim e = api.SendTextMessageAsync(chat_id, "L'oggetto " + name + " non è craftabile, verrà saltato.").Result
                     Continue For
                 End If
             End If
-            item_ids.Add(temp_id)
+            For y = 1 To quantity
+                item_ids.Add(temp_id)
+            Next
         Next
         If item_ids.Count = 0 Then
             a = api.SendTextMessageAsync(chat_id, "Nessuno degli oggetti inseriti è valido, riprova.").Result
