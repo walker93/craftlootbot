@@ -718,13 +718,13 @@ Module Module1
                 zainoDic = getZaino(message.From.Id)
                 Dim zainoDic_copy = zainoDic
                 For Each i In item_ids
-                    If Not zainoDic_copy.ContainsKey(ItemIds(i)) Then
-                        getNeededItemsList(i, CraftList, zainoDic_copy, gia_possiedi, spesa, punti_craft)
-                        If rarity_value.ContainsKey(ItemIds.Item(i).rarity) Then spesa += rarity_value.Item(ItemIds.Item(i).rarity)
-                        If rarity_craft.ContainsKey(ItemIds.Item(i).rarity) Then punti_craft += rarity_craft.Item(ItemIds.Item(i).rarity)
-                    Else
-                        gia_possiedi.Add(ItemIds(i), 1)
-                    End If
+                    'If Not zainoDic_copy.ContainsKey(ItemIds(i)) Then
+                    getNeededItemsList(i, CraftList, zainoDic_copy, gia_possiedi, spesa, punti_craft)
+                    If rarity_value.ContainsKey(ItemIds.Item(i).rarity) Then spesa += rarity_value.Item(ItemIds.Item(i).rarity)
+                    If rarity_craft.ContainsKey(ItemIds.Item(i).rarity) Then punti_craft += rarity_craft.Item(ItemIds.Item(i).rarity)
+                    'Else
+                    'gia_possiedi.Add(ItemIds(i), 1)
+                    'End If
                 Next
                 Dim result As String = getCraftListText(createCraftCountList(CraftList), item_ids.ToArray, zainoDic, gia_possiedi, spesa, punti_craft)
                 answerLongMessage(result, message.Chat.Id)
@@ -1465,11 +1465,12 @@ Module Module1
         For Each it In sortedDictionary
             tot_necessari = sortedDictionary.Item(it.Key)
             With buildernecessari
+                .Append("> ") 'inizio riga
                 If zaino.Count > 0 Then
                     If zaino.ContainsKey(it.Key) Then
                         necessari = tot_necessari - zaino.Item(it.Key)
                         If necessari > 0 Then
-                            .Append("> ") 'inizio riga
+                            '.Append("> ") 'inizio riga
                             .Append(necessari) 'necessari
                         Else
                             With builderposseduti
@@ -1485,7 +1486,7 @@ Module Module1
                         End If
                         '.Append(If(necessari > 0, necessari, 0)) 
                     Else
-                        .Append("> ") 'inizio riga
+                        '.Append("> ") 'inizio riga
                         .Append(tot_necessari.ToString)
                     End If
                     .Append(" su ")
