@@ -1465,12 +1465,12 @@ Module Module1
         For Each it In sortedDictionary
             tot_necessari = sortedDictionary.Item(it.Key)
             With buildernecessari
-                .Append("> ") 'inizio riga
+                '.Append("> ") 'inizio riga
                 If zaino.Count > 0 Then
                     If zaino.ContainsKey(it.Key) Then
                         necessari = tot_necessari - zaino.Item(it.Key)
                         If necessari > 0 Then
-                            '.Append("> ") 'inizio riga
+                            .Append("> ") 'inizio riga
                             .Append(necessari) 'necessari
                         Else
                             With builderposseduti
@@ -1490,6 +1490,8 @@ Module Module1
                         .Append(tot_necessari.ToString)
                     End If
                     .Append(" su ")
+                Else
+                    .Append("> ") 'inizio riga
                 End If
                 .Append(tot_necessari.ToString) 'Totale oggetti necessari
                 .Append(" di ")
