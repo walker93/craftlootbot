@@ -114,16 +114,16 @@ Public Module MyExtensions
     'Crea tastiera per salvataggio zaino
     Function creaZainoKeyboard() As ReplyMarkups.ReplyKeyboardMarkup
         Dim keyboard As New ReplyMarkups.ReplyKeyboardMarkup
-        Dim keyboardbuttons()() As KeyboardButton
-        Dim button1 As New KeyboardButton("Salva")
-        Dim button2 As New KeyboardButton("Annulla")
-        Dim row1() As KeyboardButton
-        Dim row2() As KeyboardButton
+        Dim keyboardbuttons()() As KeyboardButton = New KeyboardButton()() {New KeyboardButton() {("Salva")}, New KeyboardButton() {("Annulla")}}
+        'Dim button1 As New KeyboardButton("Salva")
+        'Dim button2 As New KeyboardButton("Annulla")
+        'Dim row1() As KeyboardButton
+        'Dim row2() As KeyboardButton
 
-        row1.Add(button1)
-        row2.Add(button2)
-        keyboardbuttons.Add(row1)
-        keyboardbuttons.Add(row2)
+        'row1.Add(button1)
+        'row2.Add(button2)
+        'keyboardbuttons.Add(row1)
+        'keyboardbuttons.Add(row2)
         keyboard.Keyboard = keyboardbuttons
         keyboard.OneTimeKeyboard = True
         keyboard.ResizeKeyboard = True

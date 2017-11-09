@@ -1280,6 +1280,17 @@ Module Module1
                     Console.WriteLine("Impossibile aggiornare database")
                     Exit Sub
                 End Try
+            ElseIf TypeOf e Is ArithmeticException Then
+                Try
+                    Console.WriteLine(e.Message)
+                    Dim a
+                    'sendReport(e, message)
+                    Dim mess_err As String = ""
+                    mess_err += "L'operazione richiesta richiede calcoli troppo elevati per essere soddisfatta. Ti invito a riprovare abbassando la richiesta."
+                    a = api.SendTextMessageAsync(message.Chat.Id, mess_err).Result
+                    Exit Sub
+                Catch
+                End Try
             End If
             Try
                 Console.WriteLine(e.Message)
@@ -1486,7 +1497,7 @@ Module Module1
                         End If
                         '.Append(If(necessari > 0, necessari, 0)) 
                     Else
-                        '.Append("> ") 'inizio riga
+                        .Append("> ") 'inizio riga
                         .Append(tot_necessari.ToString)
                     End If
                     .Append(" su ")
