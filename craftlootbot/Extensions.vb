@@ -545,4 +545,52 @@ Public Module MyExtensions
         Return intestazione
     End Function
 
+    'ottengo gli alias globali
+    Function getGlobalAlias() As Dictionary(Of String, String)
+        Dim alias_path As String = "alias/GLOBAL.txt"
+        Dim GlobalAlias As New Dictionary(Of String, String)
+        If IO.File.Exists(alias_path) Then
+            Dim lines = IO.File.ReadAllLines(alias_path)
+            For Each line In lines
+                GlobalAlias.Add(line.Split("==")(0), line.Split("==")(1))
+            Next
+        End If
+        Return GlobalAlias
+    End Function
+
+    'ottengo gli alias personali dell'utente
+    Function getPersonalAlias(UserID As Integer) As Dictionary(Of String, String)
+        Dim alias_path As String = "alias/" + UserID.ToString + ".txt"
+        Dim PersonalAlias As New Dictionary(Of String, String)
+        If IO.File.Exists(alias_path) Then
+            Dim lines = IO.File.ReadAllLines(alias_path)
+            For Each line In lines
+                PersonalAlias.Add(line.Split("==")(0), line.Split("==")(1))
+            Next
+        End If
+        Return PersonalAlias
+    End Function
+
+    'Aggiunge un alias personale 
+    Function AddPersonalAlias(UserID As Integer, keyword As String, items As String) As String
+        Dim alias_path As String = "alias/" + UserID.ToString + ".txt"
+        Dim PersonalAlias As Dictionary(Of String, String) = getPersonalAlias(UserID)
+        Dim result As String = "OK"
+        If PersonalAlias.ContainsKey(keyword) Then result = "Un alias con lo stesso nome è già presente." : Return result
+        IO.File.AppendAllLines(alias_path, {keyword + "==" + items})
+        Return result
+    End Function
+
+    'Rimuove un alias personale 
+    Function DeletePersonalAlias(UserID As Integer, keyword As String) As String
+        Dim alias_path As String = "alias/" + UserID.ToString + ".txt"
+        Dim PersonalAlias As Dictionary(Of String, String) = getPersonalAlias(UserID)
+        Dim result As String = "OK"
+        If Not PersonalAlias.ContainsKey(keyword) Then result = "L'alias specificato non è presente" : Return result
+        PersonalAlias.Remove(keyword)
+
+        Dim contents() = PersonalAlias.ToDictionary(Function(x) x.Key + "==" + x.Value).ToArray
+        IO.File.WriteAllLines(alias_path, contents)
+        Return result
+    End Function
 End Module
