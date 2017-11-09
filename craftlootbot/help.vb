@@ -72,7 +72,7 @@ Module help
             .AppendLine("> '/base <rarità>' per ricevere un elenco di tutti gli oggetti base per la rarità inserita, per ogni oggetto è indicata la quantità che possiedi.")
             .AppendLine("> '/vendi <oggetto/i>' per ottenere una lista di oggetti che puoi vendere in quanto non necessari per craftare gli oggetti inseriti.")
             .AppendLine("> '/creanegozi' o '/creanegozi <oggetto/i>' per ricevere dei comandi /negozio da inoltrare a @lootplusbot")
-            .AppendLine("> '/info <oggetto/i>' per ricevere informazioni utili sugli oggetti inseriti.")
+            .AppendLine("> '/info <oggetto>' per ricevere informazioni utili sull'oggetto inserito.")
             .AppendLine("> '/stats' per ottenere statistiche sull'utilizzo del bot.")
             .AppendLine("> '/stima <oggetto>' per ricevere info su costi, punti craft e valore di un oggetto tenendo presente il vostro zaino.")
             .AppendLine("> '/xml <oggetto>' o '/html <oggetto>' per ricevere un file XML o HTML con la struttura ad albero dei craft dell'oggetto inserito.")
@@ -86,6 +86,7 @@ Module help
             .AppendLine("> Se inoltri un messaggio ottenuto da /lista o /vendi, il bot restituirà i comandi /ricerca da inoltrare a @lootplusbot per conoscerne il prezzo.")
             .AppendLine()
             .AppendLine("Per specificare più oggetti esclusivamente nei comandi che lo supportano è necessario separarli con una virgola.")
+            .AppendLine("I comandi /lista, /craft, /creanegozi e /vendi supportano anche la quantità degli oggetti inseriti. Ad esempio '/lista tavolino:10' fornirà la lista per degli oggetti per 10 tavolini.")
 
             .AppendLine("*Premi sui bottoni qui sotto per vedere maggiori informazioni su uno specifico comando.*")
             .AppendLine()
