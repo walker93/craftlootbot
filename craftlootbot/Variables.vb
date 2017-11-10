@@ -73,7 +73,7 @@
         init_prezzoscrigni()
 
         init_teamMembers()
-
+        init_dirs()
         'Italian_dictionary = IO.File.ReadAllText("dictionary.txt").Split(" "c, vbLf)
     End Sub
 
@@ -133,6 +133,15 @@
         Dim team_file = "team.dat"
         If Not IO.File.Exists(team_file) Then IO.File.WriteAllText(team_file, "")
         team_members.AddRange(IO.File.ReadAllLines(team_file))
+    End Sub
+
+    'Inizializzo directory dati
+    Sub init_dirs()
+        IO.Directory.CreateDirectory("crafts")
+        IO.Directory.CreateDirectory("equip")
+        IO.Directory.CreateDirectory("zaini")
+        IO.Directory.CreateDirectory("prezzi")
+        IO.Directory.CreateDirectory("alias")
     End Sub
 
 #Region "Deprecated"

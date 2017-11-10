@@ -105,7 +105,6 @@ Public Module MyExtensions
 
     'Creo File per Salvataggio Callback di /craft
     Function createfile(text As String, UserID As Long)
-        IO.Directory.CreateDirectory("crafts")
         Dim filename = UserID.ToString + "_" + getFileName()
         IO.File.WriteAllText("crafts/" + filename, text)
         Return filename
@@ -467,7 +466,6 @@ Public Module MyExtensions
     End Function
 
     Sub saveEquip(items As List(Of Integer), UserID As Integer)
-        IO.Directory.CreateDirectory("equip")
         Dim text As New Text.StringBuilder
         Dim path = "equip/" + UserID.ToString + ".txt"
         For Each id In items

@@ -509,7 +509,6 @@ Module Module1
 #End Region
             If isZaino(message.Text) Then
 #Region "Zaino Ricevuto"
-                IO.Directory.CreateDirectory("zaini")
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) AndAlso message.Chat.Type = ChatType.Private Then
                     'sta inviando più parti di zaino
                     zaini.Item(message.From.Id) += message.Text
@@ -576,7 +575,6 @@ Module Module1
 #End Region
             ElseIf isPrezziNegozi(message.Text) Then
 #Region "prezzi ricevuti"
-                IO.Directory.CreateDirectory("prezzi")
                 IO.File.WriteAllText("prezzi/" + message.From.Id.ToString + ".txt", message.Text)
                 Console.WriteLine("Salvati prezzi di ID: " + message.From.Id.ToString)
                 a = api.SendTextMessageAsync(message.Chat.Id, "I tuoi prezzi sono stati salvati!").Result
