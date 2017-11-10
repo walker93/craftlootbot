@@ -171,6 +171,7 @@ Module Module1
                 If IO.File.Exists("zaini/" + userID.ToString + ".txt") Then IO.File.Delete("zaini/" + userID.ToString + ".txt") : report.AppendLine("Zaino utente cancellato!")
                 If IO.File.Exists("equip/" + userID.ToString + ".txt") Then IO.File.Delete("equip/" + userID.ToString + ".txt") : report.AppendLine("Equipaggiamento utente cancellato!")
                 If IO.File.Exists("prezzi/" + userID.ToString + ".txt") Then IO.File.Delete("prezzi/" + userID.ToString + ".txt") : report.AppendLine("Prezzi utente cancellati!")
+                If IO.File.Exists("alias/" + userID.ToString + ".txt") Then IO.File.Delete("alias/" + userID.ToString + ".txt") : report.AppendLine("Alias utente cancellati!")
                 For Each file In IO.Directory.GetFiles("crafts")
                     Dim info As New IO.FileInfo(file)
                     If info.Name.StartsWith(userID) Then IO.File.Delete(file) : report.AppendLine("File '" + info.Name + "' cancellato!")
@@ -1144,6 +1145,47 @@ Module Module1
                 saveEquip(item_ids, message.From.Id)
                 a = api.SendTextMessageAsync(message.Chat.Id, "Equipaggiamento salvato").Result
 #End Region
+            ElseIf message.Text.ToLower.StartsWith("/aggiungialias") Then
+#Region "/aggiungialias"
+                Dim split() = message.Text.Split({"=="}, StringSplitOptions.RemoveEmptyEntries)
+                Dim keyword As String = split(0).Replace(If(message.Text.Contains("@craftlootbot"), "/aggiungialias" + "@craftlootbot", "/aggiungialias"), "").Trim
+                If Not split.Length = 2 Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "L'alias " + keyword + " non è inserito nel formato corretto.").Result
+                    Exit Sub
+                End If
+                Dim items = checkInputItems(split(1), message.Chat.Id, "/aggiungialias")
+                If items.Count = 0 Then Exit Sub
+                Dim result = AddPersonalAlias(message.From.Id, keyword, ItemIdListToInputString(items))
+                If result <> "OK" Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, result).Result
+                Else
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Alias " + keyword + " aggiunto!").Result
+                End If
+#End Region
+            ElseIf message.Text.ToLower.StartsWith("/elencaalias") Then
+#Region "/elencaalias"
+                Dim PersonalAlias = getPersonalAlias(message.From.Id)
+                Dim builder As New Text.StringBuilder("I tuoi alias salvati sono:")
+                builder.AppendLine()
+                If PersonalAlias.Count = 0 Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Non hai alias salvati al momento.").Result
+                    Exit Sub
+                End If
+                For Each PA In PersonalAlias
+                    builder.AppendLine("*" + PA.Key + "* == " + PA.Value)
+                Next
+                answerTooEntities(builder.ToString, message.Chat.Id, ParseMode.Markdown)
+#End Region
+            ElseIf message.Text.ToLower.StartsWith("/cancellaalias") Then
+#Region "/cancellaalias"
+                Dim input = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/cancellaalias" + "@craftlootbot", "/cancellaalias"), "").Trim
+                Dim result = DeletePersonalAlias(message.From.Id, input)
+                If result <> "OK" Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, result).Result
+                Else
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Alias " + input + " rimosso!").Result
+                End If
+#End Region
             ElseIf team_members.Contains(message.From.Username) AndAlso message.Text.StartsWith("/dungeon") Then
 #Region "Dungeon"
                 Dim input = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/dungeon" + "@craftlootbot", "/dungeon"), "").Trim
@@ -1243,6 +1285,7 @@ Module Module1
 #End Region
 
             ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/ripristino") Then
+#Region "/ripristino"
                 Dim member = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/ripristino" + "@craftlootbot", "/ripristino"), "").Trim
                 Dim userID As Integer = Integer.Parse(member)
                 If zaini.ContainsKey(userID) Then zaini.Remove(userID)
@@ -1251,11 +1294,12 @@ Module Module1
                 If IO.File.Exists("zaini/" + userID.ToString + ".txt") Then IO.File.Delete("zaini/" + userID.ToString + ".txt")
                 If IO.File.Exists("equip/" + userID.ToString + ".txt") Then IO.File.Delete("equip/" + userID.ToString + ".txt")
                 If IO.File.Exists("prezzi/" + userID.ToString + ".txt") Then IO.File.Delete("prezzi/" + userID.ToString + ".txt")
+                If IO.File.Exists("alias/" + userID.ToString + ".txt") Then IO.File.Delete("alias/" + userID.ToString + ".txt")
                 For Each file In IO.Directory.GetFiles("crafts")
                     Dim info As New IO.FileInfo(file)
                     If info.Name.StartsWith(userID) Then IO.File.Delete(file)
                 Next
-
+#End Region
             ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/kill") Then
                 kill = True
                 Dim ex As New Exception("PROCESSO TERMINATO SU RICHIESTA")

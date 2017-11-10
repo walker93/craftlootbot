@@ -543,6 +543,22 @@ Public Module MyExtensions
         Return intestazione
     End Function
 
+    Function ItemIdListToInputString(item_ids As List(Of Integer)) As String
+        Dim count As New Dictionary(Of Integer, Integer)
+        For Each it In item_ids
+            If count.ContainsKey(it) Then
+                count(it) += 1
+            Else
+                count.Add(it, 1)
+            End If
+        Next
+        Dim result As String = ""
+        For Each it In count
+            result += ItemIds(it.Key).name + ":" + it.Value.ToString + If(count.Keys.Last = it.Key, "", ",")
+        Next
+        Return result
+    End Function
+
     'ottengo gli alias globali
     Function getGlobalAlias() As Dictionary(Of String, String)
         Dim alias_path As String = "alias/GLOBAL.txt"
@@ -563,7 +579,7 @@ Public Module MyExtensions
         If IO.File.Exists(alias_path) Then
             Dim lines = IO.File.ReadAllLines(alias_path)
             For Each line In lines
-                PersonalAlias.Add(line.Split("==")(0), line.Split("==")(1))
+                PersonalAlias.Add(line.Split("==")(0), line.Split("==")(2))
             Next
         End If
         Return PersonalAlias
@@ -586,9 +602,12 @@ Public Module MyExtensions
         Dim result As String = "OK"
         If Not PersonalAlias.ContainsKey(keyword) Then result = "L'alias specificato non è presente" : Return result
         PersonalAlias.Remove(keyword)
-
-        Dim contents() = PersonalAlias.ToDictionary(Function(x) x.Key + "==" + x.Value).ToArray
+        Dim contents() As String
+        For Each PA In PersonalAlias
+            contents.Add(PA.Key + "==" + PA.Value)
+        Next
         IO.File.WriteAllLines(alias_path, contents)
         Return result
     End Function
+
 End Module
