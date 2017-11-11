@@ -706,7 +706,8 @@ Module Module1
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/lista") Then
 #Region "lista"
-                Dim item_ids = checkInputItems(message.Text.ToLower.Trim, message.Chat.Id, "/lista")
+                Dim item_ids As New List(Of Integer)
+                checkInputItems(message.Text.Trim, message.Chat.Id, message.From.Id, "/lista", item_ids)
                 If item_ids.Count = 0 Then Exit Sub
                 'Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
                 'Dim zaino As String = ""
@@ -760,7 +761,8 @@ Module Module1
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/craft") Then
 #Region "craft"
-                Dim item_ids = checkInputItems(message.Text.ToLower.Trim, message.Chat.Id, "/craft")
+                Dim item_ids As New List(Of Integer)
+                checkInputItems(message.Text.Trim, message.Chat.Id, message.From.Id, "/craft", item_ids)
                 If item_ids.Count = 0 Then Exit Sub
                 Dim prof As Integer = -1
 
@@ -784,7 +786,8 @@ Module Module1
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/vendi") Then
 #Region "vendi"
-                Dim item_ids = checkInputItems(message.Text.ToLower.Trim, message.Chat.Id, "/vendi")
+                Dim item_ids As New List(Of Integer)
+                checkInputItems(message.Text.Trim, message.Chat.Id, message.From.Id, "/vendi", item_ids)
                 If item_ids.Count = 0 Then Exit Sub
                 'Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
                 'Dim zaino As String = ""
@@ -837,7 +840,8 @@ Module Module1
                     Exit Sub
                 End If
                 zainoDic = getZaino(message.From.Id)
-                Dim item_ids = checkInputItems(message.Text.Trim.ToLower, message.Chat.Id, "/creanegozi")
+                Dim item_ids As New List(Of Integer)
+                checkInputItems(message.Text.Trim, message.Chat.Id, message.From.Id, "/creanegozi", item_ids)
                 If item_ids.Count = 0 Then
                     'Uso lo zaino per creare i negozi
                     result = zainoDic
@@ -1148,12 +1152,18 @@ Module Module1
             ElseIf message.Text.ToLower.StartsWith("/aggiungialias") Then
 #Region "/aggiungialias"
                 Dim split() = message.Text.Split({"=="}, StringSplitOptions.RemoveEmptyEntries)
-                Dim keyword As String = split(0).Replace(If(message.Text.Contains("@craftlootbot"), "/aggiungialias" + "@craftlootbot", "/aggiungialias"), "").Trim
+                Dim keyword As String = split(0).Remove(0, split(0).Split(" ")(0).Length).Trim 'split(0).Replace(If(message.Text.ToLower.Contains("@craftlootbot"), "/aggiungialias" + "@craftlootbot", "/aggiungialias"), "").Trim
+                If keyword = "" Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, "L'alias non può essere vuoto.").Result
+                    Exit Sub
+                End If
                 If Not split.Length = 2 Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "L'alias " + keyword + " non è inserito nel formato corretto.").Result
                     Exit Sub
                 End If
-                Dim items = checkInputItems(split(1), message.Chat.Id, "/aggiungialias")
+
+                Dim items As New List(Of Integer)
+                checkInputItems(split(1), message.Chat.Id, message.From.Id, "/aggiungialias", items)
                 If items.Count = 0 Then Exit Sub
                 Dim result = AddPersonalAlias(message.From.Id, keyword, ItemIdListToInputString(items))
                 If result <> "OK" Then
@@ -1165,14 +1175,19 @@ Module Module1
             ElseIf message.Text.ToLower.StartsWith("/elencaalias") Then
 #Region "/elencaalias"
                 Dim PersonalAlias = getPersonalAlias(message.From.Id)
-                Dim builder As New Text.StringBuilder("I tuoi alias salvati sono:")
+                Dim GlobalAlias = getGlobalAlias()
+                Dim builder As New Text.StringBuilder("*I tuoi alias salvati sono:*")
                 builder.AppendLine()
                 If PersonalAlias.Count = 0 Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Non hai alias salvati al momento.").Result
                     Exit Sub
                 End If
                 For Each PA In PersonalAlias
-                    builder.AppendLine("*" + PA.Key + "* == " + PA.Value)
+                    builder.AppendLine("`" + PA.Key + "` == " + PA.Value)
+                Next
+                builder.AppendLine.AppendLine("*Alias Globali:*")
+                For Each GA In GlobalAlias
+                    builder.AppendLine("`" + GA.Key + "` == " + GA.Value)
                 Next
                 answerTooEntities(builder.ToString, message.Chat.Id, ParseMode.Markdown)
 #End Region
@@ -1384,6 +1399,7 @@ Module Module1
                     End If
                 End If
             Else
+
                 CraftList.Add(item)
             End If
         Next
@@ -1976,50 +1992,62 @@ Module Module1
         Return a
     End Function
 
-    Function checkInputItems(message_text As String, chat_id As Long, comando As String, Optional checkCraftable As Boolean = True) As List(Of Integer)
-
-        Dim items = message_text.Replace(If(message_text.Contains("@craftlootbot"), comando + "@craftlootbot", comando), "").Split(",").Where(Function(p) p <> "").ToList
-        Dim item_ids As New List(Of Integer)
+    Sub checkInputItems(message_text As String, chat_id As Long, user_id As Long, comando As String, ByRef item_ids As List(Of Integer), Optional checkCraftable As Boolean = True)
+        Dim items = message_text.Replace(If(message_text.ToLower.Contains("@craftlootbot"), comando + "@craftlootbot", comando), "").Split(",").Where(Function(p) p <> "").ToList
         Dim a
         If items.Count = 0 Then
             If comando <> "/creanegozi" Then a = api.SendTextMessageAsync(chat_id, "Inserisci l'oggetto o gli oggetti che vuoi ottenere").Result
-            Return item_ids
+            Exit Sub
         End If
         For Each i In items
-            i = i.Trim
-            'controllo e gestisco craft multipli
-            Dim split() = i.Split(":")
-            Dim name As String = split(0)
-            Dim quantity As Integer = 1
-            If split.Length > 2 Then
-                a = api.SendTextMessageAsync(chat_id, "L'oggetto " + name + " non è inserito nel formato corretto, verrà saltato.").Result
-                Continue For
-            End If
-            If split.Length = 2 Then
-                If Not Integer.TryParse(split(1), quantity) Then
-                    a = api.SendTextMessageAsync(chat_id, "La quantità " + split(1) + " è troppo elevata, l'oggetto " + name + " verrà saltato.").Result
+            Dim x = CheckAlias(user_id, i.Trim).Trim
+            If x <> i.Trim Then
+                checkInputItems(x, chat_id, user_id, comando, item_ids, checkCraftable)
+            Else
+                'controllo e gestisco craft multipli
+                Dim split() = x.Split(":")
+                Dim name As String = split(0)
+                Dim quantity As Integer = 1
+                If split.Length > 2 Then
+                    a = api.SendTextMessageAsync(chat_id, "L'oggetto " + name + " non è inserito nel formato corretto, verrà saltato.").Result
                     Continue For
                 End If
-            End If
-            Dim temp_id = getItemId(name)
-            If temp_id = -1 Then
-                a = api.SendTextMessageAsync(chat_id, "L'oggetto " + name + " non è stato riconosciuto, verrà saltato.").Result
-                Continue For
-            End If
-            If checkCraftable Then
-                If Not isCraftable(temp_id) Then
-                    Dim e = api.SendTextMessageAsync(chat_id, "L'oggetto " + name + " non è craftabile, verrà saltato.").Result
+                If split.Length = 2 Then
+                    If Not Integer.TryParse(split(1), quantity) Then
+                        a = api.SendTextMessageAsync(chat_id, "La quantità " + split(1) + " è troppo elevata, l'oggetto " + name + " verrà saltato.").Result
+                        Continue For
+                    End If
+                End If
+
+                'Check prima dell'aggiunta
+                Dim temp_id = getItemId(name)
+                If temp_id = -1 Then
+                    a = api.SendTextMessageAsync(chat_id, "L'oggetto " + name + " non è stato riconosciuto, verrà saltato.").Result
                     Continue For
                 End If
+                If checkCraftable Then
+                    If Not isCraftable(temp_id) Then
+                        Dim e = api.SendTextMessageAsync(chat_id, "L'oggetto " + name + " non è craftabile, verrà saltato.").Result
+                        Continue For
+                    End If
+                End If
+                For y = 1 To quantity
+                    item_ids.Add(temp_id)
+                Next
             End If
-            For y = 1 To quantity
-                item_ids.Add(temp_id)
-            Next
         Next
         If item_ids.Count = 0 Then
             a = api.SendTextMessageAsync(chat_id, "Nessuno degli oggetti inseriti è valido, riprova.").Result
         End If
-        Return item_ids
+
+    End Sub
+
+    Function CheckAlias(UserID As Long, keyword As String) As String
+        Dim result As String = keyword
+        Dim PersonalAlias = getPersonalAlias(UserID)
+        Dim union = PersonalAlias.Union(getGlobalAlias).ToDictionary(Function(k) k.Key, Function(v) v.Value)
+        If union.ContainsKey(keyword) Then result = union(keyword)
+        Return result
     End Function
 
     Sub notificaPremio()

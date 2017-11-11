@@ -566,7 +566,7 @@ Public Module MyExtensions
         If IO.File.Exists(alias_path) Then
             Dim lines = IO.File.ReadAllLines(alias_path)
             For Each line In lines
-                GlobalAlias.Add(line.Split("==")(0), line.Split("==")(1))
+                GlobalAlias.Add(line.Split("==")(0), line.Split("==")(2))
             Next
         End If
         Return GlobalAlias
@@ -589,8 +589,10 @@ Public Module MyExtensions
     Function AddPersonalAlias(UserID As Integer, keyword As String, items As String) As String
         Dim alias_path As String = "alias/" + UserID.ToString + ".txt"
         Dim PersonalAlias As Dictionary(Of String, String) = getPersonalAlias(UserID)
+        Dim GlobalAlias = getGlobalAlias()
         Dim result As String = "OK"
-        If PersonalAlias.ContainsKey(keyword) Then result = "Un alias con lo stesso nome è già presente." : Return result
+        If PersonalAlias.ContainsKey(keyword) Then result = "Un alias con lo stesso nome è già presente. Scegline un altro." : Return result
+        If GlobalAlias.ContainsKey(keyword) Then result = "Esiste un Alias globale con lo stesso nome. Scegline un altro." : Return result
         IO.File.AppendAllLines(alias_path, {keyword + "==" + items})
         Return result
     End Function
