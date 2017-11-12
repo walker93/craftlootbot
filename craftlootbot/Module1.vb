@@ -183,7 +183,7 @@ Module Module1
                 Dim a = api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId).Result
             Else
                 Dim result As String = process_help(callback.Data)
-                Dim e = api.EditMessageTextAsync(callback.Message.Chat.Id, callback.Message.MessageId, result, ParseMode.Markdown,, creaHelpKeyboard()).Result
+                Dim e = api.EditMessageTextAsync(callback.Message.Chat.Id, callback.Message.MessageId, result, ParseMode.Markdown, True, creaHelpKeyboard()).Result
                 Dim a = api.AnswerCallbackQueryAsync(callback.Id,,,, 0).Result
             End If
         Catch e As AggregateException
@@ -922,7 +922,7 @@ Module Module1
                 End If
 #End Region
             ElseIf message.Text.ToLower.StartsWith(If(message.Chat.Type = ChatType.Private, "/help", "/help@craftlootbot")) Then
-                a = api.SendTextMessageAsync(message.Chat.Id, help_builder.ToString, ParseMode.Markdown,,,, creaHelpKeyboard).Result
+                a = api.SendTextMessageAsync(message.Chat.Id, help_builder.ToString, ParseMode.Markdown, True,,, creaHelpKeyboard).Result
             ElseIf message.Text.ToLower.StartsWith("/stats") Then
 #Region "stats"
                 Dim builder As New Text.StringBuilder("*STATISTICHE COMPLESSIVE:*")
@@ -1178,10 +1178,7 @@ Module Module1
                 Dim GlobalAlias = getGlobalAlias()
                 Dim builder As New Text.StringBuilder("*I tuoi alias salvati sono:*")
                 builder.AppendLine()
-                If PersonalAlias.Count = 0 Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Non hai alias salvati al momento.").Result
-                    Exit Sub
-                End If
+                If PersonalAlias.Count = 0 Then builder.Clear.AppendLine("Non hai alias salvati al momento.")
                 For Each PA In PersonalAlias
                     builder.AppendLine("`" + PA.Key + "` == " + PA.Value)
                 Next

@@ -86,7 +86,7 @@ Module help
             .AppendLine("> Se inoltri un messaggio ottenuto da /lista o /vendi, il bot restituirà i comandi /ricerca da inoltrare a @lootplusbot per conoscerne il prezzo.")
             .AppendLine()
             .AppendLine("Per specificare più oggetti esclusivamente nei comandi che lo supportano è necessario separarli con una virgola.")
-            .AppendLine("I comandi /lista, /craft, /creanegozi e /vendi supportano anche la quantità degli oggetti inseriti. Ad esempio '/lista tavolino:10' fornirà la lista per degli oggetti per 10 tavolini.")
+            .AppendLine("I comandi /lista, /craft, /creanegozi e /vendi supportano anche la quantità degli oggetti inseriti e gli [Alias](http://telegra.ph/Guida-utilizzo-Alias-per-craftlootbot-11-12). Ad esempio '/lista tavolino:10' fornirà la lista degli oggetti per 10 tavolini.")
 
             .AppendLine("*Premi sui bottoni qui sotto per vedere maggiori informazioni su uno specifico comando.*")
             .AppendLine()
