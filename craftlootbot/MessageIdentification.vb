@@ -1,4 +1,6 @@
-﻿Module MessageIdentification
+﻿Imports System.Text.RegularExpressions
+
+Module MessageIdentification
 
     'controllo se il testo matcha uno zaino
     Function isZaino(text As String) As Boolean
