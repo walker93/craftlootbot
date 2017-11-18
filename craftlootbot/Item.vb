@@ -175,6 +175,7 @@ Public Class Item
         Next
     End Sub
 
+    'ottengo tipo di equipaggiamento dell'oggetto
     Public Function getEquipType() As Equip
         If power > 0 Then Return Equip.ARMA
         If power_armor < 0 Then Return Equip.ARMATURA
@@ -185,6 +186,7 @@ Public Class Item
         Return Equip.NONE
     End Function
 
+    'Operatori di uguaglianza e diversità tra item
     Public Shared Operator =(left As Item, right As Item)
         Return left.id = right.id
     End Operator
@@ -193,6 +195,7 @@ Public Class Item
         Return left.id <> right.id
     End Operator
 
+    'Comparazione di 2 item
     Public Class ItemComparer
         Implements IComparer(Of Item)
         Implements IComparer(Of String)

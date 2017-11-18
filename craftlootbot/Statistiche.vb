@@ -104,42 +104,13 @@
             stats.Item(comando) = New Tuple(Of String, ULong)(stats(comando).Item1, stats(comando).Item2 + 1)
             stats("totale") = New Tuple(Of String, ULong)(stats("totale").Item1, stats("totale").Item2 + 1)
 
-            'Conteggio statistiche personali per il premio
-            If stats("totale").Item2 >= 100000 Then
-                If PersonalStats.ContainsKey(userID) Then
-                    PersonalStats(userID) += 1
-                Else
-                    PersonalStats.Add(userID, 1)
-                End If
+            'Conteggio statistiche personali
+            If PersonalStats.ContainsKey(userID) Then
+                PersonalStats(userID) += 1
+            Else
+                PersonalStats.Add(userID, 1)
             End If
         End If
-    End Sub
-
-    Sub read_inlineHistory()
-        If Not IO.File.Exists(Inlinehistory_file) Then IO.File.WriteAllText(Inlinehistory_file, "")
-        Dim Global_history As String() = IO.File.ReadAllLines(Inlinehistory_file)
-        For Each line In Global_history
-            Dim User_ID As Integer = Integer.Parse(line.Split("=")(0))
-            Dim item_ids() As String = line.Split("=")(1).Split(";")
-            Dim q As New Queue(Of String)(item_ids)
-
-            inline_history.Add(User_ID, q)
-            StampaDebug("lettura cronologia inline: " + line)
-        Next
-    End Sub
-
-    Sub salva_inlineHistory()
-        While True
-            Threading.Thread.Sleep(stat_timeout * 60 * 1000) 'ogni X minuti, X è salvato nelle impostazioni
-            Dim history_builder As New Text.StringBuilder
-            For Each user In inline_history
-                Dim ids_string As String = ""
-                ids_string = String.Join(";", user.Value)
-                history_builder.AppendLine(user.Key.ToString + "=" + ids_string) '.Remove(ids_string.Length - 1))
-            Next
-            IO.File.WriteAllText(Inlinehistory_file, history_builder.ToString)
-            StampaDebug("Salvata cronologia inline!")
-        End While
     End Sub
 
 End Module

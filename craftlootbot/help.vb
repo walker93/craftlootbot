@@ -20,6 +20,7 @@ Module help
     Public xmlhtml_builder As New StringBuilder
     Public setequip_builder As New StringBuilder
 
+    'Restituisce l'help in base al parametro passato
     Function process_help(text As String) As String
         Dim builder As New StringBuilder
         Select Case text.ToLower.Trim
@@ -60,6 +61,7 @@ Module help
         Return builder.ToString
     End Function
 
+    'stringhe Help
     Sub init_help()
         With help_builder
             .AppendLine("*GUIDA COMANDI:*")
@@ -193,12 +195,12 @@ Module help
         End With
     End Sub
 
+    'creazione tastiera help
     Function creaHelpKeyboard() As ReplyMarkups.InlineKeyboardMarkup
         Dim keyboard As New ReplyMarkups.InlineKeyboardMarkup
         Dim keyboardbuttons()() As InlineKeyboardButton
         Dim lista_button As New CallbackInlineButton("📜 Lista 📜", "lista")
         Dim albero_button As New CallbackInlineButton("🌲 Albero 🌲", "albero")
-        'Dim rinascita_button As New InlineKeyboardButton("👼🏼 Rinascita 👼🏼", "rinascita")
         Dim inline_button As New CallbackInlineButton("🔍 Inline 🔍", "inline")
         Dim zaino_button As New CallbackInlineButton("🎒 Zaino 🎒", "zaino")
         Dim craft_button As New CallbackInlineButton("🛠 Craft 🛠", "craft")
@@ -219,13 +221,12 @@ Module help
         Dim row5() As InlineKeyboardButton
         Dim row6() As InlineKeyboardButton
         Dim row7() As InlineKeyboardButton
-        'Dim row8() As InlineKeyboardButton
 
         row1.Add(lista_button)
         row1.Add(albero_button)
 
         row2.Add(zaino_button)
-        'row2.Add(rinascita_button)
+
         row2.Add(craft_button)
 
         row3.Add(confronta_button)
@@ -250,7 +251,6 @@ Module help
         keyboardbuttons.Add(row5)
         keyboardbuttons.Add(row6)
         keyboardbuttons.Add(row7)
-        'keyboardbuttons.Add(row8)
         keyboard.InlineKeyboard = keyboardbuttons
         Return keyboard
     End Function

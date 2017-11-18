@@ -24,7 +24,7 @@ Module Database
             End Try
         End While
     End Sub
-
+    'Scarico dalle API e salvo su file
     Function download_items() As String
         Dim handler As New Http.HttpClientHandler
         If handler.SupportsAutomaticDecompression() Then
@@ -54,6 +54,7 @@ Module Database
         Return "Scaricati Crafts."
     End Function
 
+    'Leggo da file e inserisco nei dizionari
     Function Leggo_Items() As String
 
         Console.WriteLine("Aggiorno Items")
@@ -115,4 +116,22 @@ Module Database
         Dim j = Json.JsonConvert.SerializeObject(table)
         IO.File.WriteAllText("crafts.json", j)
     End Sub
+
+    'Leggo Json Item Rifugi
+    Function getRifugiItemsJSON() As String
+        If Not IO.File.Exists("rifugi/items.json") Then Return ""
+        Return IO.File.ReadAllText("rifugi/items.json")
+    End Function
+
+    'Leggo Json Oggetti Hallowen
+    Function getHalloweenItemsJSON() As String
+        If Not IO.File.Exists("halloween.json") Then Return ""
+        Return IO.File.ReadAllText("halloween.json")
+    End Function
+
+    'Leggo Json Craft Rifugi
+    Function getRifugiCraftsJSON() As String
+        If Not IO.File.Exists("rifugi/crafts.json") Then Return ""
+        Return IO.File.ReadAllText("rifugi/crafts.json")
+    End Function
 End Module

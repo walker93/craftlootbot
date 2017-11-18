@@ -12,11 +12,9 @@
     Public rifugiMatch() As String
     Public prezzoScrigni As New Dictionary(Of String, Integer)
     Public flush As Boolean = True
-    Public CraftIds As New Dictionary(Of Integer, IDCraft)
+    Public CraftIds As New Dictionary(Of Integer, IDCraft) 'Tabella Craft
     Public olderZaini_limit As Integer = 30 'giorni
     Public inline_history_limit As Integer = 20 'numero massimo di cronologia inline da salvare per ogni utente
-    ' Public alphabet As String() = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"}
-    ' Public Italian_dictionary As String()
     Public team_members As New List(Of String)
 
     Public Enum Equip
@@ -74,9 +72,9 @@
 
         init_teamMembers()
         init_dirs()
-        'Italian_dictionary = IO.File.ReadAllText("dictionary.txt").Split(" "c, vbLf)
     End Sub
 
+    'inizializza prezzo scrigni
     Sub init_prezzoscrigni()
         prezzoScrigni.Add("C", 450)
         prezzoScrigni.Add("NC", 750)
@@ -108,13 +106,14 @@
         rarity_value.Add("S", 0)
         rarity_value.Add("U", 50000)
         rarity_value.Add("X", 100000)
-        rarity_value.Add("RF2", 1500)
-        rarity_value.Add("RF3", 3000)
-        rarity_value.Add("RF4", 4500)
+        rarity_value.Add("RF2", 1500) 'Rifugio 2
+        rarity_value.Add("RF3", 3000) 'Rifugio 3
+        rarity_value.Add("RF4", 4500) '  ...
         rarity_value.Add("RF5", 7000)
         rarity_value.Add("RF6", 10000)
     End Sub
 
+    'inizializza stringa riconoscimento rifugi
     Sub init_rifugiMatch()
         rifugiMatch.Add("rif")
         rifugiMatch.Add("rifu")
@@ -129,6 +128,7 @@
         rifugiMatch.Add("rifugio 6")
     End Sub
 
+    'lettura membri team
     Sub init_teamMembers()
         Dim team_file = "team.dat"
         If Not IO.File.Exists(team_file) Then IO.File.WriteAllText(team_file, "")
@@ -143,6 +143,11 @@
         IO.Directory.CreateDirectory("prezzi")
         IO.Directory.CreateDirectory("alias")
     End Sub
+
+    'restituisce url giocatore per un determinato username
+    Function getPlayerUrl(User As String) As String
+        Return PLAYER_URL + User
+    End Function
 
 #Region "Deprecated"
     ''restituisce url craft per un determinato ID
@@ -159,10 +164,5 @@
     '    Return ITEM_URL + name
     'End Function
 #End Region
-
-    'restituisce url giocatore per un determinato username
-    Function getPlayerUrl(User As String) As String
-        Return PLAYER_URL + User
-    End Function
 
 End Module

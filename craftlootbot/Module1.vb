@@ -1,7 +1,6 @@
 ﻿Imports Telegram.Bot
 Imports Telegram.Bot.Types
 Imports Telegram.Bot.Types.Enums
-Imports Newtonsoft
 Imports System.Net
 Imports System.Text.RegularExpressions
 Imports craftlootbot
@@ -32,6 +31,7 @@ Module Module1
     Sub Main()
         initializeVariables()
         api = New TelegramBotClient(token.token)
+        'test token
         Try
             Dim bot = api.GetMeAsync.Result
             Console.WriteLine(bot.Username & ": " & bot.Id)
@@ -40,18 +40,22 @@ Module Module1
         Catch ex As Exception
             Console.WriteLine("{0} {1} Error: {2}", Now.ToShortDateString, Now.ToShortTimeString, ex.Message)
         End Try
-        Dim t As New Threading.Thread(New Threading.ThreadStart(AddressOf Database.initialize_Dictionary))
-        t.Start()
-        Dim thread As New Threading.Thread(New Threading.ThreadStart(AddressOf run))
-        thread.Start()
+
+        'Esecuzione dei thread infiniti
+        Dim Database_thread As New Threading.Thread(New Threading.ThreadStart(AddressOf Database.initialize_Dictionary))
+        Database_thread.Start()
         Dim stats_thread As New Threading.Thread(New Threading.ThreadStart(AddressOf salvaStats))
         stats_thread.Start()
         Dim zaini_thread As New Threading.Thread(New Threading.ThreadStart(AddressOf vecchizaini))
         zaini_thread.Start()
         Dim inlineHistory_thread As New Threading.Thread(New Threading.ThreadStart(AddressOf salva_inlineHistory))
         inlineHistory_thread.Start()
+
+        Dim thread As New Threading.Thread(New Threading.ThreadStart(AddressOf run))
+        thread.Start() 'Thread principale per long polling ricezione Updates
     End Sub
-    'Dim cron As New Dictionary(Of Long, Long)
+
+    'Long polling ricezione update
     Sub run()
         Dim updates() As Update
         Dim offset As Integer = 0
@@ -61,8 +65,6 @@ Module Module1
                 For Each up As Update In updates
                     Select Case up.Type
                         Case UpdateType.MessageUpdate
-                            'StampaDebug("Nuovo update: " + up.Message.MessageId.ToString)
-                            'cron.Add(up.Message.MessageId, Now.Ticks)
                             Dim t As New Threading.Thread(New Threading.ParameterizedThreadStart(AddressOf process_Message))
                             t.Start(up.Message)
                         Case UpdateType.InlineQueryUpdate
@@ -95,15 +97,19 @@ Module Module1
     End Sub
 
 #Region "callbackdata"
+    'risposta a Update di tipo CallBackQuery
     Sub process_callbackData(callback As CallbackQuery)
         Try
+            'gestione tastiera /info
             If callback.Data.StartsWith("info_") Then
                 Dim i As Integer = Integer.Parse(callback.Data.Replace("info_", ""))
                 Dim result As String = ItemIds(i).ToString
                 Dim related = ItemIds(i).getRelatedItemsIDs
                 Dim e = api.EditMessageTextAsync(callback.Message.Chat.Id, callback.Message.MessageId, result, ParseMode.Markdown,, If(IsNothing(related), Nothing, creaInfoKeyboard(related))).Result
                 Dim a = api.AnswerCallbackQueryAsync(callback.Id,,,, 0).Result
+
             ElseIf callback.Data.StartsWith("craftF_") Then
+#Region "/craft File"
                 Dim text As String = ""
                 Try
                     text = IO.File.ReadAllText("crafts/" + callback.Data.Replace("craftF_", ""))
@@ -134,7 +140,9 @@ Module Module1
                 IO.File.Delete(name)
                 Dim d = api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId).Result
                 IO.File.Delete("crafts/" + callback.Data.Replace("craftF_", ""))
+#End Region
             ElseIf callback.Data.StartsWith("craftM_") Then
+#Region "/craft Messaggio"
                 Dim text As String = ""
                 Try
                     text = IO.File.ReadAllText("crafts/" + callback.Data.Replace("craftM_", ""))
@@ -160,7 +168,9 @@ Module Module1
                 answerTooEntities(text_result, callback.Message.Chat.Id, ParseMode.Markdown)
                 Dim a = api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId).Result
                 IO.File.Delete("crafts/" + callback.Data.Replace("craftM_", ""))
+#End Region
             ElseIf callback.Data = "err_reset" Then
+#Region "Ripristino dati"
                 Dim userID As Integer = callback.From.Id
                 Console.WriteLine("Ripristino richiesto per l'utente {0}", userID)
                 Dim report As New Text.StringBuilder("Ripristino eseguito!")
@@ -178,10 +188,11 @@ Module Module1
                 Next
                 Dim a = api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId).Result
                 Dim b = api.SendTextMessageAsync(callback.Message.Chat.Id, report.ToString,,,,, creaNULLKeyboard).Result
-
+#End Region
             ElseIf callback.Data = "DelMess" Then
                 Dim a = api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId).Result
             Else
+                'gestione tastiera Help
                 Dim result As String = process_help(callback.Data)
                 Dim e = api.EditMessageTextAsync(callback.Message.Chat.Id, callback.Message.MessageId, result, ParseMode.Markdown, True, creaHelpKeyboard()).Result
                 Dim a = api.AnswerCallbackQueryAsync(callback.Id,,,, 0).Result
@@ -198,6 +209,8 @@ Module Module1
 
 #Region "Inline Query"
     Dim filter As String = Nothing
+
+    'risposta a Update di tipo messaggio
     Function process_query(InlineQuery As InlineQuery, ct As Threading.CancellationToken) As Boolean
         StampaDebug(String.Format("{0} {1} From: {2}-{3} ID:{4} TEXT: {5}", Now.ToShortDateString, Now.ToShortTimeString, InlineQuery.From.Id, InlineQuery.From.FirstName, InlineQuery.Id, InlineQuery.Query))
         Dim unfiltered_query As String = InlineQuery.Query.Trim.ToLower
@@ -334,14 +347,8 @@ Module Module1
         Dim zainoDic_copy As New Dictionary(Of Item, Integer)
         Dim gia_possiedi As New Dictionary(Of Item, Integer)
 
-        Dim zainoDic As Dictionary(Of Item, Integer) 'As New Dictionary(Of Item, Integer)
+        Dim zainoDic As Dictionary(Of Item, Integer)
 
-        'Dim zaino As String = ""
-        'If IO.File.Exists("zaini/" + id.ToString + ".txt") Then
-        '    zaino = IO.File.ReadAllText("zaini/" + id.ToString + ".txt")
-        'Else
-        '    Return New KeyValuePair(Of String, Integer)("", -1)
-        'End If
         zainoDic = getZaino(id)
         zainoDic_copy = zainoDic
 
@@ -354,6 +361,7 @@ Module Module1
         Return New KeyValuePair(Of String, Integer)("", 0)
     End Function
 
+    'Salvataggio cronologia inline
     Sub process_ChosenQuery(ChosenResult As ChosenInlineResult)
         aggiornastats("inline", ChosenResult.From.Username)
         Dim user_id = ChosenResult.From.Id
@@ -462,7 +470,7 @@ Module Module1
 #End Region
 
 #Region "Text Message"
-
+    'risposta a Update di tipo messaggio
     Private Sub process_Message(message As Message)
         Try
             If flush Then 'controllo flush, se attivo ignoro il messaggio
@@ -947,7 +955,7 @@ Module Module1
                 a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString).Result
 #End Region
             ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/classifica") Then
-                notificaPremio()
+                StampaClassificaUtilizzoBot()
             ElseIf message.Text.ToLower.StartsWith("/info") Then
 #Region "/info"
                 item = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/info" + "@craftlootbot", "/info"), "").Trim
@@ -1318,7 +1326,7 @@ Module Module1
                 Throw ex
             End If
             aggiornastats(message.Text, message.From.Username)
-            'If cron.ContainsKey(message.MessageId) Then cron.Remove(message.MessageId)
+
         Catch e As Exception
 #Region "exception handling"
             If e.Message = "PROCESSO TERMINATO SU RICHIESTA" Then
@@ -1362,19 +1370,9 @@ Module Module1
 #End Region
     End Sub
 
+    'calcolo oggetti lista
     Sub getNeededItemsList(id As Integer, ByRef CraftList As List(Of Item), ByRef zaino As Dictionary(Of Item, Integer), ByRef possiedi As Dictionary(Of Item, Integer), ByRef spesa As Integer, ByRef punti_craft As Integer)
-        'controllo se si possiede l'oggetto
-        'Dim currItem As Item = ItemIds(id)
-        'If isCraftable(currItem.id) AndAlso zaino.ContainsKey(ItemIds(id)) Then
-        '    zaino.Item(currItem) -= 1
-        '    If zaino.Item(currItem) = 0 Then zaino.Remove(currItem)
-        '    If Not possiedi.ContainsKey(currItem) Then
-        '        possiedi.Add(currItem, 1)
-        '    Else
-        '        possiedi.Item(currItem) += 1
-        '    End If
-        '    Exit Sub
-        'End If
+
         'Ricorsione sui figlio
         Dim rows As Integer() = requestCraft(id)
         If rows Is Nothing Then Exit Sub
@@ -1402,6 +1400,7 @@ Module Module1
         Next
     End Sub
 
+    'calcolo oggetti albero
     Sub getNeededItemsTree(id As Integer, ByRef prof As Integer, ByRef CraftTree As List(Of KeyValuePair(Of Item, Integer)), ByRef zaino As Dictionary(Of Item, Integer), ByRef possiedi As Dictionary(Of Item, Integer), ByRef spesa As Integer)
         Dim rows As Integer() = requestCraft(id)
         prof += 1
@@ -1422,6 +1421,7 @@ Module Module1
         Next
     End Sub
 
+    'calcolo oggetti craft
     Sub getCraftItemsTree(id As Integer, ByRef prof As Integer, ByRef CraftTree As List(Of KeyValuePair(Of Item, Integer)), ByRef zaino As Dictionary(Of Item, Integer), ByRef possiedi As Dictionary(Of Item, Integer))
         Dim rows As Integer() = requestCraft(id)
         prof += 1
@@ -1444,6 +1444,7 @@ Module Module1
                     Else
                         possiedi.Item(item) += 1
                     End If
+                    CraftTree.Add(New KeyValuePair(Of Item, Integer)(item, prof + 1))
                 End If
             Else
                 CraftTree.Add(New KeyValuePair(Of Item, Integer)(ItemIds.Item(item.id), prof + 1))
@@ -1451,7 +1452,8 @@ Module Module1
         Next
     End Sub
 
-    'Creazione testi
+#Region "Creazione testi"
+    'Testo /rinascita
     Function creaScambi(zaino As Dictionary(Of Item, Integer), oggetto_scambio As String, user As String) As String
         Dim builder As New Text.StringBuilder
         Dim sorted = From pair In zaino
@@ -1493,22 +1495,7 @@ Module Module1
         Return totbuilder.ToString
     End Function
 
-    Function getBilanciaText(dic As Dictionary(Of Item, Integer)) As String
-        Dim a = From pair In dic
-                Order By pair.Value Descending
-                Group By pair.Key.rarity Into Rarita = Group, Count()
-        Dim list = a.ToList
-        Dim builder As New Text.StringBuilder
-        For Each rar In list
-            builder.Append(rar.rarity).Append(" (" + rar.Count.ToString + ")").AppendLine(":")
-
-            For Each It In rar.Rarita
-                builder.Append("   > ").Append(It.Value).Append(" ").Append(It.Key.name).AppendLine()
-            Next
-        Next
-        Return builder.ToString
-    End Function
-
+    'Testo /lista
     Function getCraftListText(dic As Dictionary(Of Item, Integer), oggetti() As Integer, zaino As Dictionary(Of Item, Integer), ByRef gia_possiedi As Dictionary(Of Item, Integer), spesa As Integer, punti_craft As Integer) As String
         Dim sortedDictionary = dic.OrderByDescending(Of String)(Function(x) x.Key.rarity, New Item.ItemComparer).ThenBy(Function(x) x.Key.name).ToDictionary(Of Item, Integer)(Function(o) o.Key, Function(n) n.Value)
         Dim buildernecessari As New Text.StringBuilder()
@@ -1579,6 +1566,7 @@ Module Module1
         Return result.ToString
     End Function
 
+    'testo /albero
     Function getCraftTreeText(list As List(Of KeyValuePair(Of Item, Integer)), ByRef possiedi As Dictionary(Of Item, Integer), ByRef spesa As Integer) As String
         Dim builder As New Text.StringBuilder("Albero craft per:  " + list(0).Key.name)
         For Each pos In possiedi
@@ -1601,6 +1589,7 @@ Module Module1
         Return builder.ToString
     End Function
 
+    'testo /craft
     Function getcraftText(list As List(Of KeyValuePair(Of Item, Integer)), ByRef possiedi As Dictionary(Of Item, Integer), oggetti() As Integer, Optional tick As Boolean = False) As String
         Dim builder As New Text.StringBuilder
         Dim ogg_string As New Dictionary(Of String, Integer)
@@ -1616,7 +1605,6 @@ Module Module1
         builder.Append(vbCrLf)
         Dim sorted = list.Where(Function(z) isCraftable(z.Key.id)).OrderByDescending(Function(x) x.Value).ThenBy(Function(p) p.Key.name).Select(Function(o) o).ToList
         Dim newSorted As New Dictionary(Of Item, Integer)
-        'Dim counters() As Integer
         If tick Then
             For Each sort In sorted
                 If newSorted.ContainsKey(sort.Key) Then
@@ -1626,13 +1614,14 @@ Module Module1
                 End If
             Next
             For Each craft In newSorted
-                Dim volte As Integer = Math.Truncate(craft.Value / 3)
-                Dim modulo As Integer = craft.Value Mod 3
+                Dim NonCraftare As Integer = If(possiedi.ContainsKey(craft.Key), possiedi(craft.Key), 0)
+                Dim volte As Integer = Math.Truncate((craft.Value - NonCraftare) / 3)
+                Dim modulo As Integer = (craft.Value - NonCraftare) Mod 3
                 If volte > 0 Then
                     builder.Append("`" + "Crea " + craft.Key.name + ",3`" + If(volte > 1, " (x" + volte.ToString + ")", ""))
                     builder.Append(vbCrLf)
                 End If
-                If modulo <> 0 Then builder.Append("`" + "Crea " + craft.Key.name + If(modulo > 1, "," + modulo.ToString, "") + "`").Append(vbCrLf) '+ If(craft.Value > 1, " (x" + craft.Value.ToString + ")", ""))
+                If modulo <> 0 Then builder.Append("`" + "Crea " + craft.Key.name + If(modulo > 1, "," + modulo.ToString, "") + "`").Append(vbCrLf)
 
             Next
         Else
@@ -1655,6 +1644,7 @@ Module Module1
         Return builder.ToString
     End Function
 
+    'testo /confronta
     Function getConfrontoText(cerco As Dictionary(Of Item, Integer), presenti As Dictionary(Of Item, Integer)) As String
         Dim builder As New Text.StringBuilder()
         Dim intestazione As String = "Nello zaino sono presenti questi oggetti che cerchi:"
@@ -1676,6 +1666,7 @@ Module Module1
         Return builder.ToString
     End Function
 
+    'testo /base
     Function getBaseText(rarity As String, zaino As Dictionary(Of Item, Integer)) As String
         Dim builder As New Text.StringBuilder
         rarity = rarity.ToUpper
@@ -1700,18 +1691,14 @@ Module Module1
         Return builder.ToString
     End Function
 
+    'testo /vendi
     Function getVendiText(vendi As Dictionary(Of Item, Integer), zaino As Dictionary(Of Item, Integer), oggetti() As Integer) As String
         Dim builder As New Text.StringBuilder()
-        'Dim sor As New SortedDictionary(Of Item, Integer)(New Item.ItemComparer)
         Dim ogg_string()
         For Each i In oggetti
             ogg_string.Add(ItemIds(i).name)
         Next
-        'For Each pair In vendi
-        '    sor.Add(pair.Key, pair.Value)
-        'Next
-        Dim sortedDictionary = vendi.OrderByDescending(Of String)(Function(x) x.Key.rarity, New Item.ItemComparer).ThenBy(Function(x) x.Key.name).ToDictionary(Of Item, Integer)(Function(o) o.Key, Function(n) n.Value) 'As Dictionary(Of Item, Integer) = sor.Reverse.ToDictionary(Function(p) p.Key, Function(p) p.Value)
-
+        Dim sortedDictionary = vendi.OrderByDescending(Of String)(Function(x) x.Key.rarity, New Item.ItemComparer).ThenBy(Function(x) x.Key.name).ToDictionary(Of Item, Integer)(Function(o) o.Key, Function(n) n.Value)
         If sortedDictionary.Count > 0 Then
             builder.AppendLine(String.Format("Ecco la lista degli oggetti non necessari per craftare {0}:", String.Join(", ", ogg_string)))
             For Each it In sortedDictionary
@@ -1732,6 +1719,7 @@ Module Module1
         Return builder.ToString
     End Function
 
+    'testo /creanegozi
     Function getNegoziText(zaino As Dictionary(Of Item, Integer), prezzi As Dictionary(Of Item, Integer)) As List(Of String)
         Dim res As New List(Of String)
         Dim builder As New Text.StringBuilder("/negozio ")
@@ -1785,6 +1773,7 @@ Module Module1
         Return res
     End Function
 
+    'testo /ricerca plusbot
     Function getRicercaText(parsedDic As Dictionary(Of Item, Integer)) As List(Of String)
         Dim res As New List(Of String)
         Dim builder As New Text.StringBuilder("/ricerca ")
@@ -1804,6 +1793,7 @@ Module Module1
         If Not builder.ToString.Trim = "/ricerc" Then res.Add(builder.ToString)
         Return res
     End Function
+#End Region
 #End Region
 
     'controllo se l'item è craftabile
@@ -1833,9 +1823,6 @@ Module Module1
         Try
             Dim list = ItemIds.Where(Function(i) i.Value.name.ToLower = name.ToLower.Trim)
             If list.Count > 0 Then Return list.First.Key
-            'For Each it In ItemIds
-            '    If it.Value.name.ToLower = name.ToLower.Trim Then Return it.Key
-            'Next
         Catch ex As Exception
             download_crafts()
             download_items()
@@ -1952,6 +1939,7 @@ Module Module1
         Dim a = api.SendTextMessageAsync(1265775, reportBuilder.ToString,, True).Result
     End Sub
 
+    'Invia messaggi multipli se messaggio troppo lungo
     Function answerLongMessage(result As String, chatID As Long, Optional parse As ParseMode = ParseMode.Markdown, Optional replyMarckup As ReplyMarkups.IReplyMarkup = Nothing) As Message
         Dim a
         If result.Length > 4096 Then
@@ -1975,6 +1963,7 @@ Module Module1
         Return a
     End Function
 
+    'Invia messaggi multipli se messaggio ha troppe entità
     Function answerTooEntities(result As String, chatID As Long, parse As ParseMode, Optional replymarckup As ReplyMarkups.IReplyMarkup = Nothing) As Message
         Dim lines = result.Split(vbCrLf)
         Dim a
@@ -1989,6 +1978,7 @@ Module Module1
         Return a
     End Function
 
+    'Controllo oggetti/quantità/alias in input
     Sub checkInputItems(message_text As String, chat_id As Long, user_id As Long, comando As String, ByRef item_ids As List(Of Integer), Optional checkCraftable As Boolean = True)
         Dim items = message_text.Replace(If(message_text.ToLower.Contains("@craftlootbot"), comando + "@craftlootbot", comando), "").Split(",").Where(Function(p) p <> "").ToList
         Dim a
@@ -1997,7 +1987,7 @@ Module Module1
             Exit Sub
         End If
         For Each i In items
-            Dim x = CheckAlias(user_id, i.Trim).Trim
+            Dim x = GetAliasValue(user_id, i.Trim).Trim
             If x <> i.Trim Then
                 checkInputItems(x, chat_id, user_id, comando, item_ids, checkCraftable)
             Else
@@ -2039,15 +2029,8 @@ Module Module1
 
     End Sub
 
-    Function CheckAlias(UserID As Long, keyword As String) As String
-        Dim result As String = keyword
-        Dim PersonalAlias = getPersonalAlias(UserID)
-        Dim union = PersonalAlias.Union(getGlobalAlias).ToDictionary(Function(k) k.Key, Function(v) v.Value)
-        If union.ContainsKey(keyword) Then result = union(keyword)
-        Return result
-    End Function
-
-    Sub notificaPremio()
+    'restituisco classifica utilizzo bot
+    Sub StampaClassificaUtilizzoBot()
         Dim builder As New Text.StringBuilder()
         builder.AppendLine()
         Dim i = 1
@@ -2058,39 +2041,13 @@ Module Module1
         answerLongMessage("La classifica è: " + builder.ToString, 1265775, ParseMode.Default)
     End Sub
 
-    Sub vecchizaini()
-        While True
-            Try
-                For Each file In IO.Directory.GetFiles("zaini/")
-                    If DateDiff(DateInterval.Day, IO.File.GetLastWriteTime(file), Date.Now) > olderZaini_limit Then
-                        IO.File.Delete(file)
-                        StampaDebug(file + " Cancellato!")
-                    End If
-                Next
-                For Each file In IO.Directory.GetFiles("crafts/")
-                    If DateDiff(DateInterval.Day, IO.File.GetLastWriteTime(file), Date.Now) > olderZaini_limit Then
-                        IO.File.Delete(file)
-                        StampaDebug(file + " Cancellato!")
-                    End If
-                Next
-                Threading.Thread.Sleep(24 * 60 * 60 * 1000) 'aspetto 1 giorno
-            Catch ex As Exception
-                Console.WriteLine("Errore cancellazione file.")
-                Threading.Thread.Sleep(24 * 60 * 60 * 1000)
-            End Try
-        End While
-    End Sub
-
+    'creazione testo XML
     Function ItemToXML(id As Integer) As String
         Dim it = ItemIds(id)
         Dim builder As New Text.StringBuilder
         Dim prop() = GetType(Item).GetProperties
         builder.Append("<item name=""")
-        'For Each p In prop
-        '    builder.Append("<" + p.Name + ">").Append(p.GetValue(it)).Append("</" + p.Name + ">").AppendLine()
-        'Next
         builder.Append(it.name).Append("""" + ">")
-
         If isCraftable(id) Then
             builder.AppendLine().AppendLine("<required_items>")
             Dim craft = requestCraft(id)
@@ -2103,6 +2060,7 @@ Module Module1
         Return builder.ToString
     End Function
 
+    'creazione testo HTML
     Function ItemToHTML(id As Integer, ByRef counter As Integer) As String
         Dim it = ItemIds(id)
         Dim input As String = "<input type='checkbox' style='display: none' id=CBXX>"

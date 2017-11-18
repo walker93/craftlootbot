@@ -129,6 +129,8 @@
     <Compile Include="InlineButton.vb" />
     <Compile Include="Item.vb" />
     <Compile Include="JsonResponse.vb" />
+    <Compile Include="Keyboards.vb" />
+    <Compile Include="MessageIdentification.vb" />
     <Compile Include="Module1.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
@@ -147,6 +149,7 @@
     </Compile>
     <Compile Include="Statistiche.vb" />
     <Compile Include="token.vb" />
+    <Compile Include="UserData.vb" />
     <Compile Include="Variables.vb" />
   </ItemGroup>
   <ItemGroup>
