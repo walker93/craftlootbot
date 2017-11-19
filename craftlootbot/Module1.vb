@@ -9,11 +9,11 @@ Module Module1
     Dim WithEvents api As TelegramBotClient
 
     Dim time_start As Date = Date.UtcNow
-    Public ItemIds As New Dictionary(Of Integer, Item)
+    Public ItemIds As New Dictionary(Of Integer, Item) 'Dizionario degli oggetti di Loot (ID, oggetto)
     Dim items() As Item
-    Dim stati As New Dictionary(Of ULong, Integer)
-    Dim zaini As New Dictionary(Of ULong, String)
-    Dim confronti As New Dictionary(Of ULong, String)
+    Dim stati As New Dictionary(Of ULong, Integer) 'stato utenti
+    Dim zaini As New Dictionary(Of ULong, String) 'salvataggio zaini in corso
+    Dim confronti As New Dictionary(Of ULong, String) 'confronti in corso
     Dim thread_inline As New Dictionary(Of Integer, Threading.CancellationTokenSource)
     Dim from_inline_query As New Dictionary(Of ULong, String) 'ID_utente, Query
 
@@ -476,7 +476,7 @@ Module Module1
             If flush Then 'controllo flush, se attivo ignoro il messaggio
                 If message.Date < time_start Then Exit Sub
             End If
-            If message.Type <> MessageType.TextMessage And message.Type <> MessageType.DocumentMessage Then Exit Sub
+            If message.Type <> MessageType.TextMessage And message.Type <> MessageType.DocumentMessage Then Exit Sub 'ignoro messagi che non siano testo o documenti
             Dim a As Message
             Dim CraftList As New List(Of Item)
             Dim zainoDic As New Dictionary(Of Item, Integer)
@@ -488,9 +488,8 @@ Module Module1
             Dim spesa As Integer
             Dim punti_craft As Integer
             Dim it As New Item
-            'Dim lootbot_id As ULong = 171514820
+            'Dim lootbot_id As ULong = 171514820 <-- ID Bot Lootbot
             Dim kill As Boolean = False
-            'StampaDebug("Nuovo Messaggio: " + message.From.Username)
 
 #Region "File prezzi"
             If message.Type = MessageType.DocumentMessage Then
@@ -717,11 +716,6 @@ Module Module1
                 Dim item_ids As New List(Of Integer)
                 checkInputItems(message.Text.Trim, message.Chat.Id, message.From.Id, "/lista", item_ids)
                 If item_ids.Count = 0 Then Exit Sub
-                'Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
-                'Dim zaino As String = ""
-                'If IO.File.Exists(path) Then
-                '    zaino = IO.File.ReadAllText(path)
-                'End If
                 api.SendChatActionAsync(message.Chat.Id, ChatAction.Typing)
                 zainoDic = getZaino(message.From.Id)
                 Dim zainoDic_copy = zainoDic
@@ -746,11 +740,6 @@ Module Module1
                 End If
                 id = getItemId(item)
                 Dim prof As Integer = -1
-                'Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
-                'Dim zaino As String = ""
-                'If IO.File.Exists(path) Then
-                ' zaino = IO.File.ReadAllText(path)
-                'End If
                 If id <> -1 Then
                     If Not isCraftable(id) Then
                         Dim e = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è craftabile").Result
@@ -775,33 +764,13 @@ Module Module1
                 Dim prof As Integer = -1
 
                 a = api.SendTextMessageAsync(message.Chat.Id, "Scegli come ottenere la lista craft:",,,,, creaCraftKeyboard(item_ids.ToArray, message.From.Id)).Result
-
-                'zainoDic = getZaino(message.From.Id)
-                'Dim zainoDic_copy = zainoDic
-                'For Each i In item_ids
-                '    prof = -1
-                '    getCraftItemsTree(i, prof, CraftTree, zainoDic_copy, gia_possiedi)
-                '    If rarity_value.ContainsKey(ItemIds.Item(i).rarity) Then spesa += rarity_value.Item(ItemIds.Item(i).rarity)
-                'Next
-                'Dim text_result As String = getcraftText(CraftTree, gia_possiedi, item_ids.ToArray, True)
-                'answerTooEntities(text_result, message.Chat.Id, ParseMode.Markdown)
-
-                'api.SendChatActionAsync(message.Chat.Id, ChatAction.UploadDocument)
-                'Dim name As String = getFileName()
-                'a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, getcraftText(CraftTree, gia_possiedi, item_ids.ToArray), "Lista Craft"), "File di testo da usare su PC").Result
-                'IO.File.Delete(name)
-
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/vendi") Then
 #Region "vendi"
                 Dim item_ids As New List(Of Integer)
                 checkInputItems(message.Text.Trim, message.Chat.Id, message.From.Id, "/vendi", item_ids)
                 If item_ids.Count = 0 Then Exit Sub
-                'Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
-                'Dim zaino As String = ""
-                If HasZaino(message.From.Id) Then
-                    'zaino = IO.File.ReadAllText(path)
-                Else
+                If Not HasZaino(message.From.Id) Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Per utilizzare questa funzione devi prima salvare il tuo zaino.").Result
                     Exit Sub
                 End If
@@ -837,12 +806,7 @@ Module Module1
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/creanegozi") Then
 #Region "creanegozi"
-                'Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
-                'Dim zaino As String = ""
                 Dim result As New Dictionary(Of Item, Integer)
-                'If IO.File.Exists(path) Then
-                '    zaino = IO.File.ReadAllText(path)
-                'End If
                 If Not HasZaino(message.From.Id) Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Devi salvare lo zaino prima di usare questa funzione.").Result
                     Exit Sub
@@ -993,11 +957,6 @@ Module Module1
                     Dim pc_tot As Integer = If(rarity_craft.ContainsKey(rarity), rarity_craft(rarity), 0)
                     Dim costoBase As Integer = 0
                     Dim oggBase As Integer = 0
-                    'Dim path As String = "zaini/" + message.From.Id.ToString + ".txt"
-                    'Dim zaino As String = ""
-                    'If IO.File.Exists(path) Then
-                    '    zaino = IO.File.ReadAllText(path)
-                    'End If
                     api.SendChatActionAsync(message.Chat.Id, ChatAction.Typing)
                     zainoDic = getZaino(message.From.Id)
                     Dim zainoDic_copy = zainoDic
@@ -1592,14 +1551,6 @@ Module Module1
     'testo /craft
     Function getcraftText(list As List(Of KeyValuePair(Of Item, Integer)), ByRef possiedi As Dictionary(Of Item, Integer), oggetti() As Integer, Optional tick As Boolean = False) As String
         Dim builder As New Text.StringBuilder
-        Dim ogg_string As New Dictionary(Of String, Integer)
-        For Each i In oggetti
-            If ogg_string.ContainsKey(ItemIds(i).name) Then
-                ogg_string(ItemIds(i).name) += 1
-            Else
-                ogg_string.Add(ItemIds(i).name, 1)
-            End If
-        Next
         Dim intestazione As String = getIntestazioneMessaggio("Lista craft per ", oggetti)
         builder.Append(intestazione)
         builder.Append(vbCrLf)
@@ -1694,13 +1645,9 @@ Module Module1
     'testo /vendi
     Function getVendiText(vendi As Dictionary(Of Item, Integer), zaino As Dictionary(Of Item, Integer), oggetti() As Integer) As String
         Dim builder As New Text.StringBuilder()
-        Dim ogg_string()
-        For Each i In oggetti
-            ogg_string.Add(ItemIds(i).name)
-        Next
         Dim sortedDictionary = vendi.OrderByDescending(Of String)(Function(x) x.Key.rarity, New Item.ItemComparer).ThenBy(Function(x) x.Key.name).ToDictionary(Of Item, Integer)(Function(o) o.Key, Function(n) n.Value)
         If sortedDictionary.Count > 0 Then
-            builder.AppendLine(String.Format("Ecco la lista degli oggetti non necessari per craftare {0}:", String.Join(", ", ogg_string)))
+            builder.AppendLine(getIntestazioneMessaggio("Ecco la lista degli oggetti non necessari per craftare ", oggetti))
             For Each it In sortedDictionary
                 With builder
                     .Append("> ")
