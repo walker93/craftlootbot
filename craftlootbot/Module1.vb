@@ -1584,8 +1584,9 @@ Module Module1
                 End If
             Next
             For Each craft In newSorted
-                Dim volte As Integer = Math.Truncate(craft.Value / 3)
-                Dim modulo As Integer = craft.Value Mod 3
+                Dim NonCraftare As Integer = If(possiedi.ContainsKey(craft.Key), possiedi(craft.Key), 0)
+                Dim volte As Integer = Math.Truncate((craft.Value - NonCraftare) / 3)
+                Dim modulo As Integer = (craft.Value - NonCraftare) Mod 3
                 For i = 1 To volte
                     builder.Append("Crea " + craft.Key.name + ",3").Append(vbCrLf)
                 Next
