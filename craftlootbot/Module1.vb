@@ -1894,8 +1894,9 @@ Module Module1
             Dim valid_substring As String
             Do
                 Dim substring = result.Substring(0, If(result.Length > 4096, 4096, result.Length))
-                valid_substring = substring.Substring(0, substring.LastIndexOf(Environment.NewLine))
-                result = result.Substring(substring.LastIndexOf(Environment.NewLine))
+                Dim lenght = substring.LastIndexOf(Environment.NewLine)
+                valid_substring = substring.Substring(0, lenght)
+                result = result.Substring(lenght)
                 If valid_substring.Trim <> "" And valid_substring <> Environment.NewLine Then
                     a = api.SendTextMessageAsync(chatID, valid_substring, parse).Result
                 Else
@@ -1920,6 +1921,10 @@ Module Module1
         Do
             sublines = lines.Skip(99 * iterations).Take(99)
             Dim text As String = String.Join("", sublines.ToArray).ToString
+            If text.Length > 4096 Then
+                answerLongMessage(sublines(0), chatID, parse, replymarckup)
+                text = String.Join("", sublines.Skip(1).Take(99)).ToString
+            End If
             a = api.SendTextMessageAsync(chatID, text, parse,,,, replymarckup).Result
             iterations += 1
         Loop Until sublines.Count < 99
