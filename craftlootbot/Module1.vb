@@ -1573,7 +1573,6 @@ Module Module1
                     builder.Append(vbCrLf)
                 End If
                 If modulo <> 0 Then builder.Append("`" + "Crea " + craft.Key.name + If(modulo > 1, "," + modulo.ToString, "") + "`").Append(vbCrLf)
-
             Next
         Else
             For Each sort In sorted
@@ -1784,11 +1783,16 @@ Module Module1
     'Dato uno zaino in stringa restituisco dizionario(oggetto, quantità)
     Function parseZaino(text As String) As Dictionary(Of Item, Integer)
         Dim quantità As New Dictionary(Of Item, Integer)
-        Dim rex As New Regex("\> ([A-z 0-9òàèéìù'-]+)\(([0-9]+)\)")
+        Dim rex As New Regex("\> ([A-z 0-9òàèéìù'-]+)\(([0-9.]+)\)")
         Dim matches As MatchCollection = rex.Matches(text)
+        Dim nfi As Globalization.NumberFormatInfo = DirectCast(Globalization.CultureInfo.InvariantCulture.NumberFormat.Clone(), Globalization.NumberFormatInfo)
+        nfi.NumberGroupSeparator = "."
+        nfi.NumberGroupSizes = {3}
+        nfi.NumberDecimalDigits = 0
+
         For Each match As Match In matches
             Try
-                quantità.Add(ItemIds.Item(getItemId(match.Groups(1).Value)), (Integer.Parse(match.Groups(2).Value)))
+                quantità.Add(ItemIds.Item(getItemId(match.Groups(1).Value)), (Integer.Parse(match.Groups(2).Value, Globalization.NumberStyles.AllowThousands, nfi)))
             Catch e As Exception
                 Continue For
             End Try
