@@ -4,7 +4,7 @@ Module MessageIdentification
 
     'controllo se il testo matcha uno zaino
     Function isZaino(text As String) As Boolean
-        Dim rex As New Regex("\> ([A-z 0-9òàèéìù'-]+)\(([0-9]+)\)")
+        Dim rex As New Regex("\> ([A-z 0-9òàèéìù'-]+)\(([0-9.]+)\)")
         Return rex.IsMatch(text)
     End Function
 
@@ -23,7 +23,7 @@ Module MessageIdentification
 
     'Controllo se il testo matcha un'apertura scrigni di loot
     Function isAperturaScrigno(text As String) As Boolean
-        Dim rex As New Regex("\> ([0-9]+)x ([A-z 0-9òàèéìù'-]+) \(([A-Z]+)\)")
+        Dim rex As New Regex("\> ([0-9.]+)x ([A-z 0-9òàèéìù'-]+) \(([A-Z]+)\)")
         Dim matches As MatchCollection = rex.Matches(text)
         Return rex.IsMatch(text)
     End Function

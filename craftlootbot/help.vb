@@ -68,7 +68,6 @@ Module help
             .AppendLine("> '/lista <oggetto/i>' per ricevere la lista dei materiali base necessari al craft degli oggetti inseriti.")
             .AppendLine("> '/albero <oggetto>' per ricevere un file di testo contenente l'albero dei craft dell'oggetto inserito.")
             .AppendLine("> '/salvazaino' per salvare lo zaino diviso in più messaggi, copia o inoltralo senza nessun comando se è un singolo messaggio.")
-            .AppendLine("> '/rinascita <Username> <oggetto>' per ricevere un file di testo con le stringhe scambio da copiare e incollare in lootbot.")
             .AppendLine("> '/confronta' per ricevere un elenco di oggetti in comune tra una lista di oggetti in vendita e gli oggetti che stai cercando.")
             .AppendLine("> '/craft <oggetto/i>' per ricevere un file di testo contenente stringhe da copiare e incollare, per craftare tutti gli oggetti necessari fino agli oggetti inseriti.")
             .AppendLine("> '/base <rarità>' per ricevere un elenco di tutti gli oggetti base per la rarità inserita, per ogni oggetto è indicata la quantità che possiedi.")
@@ -117,15 +116,15 @@ Module help
             .AppendLine("Per aggiornare lo zaino salvato, basta ripetere la procedura, quello precedente verrà sovrascritto.")
             .AppendLine("Usa '/svuota' per eliminare il tuo zaino se lo desideri.")
         End With
-        With Rinascita_buider
-            .AppendLine("*Rinascita:*")
-            .AppendLine("Quando hai il tuo zaino salvato, e stai per fare la rinascita puoi chiedere al bot di creare in automatico le stringhe rapide per scambiare gli oggetti a un tuo compagno.")
-            .AppendLine("Usa '/rinascita <Username> <oggetto>' per ricevere un file di testo con le stringhe da copiare e incollare in lootbot")
-            .AppendLine("<Username> è il nome utente del giocatore al quale invierai i tuoi oggetti.")
-            .AppendLine("<oggetto> è l'item base che verrà usato tra di voi per eseguire gli scambi, *è importante che entrambi abbiate almeno un'unità di quell'oggetto nello zaino*.")
-            .AppendLine("Un esempio di stringa è:" + vbCrLf + "_'Scambia Bronzo,Titanio,<oggetto>,<oggetto>,,,<Username>,9'_")
-            .AppendLine("Il bot tiene conto della quantità degli oggetti che hai nello zaino.")
-        End With
+        'With Rinascita_buider
+        '    .AppendLine("*Rinascita:*")
+        '    .AppendLine("Quando hai il tuo zaino salvato, e stai per fare la rinascita puoi chiedere al bot di creare in automatico le stringhe rapide per scambiare gli oggetti a un tuo compagno.")
+        '    .AppendLine("Usa '/rinascita <Username> <oggetto>' per ricevere un file di testo con le stringhe da copiare e incollare in lootbot")
+        '    .AppendLine("<Username> è il nome utente del giocatore al quale invierai i tuoi oggetti.")
+        '    .AppendLine("<oggetto> è l'item base che verrà usato tra di voi per eseguire gli scambi, *è importante che entrambi abbiate almeno un'unità di quell'oggetto nello zaino*.")
+        '    .AppendLine("Un esempio di stringa è:" + vbCrLf + "_'Scambia Bronzo,Titanio,<oggetto>,<oggetto>,,,<Username>,9'_")
+        '    .AppendLine("Il bot tiene conto della quantità degli oggetti che hai nello zaino.")
+        'End With
         With confronta_builder
             .AppendLine("*Confronta:*")
             .AppendLine("Permette di confrontare un elenco 'Cerco:' dal comando inline o una /lista con uno zaino o un comando /vendi restituendo gli oggetti che sono presenti in entrambi.")

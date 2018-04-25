@@ -519,7 +519,7 @@ Module Module1
 #Region "Zaino Ricevuto"
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) AndAlso message.Chat.Type = ChatType.Private Then
                     'sta inviando più parti di zaino
-                    zaini.Item(message.From.Id) += message.Text
+                    zaini.Item(message.From.Id) += message.Text + vbNewLine
                     StampaDebug("Zaino diviso ricevuto.") ' ID:" + message.MessageId.ToString + " tempo: " + ((Now.Ticks - cron(message.MessageId)) / 10000).ToString)
                 ElseIf stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) AndAlso message.Chat.Type = ChatType.Private Then
                     'sta inviando zaino per confronto
@@ -611,7 +611,7 @@ Module Module1
 #End Region
             ElseIf isAperturaScrigno(message.Text) Then
 #Region "Apertura scrigno"
-                Dim rex As New Regex("\> ([0-9]+)x ([A-z 0-9òàèéìù'-]+) \(([A-Z]+)\)")
+                Dim rex As New Regex("\> ([0-9.]+)x ([A-z 0-9òàèéìù'-]+) \(([A-Z]+)\)")
                 Dim matches As MatchCollection = rex.Matches(message.Text)
                 Dim res = rex.Replace(message.Text, "> $2 ($1)")
                 a = api.SendTextMessageAsync(message.Chat.Id, res).Result
@@ -1395,7 +1395,7 @@ Module Module1
                     getCraftItemsTree(item.id, prof, CraftTree, zaino, possiedi)
                     prof -= 1
                 Else
-                    StampaDebug(item.name + " presente nello zaino")
+                    StampaDebug(item.name + " presente nello zaino con profondità " & prof + 1)
                     zaino.Item(item) -= 1
                     If zaino.Item(item) = 0 Then zaino.Remove(item)
                     If Not possiedi.ContainsKey(item) Then
@@ -1403,7 +1403,7 @@ Module Module1
                     Else
                         possiedi.Item(item) += 1
                     End If
-                    CraftTree.Add(New KeyValuePair(Of Item, Integer)(item, prof + 1))
+                    'CraftTree.Add(New KeyValuePair(Of Item, Integer)(item, prof + 1))
                 End If
             Else
                 CraftTree.Add(New KeyValuePair(Of Item, Integer)(ItemIds.Item(item.id), prof + 1))
@@ -1558,6 +1558,10 @@ Module Module1
         Dim newSorted As New Dictionary(Of Item, Integer)
         If tick Then
             For Each sort In sorted
+                If sort.Key.name.StartsWith("Generatore di Massa") Then StampaDebug("Generatore di massa: " & sort.Value)
+                If sort.Key.name.StartsWith("Bronzo") Then StampaDebug("Bronzo: " & sort.Value)
+                If sort.Key.name.StartsWith("Carica Positiva") Then StampaDebug("Carica Positiva: " & sort.Value)
+
                 If newSorted.ContainsKey(sort.Key) Then
                     newSorted(sort.Key) += 1
                 Else
@@ -1565,7 +1569,7 @@ Module Module1
                 End If
             Next
             For Each craft In newSorted
-                Dim NonCraftare As Integer = If(possiedi.ContainsKey(craft.Key), possiedi(craft.Key), 0)
+                Dim NonCraftare As Integer '= If(possiedi.ContainsKey(craft.Key), possiedi(craft.Key), 0)
                 Dim volte As Integer = Math.Truncate((craft.Value - NonCraftare) / 3)
                 Dim modulo As Integer = (craft.Value - NonCraftare) Mod 3
                 If volte > 0 Then
@@ -1750,6 +1754,10 @@ Module Module1
         Catch e As Exception
             Return False
         End Try
+    End Function
+
+    Function isCraftable(item As Item) As Boolean
+        Return isCraftable(item.id)
     End Function
 
     'Data una lista di oggetti ripetuti creo dizionario(oggetto, quantità)
