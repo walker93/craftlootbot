@@ -76,12 +76,12 @@
 
     'inizializza prezzo scrigni
     Sub init_prezzoscrigni()
-        prezzoScrigni.Add("C", 450)
-        prezzoScrigni.Add("NC", 750)
-        prezzoScrigni.Add("R", 1500)
-        prezzoScrigni.Add("UR", 2500)
-        prezzoScrigni.Add("L", 5000)
-        prezzoScrigni.Add("E", 10000)
+        prezzoScrigni.Add("C", 1200)
+        prezzoScrigni.Add("NC", 2400)
+        prezzoScrigni.Add("R", 4800)
+        prezzoScrigni.Add("UR", 7200)
+        prezzoScrigni.Add("L", 14000)
+        prezzoScrigni.Add("E", 30000)
     End Sub
 
     'inizializza punti craft rarità
@@ -96,16 +96,16 @@
 
     'Inizializza costo craft rarità
     Sub init_rarity_value()
-        rarity_value.Add("C", 0)
-        rarity_value.Add("NC", 0)
-        rarity_value.Add("R", 0)
-        rarity_value.Add("UR", 500)
-        rarity_value.Add("L", 750)
-        rarity_value.Add("E", 1000)
-        rarity_value.Add("UE", 10000)
+        rarity_value.Add("C", 1000)
+        rarity_value.Add("NC", 2000)
+        rarity_value.Add("R", 3000)
+        rarity_value.Add("UR", 5000)
+        rarity_value.Add("L", 7500)
+        rarity_value.Add("E", 10000)
+        rarity_value.Add("UE", 100000)
         rarity_value.Add("S", 0)
-        rarity_value.Add("U", 50000)
-        rarity_value.Add("X", 100000)
+        rarity_value.Add("U", 250000)
+        rarity_value.Add("X", 1000000)
         rarity_value.Add("RF2", 1500) 'Rifugio 2
         rarity_value.Add("RF3", 3000) 'Rifugio 3
         rarity_value.Add("RF4", 4500) '  ...
