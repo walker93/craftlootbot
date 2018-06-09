@@ -41,12 +41,12 @@ Public Module MyExtensions
     End Function
 
     'Crea file e lo prepara ad essere caricato
-    Function prepareFile(filename As String, text As String, Item As String, Optional Extension As String = ".txt") As FileToSend
+    Function prepareFile(filename As String, text As String, Item As String, Optional Extension As String = ".txt") As InputFiles.InputOnlineFile
         IO.File.WriteAllText(filename, text)
-        Dim file As New FileToSend
-        file.Content = IO.File.Open(filename, IO.FileMode.Open)
-        file.Filename = Item + Extension
-        StampaDebug("Item: " + Item + ", Filename: " + file.Filename)
+        Dim stream = IO.File.Open(filename, IO.FileMode.Open)
+        Dim file As New InputFiles.InputOnlineFile(stream)
+        file.FileName = Item + Extension
+        StampaDebug("Item: " + Item + ", Filename: " + file.FileName)
         Return file
     End Function
 

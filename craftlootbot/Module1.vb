@@ -64,12 +64,12 @@ Module Module1
                 updates = api.GetUpdatesAsync(offset,, 20).Result
                 For Each up As Update In updates
                     Select Case up.Type
-                        Case UpdateType.MessageUpdate
+                        Case UpdateType.Message
                             Dim t As New Threading.Thread(New Threading.ParameterizedThreadStart(AddressOf process_Message))
                             t.Start(up.Message)
-                        Case UpdateType.InlineQueryUpdate
+                        Case UpdateType.InlineQuery
                             Dim ct As New Threading.CancellationTokenSource
-                            Dim t As New Task(Of Boolean)(Function() process_query(up.InlineQuery, ct.Token), ct.Token)
+                            Dim t As New Task(Of Boolean)(Function() process_query(up.InlineQuery, ct.Token).Result, ct.Token)
                             Dim from_id = up.InlineQuery.From.Id
                             If thread_inline.ContainsKey(from_id) Then
                                 thread_inline.Item(from_id).Cancel()
@@ -77,10 +77,10 @@ Module Module1
                             End If
                             t.Start()
                             thread_inline.Add(from_id, ct)
-                        Case UpdateType.ChosenInlineResultUpdate
+                        Case UpdateType.ChosenInlineResult
                             Dim t As New Threading.Thread(New Threading.ParameterizedThreadStart(AddressOf process_ChosenQuery))
                             t.Start(up.ChosenInlineResult)
-                        Case UpdateType.CallbackQueryUpdate
+                        Case UpdateType.CallbackQuery
                             Dim t As New Threading.Thread(New Threading.ParameterizedThreadStart(AddressOf process_callbackData))
                             t.Start(up.CallbackQuery)
                     End Select
@@ -88,17 +88,17 @@ Module Module1
                 Next
             Catch ex As AggregateException
                 Threading.Thread.Sleep(20 * 1000)
-                Console.WriteLine("{0} {1} Error: {2}", Now.ToShortDateString, Now.ToShortTimeString, ex.InnerException.Message)
+                Console.WriteLine("{0} {1} FATAL Error: {2}", Now.ToShortDateString, Now.ToShortTimeString, ex.InnerException.Message)
             Catch ex As Exception
                 Threading.Thread.Sleep(20 * 1000)
-                Console.WriteLine("{0} {1} Error: {2}", Now.ToShortDateString, Now.ToShortTimeString, ex.Message)
+                Console.WriteLine("{0} {1} FATAL Error: {2}", Now.ToShortDateString, Now.ToShortTimeString, ex.Message)
             End Try
         End While
     End Sub
 
 #Region "callbackdata"
     'risposta a Update di tipo CallBackQuery
-    Sub process_callbackData(callback As CallbackQuery)
+    Async Sub process_callbackData(callback As CallbackQuery)
         Try
             'gestione tastiera /info
             If callback.Data.StartsWith("info_") Then
@@ -106,7 +106,7 @@ Module Module1
                 Dim result As String = ItemIds(i).ToString
                 Dim related = ItemIds(i).getRelatedItemsIDs
                 Dim e = api.EditMessageTextAsync(callback.Message.Chat.Id, callback.Message.MessageId, result, ParseMode.Markdown,, If(IsNothing(related), Nothing, creaInfoKeyboard(related))).Result
-                Dim a = api.AnswerCallbackQueryAsync(callback.Id,,,, 0).Result
+                Await api.AnswerCallbackQueryAsync(callback.Id,,,, 0)
 
             ElseIf callback.Data.StartsWith("craftF_") Then
 #Region "/craft File"
@@ -131,14 +131,14 @@ Module Module1
                     getCraftItemsTree(i, prof, CraftTree, zainoDic_copy, gia_possiedi)
                     If rarity_value.ContainsKey(ItemIds.Item(i).rarity) Then spesa += rarity_value.Item(ItemIds.Item(i).rarity)
                 Next
-                api.SendChatActionAsync(callback.Message.Chat.Id, ChatAction.UploadDocument)
+                Await api.SendChatActionAsync(callback.Message.Chat.Id, ChatAction.UploadDocument)
                 Dim name As String = getFileName()
                 Dim b = api.SendDocumentAsync(callback.Message.Chat.Id, prepareFile(name, getcraftText(CraftTree, gia_possiedi, item_ids.ToArray), "Lista Craft"))
                 Dim a = api.EditMessageTextAsync(callback.Message.Chat.Id, callback.Message.MessageId, "File in arrivo...").Result
 
                 Dim c = b.Result
                 IO.File.Delete(name)
-                Dim d = api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId).Result
+                Await api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId)
                 IO.File.Delete("crafts/" + callback.Data.Replace("craftF_", ""))
 #End Region
             ElseIf callback.Data.StartsWith("craftM_") Then
@@ -166,7 +166,7 @@ Module Module1
                 Next
                 Dim text_result As String = getcraftText(CraftTree, gia_possiedi, item_ids.ToArray, True)
                 answerTooEntities(text_result, callback.Message.Chat.Id, ParseMode.Markdown)
-                Dim a = api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId).Result
+                Await api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId)
                 IO.File.Delete("crafts/" + callback.Data.Replace("craftM_", ""))
 #End Region
             ElseIf callback.Data = "err_reset" Then
@@ -186,16 +186,16 @@ Module Module1
                     Dim info As New IO.FileInfo(file)
                     If info.Name.StartsWith(userID) Then IO.File.Delete(file) : report.AppendLine("File '" + info.Name + "' cancellato!")
                 Next
-                Dim a = api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId).Result
-                Dim b = api.SendTextMessageAsync(callback.Message.Chat.Id, report.ToString,,,,, creaNULLKeyboard).Result
+                Await api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId)
+                Await api.SendTextMessageAsync(callback.Message.Chat.Id, report.ToString,,,,, creaNULLKeyboard)
 #End Region
             ElseIf callback.Data = "DelMess" Then
-                Dim a = api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId).Result
+                Await api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId)
             Else
                 'gestione tastiera Help
                 Dim result As String = process_help(callback.Data)
                 Dim e = api.EditMessageTextAsync(callback.Message.Chat.Id, callback.Message.MessageId, result, ParseMode.Markdown, True, creaHelpKeyboard()).Result
-                Dim a = api.AnswerCallbackQueryAsync(callback.Id,,,, 0).Result
+                Await api.AnswerCallbackQueryAsync(callback.Id,,,, 0)
             End If
         Catch e As AggregateException
             Console.WriteLine(e.InnerException.Message)
@@ -211,13 +211,13 @@ Module Module1
     Dim filter As String = Nothing
 
     'risposta a Update di tipo messaggio
-    Function process_query(InlineQuery As InlineQuery, ct As Threading.CancellationToken) As Boolean
+    Async Function process_query(InlineQuery As InlineQuery, ct As Threading.CancellationToken) As Task(Of Boolean)
         StampaDebug(String.Format("{0} {1} From: {2}-{3} ID:{4} TEXT: {5}", Now.ToShortDateString, Now.ToShortTimeString, InlineQuery.From.Id, InlineQuery.From.FirstName, InlineQuery.Id, InlineQuery.Query))
         Dim unfiltered_query As String = InlineQuery.Query.Trim.ToLower
         Dim query_text As String
         Dim path As String = "zaini/" + InlineQuery.From.Id.ToString + ".txt"
         Dim hasZaino As Boolean = IO.File.Exists(path)
-        Dim results As New List(Of InlineQueryResults.InlineQueryResult)
+        Dim results As New List(Of InlineQueryResults.InlineQueryResultBase)
         Dim user_history() As KeyValuePair(Of String, Integer) = getUserHistory(InlineQuery.From.Id)
         Try
             Dim reg As New Regex("^(C|NC|R|UR|L|E|UE|U){1} ", RegexOptions.IgnoreCase)
@@ -259,20 +259,20 @@ Module Module1
                                                      End Function)
                 Next
                 For i = 0 To limit
-                    Dim content As New InputMessageContents.InputTextMessageContent
                     If Tasks(i) Is Nothing Then Continue For
                     Dim result = Tasks(i).Result
-                    content.MessageText = If(result.Key <> "", result.Key, "Possiedo già tutti gli oggetti necessari")
+                    Dim content As New InlineQueryResults.InputTextMessageContent(If(result.Key <> "", result.Key, "Possiedo già tutti gli oggetti necessari"))
                     Dim f = matching_items(i).Value
-                    Dim article = New InlineQueryResults.InlineQueryResultArticle
                     Dim costo As Integer = If(rarity_value.ContainsKey(matching_items(i).Key.rarity), rarity_value(matching_items(i).Key.rarity), 0)
                     Dim punti As Integer = If(rarity_craft.ContainsKey(matching_items(i).Key.rarity), rarity_craft(matching_items(i).Key.rarity), 0)
                     Dim costoBase As Integer = 0 'matching_items(i).value
                     Dim oggbase As Integer = 0
-                    article.Id = f + matching_items(i).Key.id.ToString
-                    article.InputMessageContent = content
-                    article.Title = "Cerco per " + matching_items(i).Key.name
-                    matching_items(i).Key.contaCosto(matching_items(i).Key.id, costo, punti, costoBase, oggbase)
+                    Dim costoScrigni As Integer = 0
+                    Dim article = New InlineQueryResults.InlineQueryResultArticle(f + matching_items(i).Key.id.ToString,
+                                                                                  "Cerco per " + matching_items(i).Key.name,
+                                                                                  content)
+
+                    matching_items(i).Key.contaCosto(matching_items(i).Key.id, costo, punti, costoBase, oggbase, costoScrigni)
 
                     article.Description = If(content.MessageText.Contains("Possiedo"), "Hai già tutti gli oggetti" &
                         If(IsNothing(f), "", " " & f).ToUpper, "Hai bisogno di " + result.Value.ToString &
@@ -283,10 +283,10 @@ Module Module1
                     res.Add(article)
                 Next
                 If res IsNot Nothing Then results.AddRange(res)
-                Dim success = api.AnswerInlineQueryAsync(InlineQuery.Id, results.ToArray, 5, True,, "Aggiorna zaino salvato", "inline_" + query_text.Replace(" ", "-")).Result
+                Await api.AnswerInlineQueryAsync(InlineQuery.Id, results.ToArray, 5, True,, "Aggiorna zaino salvato", "inline_" + query_text.Replace(" ", "-"))
             Else
                 'Non ha zaino, propongo di salvarlo
-                api.AnswerInlineQueryAsync(InlineQuery.Id, results.ToArray, 0, True,, "Cliccami e salva lo zaino per questa funzione", "inline_" + query_text)
+                Await api.AnswerInlineQueryAsync(InlineQuery.Id, results.ToArray, 0, True,, "Cliccami e salva lo zaino per questa funzione", "inline_" + query_text)
             End If
         Catch e As AggregateException
             For Each v In e.InnerExceptions
@@ -476,7 +476,7 @@ Module Module1
             If flush Then 'controllo flush, se attivo ignoro il messaggio
                 If message.Date < time_start Then Exit Sub
             End If
-            If message.Type <> MessageType.TextMessage And message.Type <> MessageType.DocumentMessage Then Exit Sub 'ignoro messagi che non siano testo o documenti
+            If message.Type <> MessageType.Text And message.Type <> MessageType.Document Then Exit Sub 'ignoro messagi che non siano testo o documenti
             Dim a As Message
             Dim CraftList As New List(Of Item)
             Dim zainoDic As New Dictionary(Of Item, Integer)
@@ -492,7 +492,7 @@ Module Module1
             Dim kill As Boolean = False
 
 #Region "File prezzi"
-            If message.Type = MessageType.DocumentMessage Then
+            If message.Type = MessageType.Document Then
                 'è un documento prezzi, lo scarico e lo salvo
                 If message.Document.MimeType <> "text/plain" Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Formato file non consentito, invia solamente file di testo.").Result
@@ -957,6 +957,7 @@ Module Module1
                     Dim pc_tot As Integer = If(rarity_craft.ContainsKey(rarity), rarity_craft(rarity), 0)
                     Dim costoBase As Integer = 0
                     Dim oggBase As Integer = 0
+                    Dim costoScrigni As Integer = 0
                     api.SendChatActionAsync(message.Chat.Id, ChatAction.Typing)
                     zainoDic = getZaino(message.From.Id)
                     Dim zainoDic_copy = zainoDic
@@ -970,11 +971,12 @@ Module Module1
                         prezzi = IO.File.ReadAllText("prezzi/" + message.From.Id.ToString + ".txt")
                         prezzi_dic = parsePrezzoNegozi(prezzi)
                     End If
-                    ItemIds(id).contaCosto(id, s_tot, pc_tot, costoBase, oggBase, prezzi_dic)
+                    ItemIds(id).contaCosto(id, s_tot, pc_tot, costoBase, oggBase, costoScrigni, prezzi_dic)
                     builder.AppendLine(ItemIds(id).name + ":").AppendLine()
                     builder.Append("Punti craft mancanti / totali: ").AppendLine(punti_craft.ToString + "/" + pc_tot.ToString)
                     builder.Append("Costo craft mancante / totale: ").AppendLine(prettyCurrency(spesa) + "/" + prettyCurrency(s_tot))
                     builder.Append("Valore stimato con i prezzi salvati: ").AppendLine(prettyCurrency(costoBase))
+                    builder.Append("Valore scrigni degli oggetti base + costo craft: ").AppendLine(prettyCurrency(spesa + costoScrigni))
                     builder.Append("Valore corrente stimato: ").AppendLine(prettyCurrency(ItemIds(id).estimate))
                     builder.Append("Totale oggetti base necessario al craft: ").AppendLine(oggBase)
                     a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString).Result
@@ -1556,11 +1558,13 @@ Module Module1
         builder.Append(vbCrLf)
         Dim sorted = list.Where(Function(z) isCraftable(z.Key.id)).OrderByDescending(Function(x) x.Value).ThenBy(Function(p) p.Key.name).Select(Function(o) o).ToList
         Dim newSorted As New Dictionary(Of Item, Integer)
+        'TODO: rimuovi "NonCraftare" sia in tick che non.
+
         If tick Then
             For Each sort In sorted
-                If sort.Key.name.StartsWith("Generatore di Massa") Then StampaDebug("Generatore di massa: " & sort.Value)
-                If sort.Key.name.StartsWith("Bronzo") Then StampaDebug("Bronzo: " & sort.Value)
-                If sort.Key.name.StartsWith("Carica Positiva") Then StampaDebug("Carica Positiva: " & sort.Value)
+                'If sort.Key.name.StartsWith("Generatore di Massa") Then StampaDebug("Generatore di massa: " & sort.Value)
+                'If sort.Key.name.StartsWith("Bronzo") Then StampaDebug("Bronzo: " & sort.Value)
+                'If sort.Key.name.StartsWith("Carica Positiva") Then StampaDebug("Carica Positiva: " & sort.Value)
 
                 If newSorted.ContainsKey(sort.Key) Then
                     newSorted(sort.Key) += 1
@@ -1587,7 +1591,7 @@ Module Module1
                 End If
             Next
             For Each craft In newSorted
-                Dim NonCraftare As Integer = If(possiedi.ContainsKey(craft.Key), possiedi(craft.Key), 0)
+                Dim NonCraftare As Integer '= If(possiedi.ContainsKey(craft.Key), possiedi(craft.Key), 0)
                 Dim volte As Integer = Math.Truncate((craft.Value - NonCraftare) / 3)
                 Dim modulo As Integer = (craft.Value - NonCraftare) Mod 3
                 For i = 1 To volte

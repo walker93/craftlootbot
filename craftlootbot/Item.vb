@@ -35,9 +35,11 @@ Public Class Item
             Dim punti_craft As Integer = If(rarity_craft.ContainsKey(rarity), rarity_craft(rarity), 0)
             Dim costoBase As Integer = 0
             Dim oggBase As Integer = 0
-            contaCosto(id, spesa, punti_craft, costoBase, oggBase)
+            Dim costoScrigni As Integer = 0
+            contaCosto(id, spesa, punti_craft, costoBase, oggBase, costoScrigni)
             builder.Append("Costo per il Craft: ").AppendLine(prettyCurrency(spesa))
             builder.Append("Valore oggetti base + costo craft: ").AppendLine(prettyCurrency(costoBase + spesa))
+            builder.Append("Valore scrigni oggetti base + costo craft: ").AppendLine(prettyCurrency(spesa + costoScrigni))
             builder.Append("Punti craft guadagnati: ").AppendLine(punti_craft)
             builder.Append("Numero oggetti base necessari: ").AppendLine(oggBase)
         End If
@@ -155,7 +157,7 @@ Public Class Item
     End Sub
 
     'ricorsione per punti craft e costo
-    Sub contaCosto(item_id As Integer, ByRef spesa As Integer, ByRef punticraft As Integer, ByRef costoBase As Integer, ByRef oggBase As Integer, Optional prezzi_dic As Dictionary(Of Item, Integer) = Nothing)
+    Sub contaCosto(item_id As Integer, ByRef spesa As Integer, ByRef punticraft As Integer, ByRef costoBase As Integer, ByRef oggBase As Integer, ByRef costoScrgni As Integer, Optional prezzi_dic As Dictionary(Of Item, Integer) = Nothing)
         Dim required_ids() As Integer = requestCraft(item_id)
         Dim ite As Item
         For Each i In required_ids
@@ -163,13 +165,14 @@ Public Class Item
             If isCraftable(i) Then
                 If rarity_value.ContainsKey(ite.rarity) Then spesa += rarity_value.Item(ite.rarity)
                 If rarity_craft.ContainsKey(ite.rarity) Then punticraft += rarity_craft.Item(ite.rarity)
-                contaCosto(i, spesa, punticraft, costoBase, oggBase, prezzi_dic)
+                contaCosto(i, spesa, punticraft, costoBase, oggBase, costoScrgni, prezzi_dic)
             Else
                 If Not IsNothing(prezzi_dic) AndAlso prezzi_dic.ContainsKey(ite) AndAlso prezzi_dic(ite) > 0 Then
                     costoBase += prezzi_dic(ite)
                 Else
                     costoBase += ite.value
                 End If
+                If prezzoScrigni.ContainsKey(ite.rarity.ToUpper) Then costoScrgni += prezzoScrigni(ite.rarity.ToUpper)
                 oggBase += 1
             End If
         Next

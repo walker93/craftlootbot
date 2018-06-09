@@ -1,6 +1,6 @@
 ﻿Imports System.Text
 Imports Telegram.Bot.Types
-Imports Telegram.Bot.Types.InlineKeyboardButtons
+Imports Telegram.Bot.Types.ReplyMarkups
 
 Module help
     'Inizializza Testo help
@@ -195,23 +195,24 @@ Module help
     End Sub
 
     'creazione tastiera help
+
+
     Function creaHelpKeyboard() As ReplyMarkups.InlineKeyboardMarkup
-        Dim keyboard As New ReplyMarkups.InlineKeyboardMarkup
-        Dim keyboardbuttons()() As InlineKeyboardButton
-        Dim lista_button As New CallbackInlineButton("📜 Lista 📜", "lista")
-        Dim albero_button As New CallbackInlineButton("🌲 Albero 🌲", "albero")
-        Dim inline_button As New CallbackInlineButton("🔍 Inline 🔍", "inline")
-        Dim zaino_button As New CallbackInlineButton("🎒 Zaino 🎒", "zaino")
-        Dim craft_button As New CallbackInlineButton("🛠 Craft 🛠", "craft")
-        Dim confronta_button As New CallbackInlineButton("📊 Confronta 📊", "confronta")
-        Dim base_button As New CallbackInlineButton("🔤 Base 🔤", "base")
-        Dim vendi_button As New CallbackInlineButton("🏪 Vendi 🏪", "vendi")
-        Dim creanegozi_button As New CallbackInlineButton("💸 CreaNegozi 💸", "creanegozi")
-        Dim info_button As New CallbackInlineButton("ℹ️ Info ℹ️", "info")
-        Dim stima_button As New CallbackInlineButton("📈 Stima 📈", "stima")
-        Dim xmlHtml_button As New CallbackInlineButton("🌐 XML / HTML 🌐", "html-xml")
-        Dim setequip_button As New CallbackInlineButton("🗡 SetEquip 🗡", "setequip")
-        Dim riepilogo_button As New CallbackInlineButton("⬅️ Riepilogo ⬅️", "riepilogo")
+
+        Dim lista_button As New InlineKeyboardButton() With {.Text = "📜 Lista 📜", .CallbackData = "lista"}
+        Dim albero_button As New InlineKeyboardButton() With {.Text = "🌲 Albero 🌲", .CallbackData = "albero"}
+        Dim inline_button As New InlineKeyboardButton() With {.Text = "🔍 Inline 🔍", .CallbackData = "inline"}
+        Dim zaino_button As New InlineKeyboardButton() With {.Text = "🎒 Zaino 🎒", .CallbackData = "zaino"}
+        Dim craft_button As New InlineKeyboardButton() With {.Text = "🛠 Craft 🛠", .CallbackData = "craft"}
+        Dim confronta_button As New InlineKeyboardButton() With {.Text = "📊 Confronta 📊", .CallbackData = "confronta"}
+        Dim base_button As New InlineKeyboardButton() With {.Text = "🔤 Base 🔤", .CallbackData = "base"}
+        Dim vendi_button As New InlineKeyboardButton() With {.Text = "🏪 Vendi 🏪", .CallbackData = "vendi"}
+        Dim creanegozi_button As New InlineKeyboardButton() With {.Text = "💸 CreaNegozi 💸", .CallbackData = "creanegozi"}
+        Dim info_button As New InlineKeyboardButton() With {.Text = "ℹ️ Info ℹ️", .CallbackData = "info"}
+        Dim stima_button As New InlineKeyboardButton() With {.Text = "📈 Stima 📈", .CallbackData = "stima"}
+        Dim xmlHtml_button As New InlineKeyboardButton() With {.Text = "🌐 XML / HTML 🌐", .CallbackData = "html-xml"}
+        Dim setequip_button As New InlineKeyboardButton() With {.Text = "🗡 SetEquip 🗡", .CallbackData = "setequip"}
+        Dim riepilogo_button As New InlineKeyboardButton() With {.Text = "⬅️ Riepilogo ⬅️", .CallbackData = "riepilogo"}
 
         Dim row1() As InlineKeyboardButton
         Dim row2() As InlineKeyboardButton
@@ -243,14 +244,16 @@ Module help
         row7.Add(setequip_button)
         row7.Add(riepilogo_button)
 
-        keyboardbuttons.Add(row1)
-        keyboardbuttons.Add(row2)
-        keyboardbuttons.Add(row3)
-        keyboardbuttons.Add(row4)
-        keyboardbuttons.Add(row5)
-        keyboardbuttons.Add(row6)
-        keyboardbuttons.Add(row7)
-        keyboard.InlineKeyboard = keyboardbuttons
+        Dim keyboard As New ReplyMarkups.InlineKeyboardMarkup({
+                                                              row1,
+                                                              row2,
+                                                              row3,
+                                                              row4,
+                                                              row5,
+                                                              row6,
+                                                              row7
+                                                              })
+
         Return keyboard
     End Function
 

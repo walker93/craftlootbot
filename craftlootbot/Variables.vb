@@ -48,6 +48,7 @@
                     inline_message_row_limit = split(1)
                 Case "flush"
                     flush = If(split(1) = 1, True, False)
+                    If flush Then Console.WriteLine("Flush Attivo.")
                 Case "olderzaini_limit"
                     olderZaini_limit = split(1)
                 Case "inline_history_limit"
