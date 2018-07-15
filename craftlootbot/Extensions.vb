@@ -36,7 +36,7 @@ Public Module MyExtensions
     Function getFileName() As String
         Dim uTime As ULong
         uTime = (Date.UtcNow - New DateTime(1970, 1, 1, 0, 0, 0)).TotalMilliseconds
-        Dim filename As String = uTime.ToString + ".txt"
+        Dim filename As String = "temp/" + uTime.ToString + ".txt"
         Return filename
     End Function
 

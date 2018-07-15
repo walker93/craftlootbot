@@ -143,6 +143,7 @@
         IO.Directory.CreateDirectory("zaini")
         IO.Directory.CreateDirectory("prezzi")
         IO.Directory.CreateDirectory("alias")
+        IO.Directory.CreateDirectory("temp")
     End Sub
 
     'restituisce url giocatore per un determinato username

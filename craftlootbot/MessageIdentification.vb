@@ -11,7 +11,7 @@ Module MessageIdentification
     'controllo se il testo matcha un elenco cerco inline
     Function isInlineCerco(text As String) As Boolean
         Dim rex As New Regex("\> ([0-9]+) di ([A-z òàèéìù'-]+) \(([A-Z]+)\)")
-        Return rex.IsMatch(text)
+        Return rex.IsMatch(text) And text.StartsWith("Cerco:")
     End Function
 
     'controllo se il testo match un elenco prezzi negozio

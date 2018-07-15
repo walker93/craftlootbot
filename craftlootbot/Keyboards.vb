@@ -35,8 +35,8 @@ Module Keyboards
         Return keyboard
     End Function
 
-    'Crea tastiera per salvataggio zaino inline
-    Function creaInlineKeyboard(query_text As String) As ReplyMarkups.InlineKeyboardMarkup
+    'Crea tastiera inline
+    Function creaInlineKeyboard(query_text As String) As InlineKeyboardMarkup
         Dim keyboardbuttons()() As InlineKeyboardButton
         Dim button1 As New InlineKeyboardButton() With {.Text = "Torna Inline", .SwitchInlineQuery = query_text}
 

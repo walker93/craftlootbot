@@ -126,7 +126,6 @@
     <Compile Include="database.vb" />
     <Compile Include="Extensions.vb" />
     <Compile Include="help.vb" />
-    <Compile Include="InlineButton.vb" />
     <Compile Include="Item.vb" />
     <Compile Include="JsonResponse.vb" />
     <Compile Include="Keyboards.vb" />

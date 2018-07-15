@@ -242,7 +242,7 @@ Module Module1
                     Next
                 End If
                 If matching_items Is Nothing OrElse matching_items.Length = 0 Then
-                    api.AnswerInlineQueryAsync(InlineQuery.Id, results.ToArray, 0, True)
+                    Await api.AnswerInlineQueryAsync(InlineQuery.Id, results.ToArray, 0, True)
                     Return True
                 End If
 
@@ -1036,6 +1036,7 @@ Module Module1
                     Dim name As String = getFileName()
                     Dim xml As String = "<?xml version='1.0' encoding='UTF-8'?>" + vbNewLine + ItemToXML(id)
                     a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, xml, item, ".xml"),,, message.MessageId).Result
+                    IO.File.Delete(name)
                 Else
                     a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
                 End If
@@ -1055,6 +1056,7 @@ Module Module1
                     Dim counter = 0
                     Dim html As String = Header + vbNewLine + ItemToHTML(id, counter) + "</body>"
                     a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, html, item, ".html"),,, message.MessageId).Result
+                    IO.File.Delete(name)
                 Else
                     a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
                 End If
