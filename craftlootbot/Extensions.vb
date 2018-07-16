@@ -104,7 +104,11 @@ Public Module MyExtensions
 
     'Creo File per Salvataggio Callback di /craft
     Function createfile(text As String, UserID As Long)
-        Dim filename = UserID.ToString + "_" + getFileName()
+        Dim uTime As ULong
+        uTime = (Date.UtcNow - New DateTime(1970, 1, 1, 0, 0, 0)).TotalMilliseconds
+        Dim filename As String = uTime.ToString + ".txt"
+
+        'Dim combined_filename = UserID.ToString + "_" + filename
         IO.File.WriteAllText("crafts/" + filename, text)
         Return filename
     End Function
