@@ -12,7 +12,7 @@ Module Module1
     Public ItemIds As New Dictionary(Of Integer, Item) 'Dizionario degli oggetti di Loot (ID, oggetto)
     Dim items() As Item
     Dim stati As New Dictionary(Of ULong, Integer) 'stato utenti
-    Dim zaini As New Dictionary(Of ULong, String) 'salvataggio zaini in corso
+    Dim zaini As New Concurrent.ConcurrentDictionary(Of ULong, String) 'salvataggio zaini in corso
     Dim confronti As New Dictionary(Of ULong, String) 'confronti in corso
     Dim thread_inline As New Dictionary(Of Integer, Threading.CancellationTokenSource)
     Dim from_inline_query As New Dictionary(Of ULong, String) 'ID_utente, Query
@@ -175,7 +175,7 @@ Module Module1
                 Console.WriteLine("Ripristino richiesto per l'utente {0}", userID)
                 Dim report As New Text.StringBuilder("Ripristino eseguito!")
                 report.AppendLine()
-                If zaini.ContainsKey(userID) Then zaini.Remove(userID) : report.AppendLine("Salvataggio zaino interrotto.")
+                If zaini.TryRemove(userID, "") Then report.AppendLine("Salvataggio zaino interrotto.")
                 If stati.ContainsKey(userID) Then stati.Remove(userID) : report.AppendLine("Stato utente ripristinato.")
                 If confronti.ContainsKey(userID) Then confronti.Remove(userID) : report.AppendLine("Confronto interrotto.")
                 If IO.File.Exists("zaini/" + userID.ToString + ".txt") Then IO.File.Delete("zaini/" + userID.ToString + ".txt") : report.AppendLine("Zaino utente cancellato!")
@@ -286,7 +286,7 @@ Module Module1
                 Await api.AnswerInlineQueryAsync(InlineQuery.Id, results.ToArray, 5, True,, "Aggiorna zaino salvato", "inline_" + query_text.Replace(" ", "-"))
             Else
                 'Non ha zaino, propongo di salvarlo
-                Await api.AnswerInlineQueryAsync(InlineQuery.Id, results.ToArray, 0, True,, "Cliccami e salva lo zaino per questa funzione", "inline_" + query_text)
+                Await api.AnswerInlineQueryAsync(InlineQuery.Id, results.ToArray, 0, True,, "Cliccami e salva lo zaino per questa funzione", "inline_" + query_text.Replace(" ", "-"))
             End If
         Catch e As AggregateException
             For Each v In e.InnerExceptions
@@ -651,7 +651,7 @@ Module Module1
                     Exit Sub
                 End If
                 stati.Add(message.From.Id, 10) 'entro nello stato 10, ovvero salvataggio zaino
-                zaini.Add(message.From.Id, "")
+                If Not zaini.TryAdd(message.From.Id, "") Then Console.WriteLine("Impossibile creare elemento in dictionary zaini, l'elemento esiste già.")
                 If message.Chat.Type = ChatType.Group Or message.Chat.Type = ChatType.Supergroup Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Inoltra i messaggi in privato").Result
                 End If
@@ -660,7 +660,7 @@ Module Module1
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) AndAlso zaini.ContainsKey(message.From.Id) Then
                     IO.File.WriteAllText("zaini/" + message.From.Id.ToString + ".txt", zaini.Item(message.From.Id))
                     stati.Remove(message.From.Id)
-                    zaini.Remove(message.From.Id)
+                    If Not zaini.TryRemove(message.From.Id, "") Then Console.WriteLine("Impossibile eliminare l'elemento dal dictionary zaini.")
                     If from_inline_query.ContainsKey(message.From.Id) Then
                         a = api.SendTextMessageAsync(message.Chat.Id, "Il tuo zaino è stato salvato!",,,, , creaInlineKeyboard(from_inline_query.Item(message.From.Id))).Result
                         from_inline_query.Remove(message.From.Id)
@@ -673,7 +673,7 @@ Module Module1
             ElseIf message.Text.ToLower.Equals("annulla") Then
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) AndAlso zaini.ContainsKey(message.From.Id) Then
                     stati.Remove(message.From.Id)
-                    zaini.Remove(message.From.Id)
+                    If Not zaini.TryRemove(message.From.Id, "") Then Console.WriteLine("Impossibile eliminare l'elemento dal dictionary zaini.")
                     a = api.SendTextMessageAsync(message.Chat.Id, "Hai annullato il salvataggio dello zaino",,,, , creaNULLKeyboard).Result
                 ElseIf stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 100)) Or stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) Then
                     stati.Remove(message.From.Id)
@@ -874,7 +874,7 @@ Module Module1
                     'Proviene da inline propongo zaino
                     If Not stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) Then
                         stati.Add(message.From.Id, 10) 'entro nello stato 10, ovvero salvataggio zaino
-                        zaini.Add(message.From.Id, "")
+                        If Not zaini.TryAdd(message.From.Id, "") Then Console.WriteLine("Impossibile creare elemento in dictionary zaini, l'elemento esiste già.")
                     End If
                     If Not from_inline_query.ContainsKey(message.From.Id) Then
                         from_inline_query.Add(message.From.Id, message.Text.ToLower.Trim.Replace("/start inline_", "").Replace("-", " "))
@@ -1271,7 +1271,7 @@ Module Module1
 #Region "/ripristino"
                 Dim member = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/ripristino" + "@craftlootbot", "/ripristino"), "").Trim
                 Dim userID As Integer = Integer.Parse(member)
-                If zaini.ContainsKey(userID) Then zaini.Remove(userID)
+                If Not zaini.TryRemove(userID, "") Then Console.WriteLine("Impossibile eliminare elemento da dictionary zaini")
                 If stati.ContainsKey(userID) Then stati.Remove(userID)
                 If confronti.ContainsKey(userID) Then confronti.Remove(userID)
                 If IO.File.Exists("zaini/" + userID.ToString + ".txt") Then IO.File.Delete("zaini/" + userID.ToString + ".txt")

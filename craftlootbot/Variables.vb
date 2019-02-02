@@ -87,6 +87,7 @@
 
     'inizializza punti craft rarità
     Sub init_rarity_craft()
+        rarity_craft.Add("R", 1)
         rarity_craft.Add("UR", 2)
         rarity_craft.Add("L", 3)
         rarity_craft.Add("E", 5)
