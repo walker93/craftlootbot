@@ -813,478 +813,487 @@ Module Module1
                 End If
                 zainoDic = getZaino(message.From.Id)
                 Dim item_ids As New List(Of Integer)
-                checkInputItems(message.Text.Trim, message.Chat.Id, message.From.Id, "/creanegozi", item_ids)
+                Dim items_string = message.Text.Trim.Replace(If(message.Text.Trim.ToLower.Contains("@craftlootbot"), "/creanegozi" + "@craftlootbot", "/creanegozi"), "").Trim
+
+                Dim reg As New Regex("^(C|NC|R|UR|L|E|UE|S|U|X|RF2|RF3|RF4|RF5|RF6)?(\*)? {1}", RegexOptions.IgnoreCase)
+                Dim filter As Match
+                Dim new_message As String = message.Text.Trim
+                If items_string <> "" AndAlso reg.IsMatch(items_string & " ") Then
+                    filter = reg.Match(items_string & " ")
+                    new_message = new_message.Replace(filter.Value.Trim, "").Trim
+                End If
+                checkInputItems(new_message, message.Chat.Id, message.From.Id, "/creanegozi", item_ids)
                 If item_ids.Count = 0 Then
                     'Uso lo zaino per creare i negozi
                     result = zainoDic
                 Else
-                    'Uso il /vendi per creare i negozi
-                    api.SendChatActionAsync(message.Chat.Id, ChatAction.Typing)
-                    Dim zainoDic_copy = zainoDic
-                    For Each i In item_ids
-                        getNeededItemsList(i, CraftList, zainoDic_copy, gia_possiedi, spesa, punti_craft)
-                    Next
-                    result = SottrazioneDizionariItem(zainoDic_copy, createCraftCountList(CraftList))
-                End If
-                Dim prezzi_dic As Dictionary(Of Item, Integer)
-                Dim prezzi As String
-                If IO.File.Exists("prezzi/" + message.From.Id.ToString + ".txt") Then
-                    prezzi = IO.File.ReadAllText("prezzi/" + message.From.Id.ToString + ".txt")
-                    prezzi_dic = parsePrezzoNegozi(prezzi)
-                End If
-                Dim negozi = getNegoziText(result, prezzi_dic)
-                For Each negozio In negozi
-                    a = api.SendTextMessageAsync(message.Chat.Id, negozio).Result
-                Next
-                a = api.SendTextMessageAsync(message.Chat.Id, "/privacy tutti").Result
-#End Region
-            ElseIf message.Text.ToLower.StartsWith("/ottieniprezzi") Then
-#Region "ottieniprezzi"
-                If IO.File.Exists("prezzi/" + message.From.Id.ToString + ".txt") Then
-                    Dim prezzi_text = IO.File.ReadAllText("prezzi/" + message.From.Id.ToString + ".txt")
-                    Dim link = checkLink(prezzi_text)
-                    If Not isPrezziNegozi(prezzi_text) AndAlso Not IsNothing(link) Then
-                        prezzi_text = "I prezzi sono scaricati autonomamente dal link:" + vbCrLf + link.AbsoluteUri + vbCrLf + vbCrLf + "Il contenuto è:"
-                        a = api.SendTextMessageAsync(message.Chat.Id, prezzi_text, , True).Result
-                        prezzi_text = getPrezziStringFromURL(link)
+                        'Uso il /vendi per creare i negozi
+                        api.SendChatActionAsync(message.Chat.Id, ChatAction.Typing)
+                        Dim zainoDic_copy = zainoDic
+                        For Each i In item_ids
+                            getNeededItemsList(i, CraftList, zainoDic_copy, gia_possiedi, spesa, punti_craft)
+                        Next
+                        result = SottrazioneDizionariItem(zainoDic_copy, createCraftCountList(CraftList))
                     End If
-
-                    If prezzi_text.Split(vbLf).Length > 15 Then
-                        'invio file
-                        Dim name As String = getFileName()
-                        a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, prezzi_text, "Prezzi")).Result
-                        IO.File.Delete(name)
-                    Else
-                        answerLongMessage(prezzi_text, message.Chat.Id)
-                    End If
-
-
-                Else
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Non hai prezzi salvati al momento").Result
-                End If
-#End Region
-            ElseIf message.Text.ToLower.StartsWith("/start") Then
-#Region "start"
-                If message.Text.Contains("inline_") Then
-                    If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 100)) _
-                            Or stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) Then
-                        stati.Remove(message.From.Id)  'entro nello stato 10, ovvero salvataggio zaino
-                        confronti.Remove(message.From.Id)
-                    End If
-                    'Proviene da inline propongo zaino
-                    If Not stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) Then
-                        stati.Add(message.From.Id, 10) 'entro nello stato 10, ovvero salvataggio zaino
-                        If Not zaini.TryAdd(message.From.Id, "") Then Console.WriteLine("Impossibile creare elemento in dictionary zaini, l'elemento esiste già.")
-                    End If
-                    If Not from_inline_query.ContainsKey(message.From.Id) Then
-                        from_inline_query.Add(message.From.Id, message.Text.ToLower.Trim.Replace("/start inline_", "").Replace("-", " "))
-                    Else
-                        from_inline_query(message.From.Id) = message.Text.ToLower.Trim.Replace("/start inline_", "").Replace("-", " ")
-                    End If
-                    a = api.SendTextMessageAsync(message.From.Id, "Inoltra o incolla di seguito il tuo zaino, può essere in più messaggi." + vbCrLf + "Premi 'Salva' quando hai terminato, o 'Annulla' per non salvare.",,,,, creaZainoKeyboard).Result
-                Else
-                    'Avvio normale
-                    Dim builder As New Text.StringBuilder()
-                    builder.AppendLine("Benvenuto in Craft Lootbot!")
-                    builder.AppendLine("Questo bot permette di riceve la lista dei materiali necessari al craft, l'albero dei craft di un oggetto e molto altro.")
-                    builder.AppendLine("Usa /help per la guida ai comandi.")
-                    builder.AppendLine("Segui il canale @CraftLootBotNews per le news e aggiornamenti, contatta @AlexCortinovis per malfunzionamenti o dubbi")
-                    builder.AppendLine("Provami! Non ti deluderò!")
-                    a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString).Result
-                End If
-#End Region
-            ElseIf message.Text.ToLower.StartsWith(If(message.Chat.Type = ChatType.Private, "/help", "/help@craftlootbot")) Then
-                a = api.SendTextMessageAsync(message.Chat.Id, help_builder.ToString, ParseMode.Markdown, True,,, creaHelpKeyboard).Result
-            ElseIf message.Text.ToLower.StartsWith("/stats") Then
-#Region "stats"
-                Dim builder As New Text.StringBuilder("*STATISTICHE COMPLESSIVE:*")
-                builder.AppendLine().AppendLine()
-                stats.Item("zaini") = New Tuple(Of String, ULong)(stats.Item("zaini").Item1, IO.Directory.GetFiles("zaini/").Length)
-                For Each stat In stats
-                    builder.Append("*" + stat.Value.Item1 + ":* " + stat.Value.Item2.ToString).Append(vbCrLf)
-                Next
-                builder.AppendLine().AppendLine("*Negli ultimi " + stat_timeout.ToString + " minuti:*")
-                For Each delta_stat In delta_stats
-                    builder.Append("*" + delta_stat.Value.Item1 + ":* " + delta_stat.Value.Item2.ToString).Append(vbCrLf)
-                Next
-                a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString, ParseMode.Markdown).Result
-#End Region
-            ElseIf message.Text.ToLower.StartsWith("/db") Then
-#Region "Aggiorno DB"
-                Dim builder As New Text.StringBuilder
-                builder.AppendLine(download_items())
-                builder.AppendLine(download_crafts())
-                builder.AppendLine(Leggo_Items())
-                builder.AppendLine(Leggo_Crafts())
-                a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString).Result
-#End Region
-            ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/classifica") Then
-                StampaClassificaUtilizzoBot()
-            ElseIf message.Text.ToLower.StartsWith("/info") Then
-#Region "/info"
-                item = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/info" + "@craftlootbot", "/info"), "").Trim
-                If item = "" Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto su cui avere informazioni").Result
-                    Exit Sub
-                End If
-                id = getItemId(item)
-                If id <> -1 Then
-                    Dim builder As New Text.StringBuilder
-                    Dim related = ItemIds(id).getRelatedItemsIDs
-                    builder.AppendLine(ItemIds(id).ToString)
-                    a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString, ParseMode.Markdown,,,, If(IsNothing(related), Nothing, creaInfoKeyboard(related))).Result
-                Else
-                    a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
-                End If
-#End Region
-            ElseIf message.Text.ToLower.StartsWith("/stima") Then
-#Region "/stima"
-                item = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/stima" + "@craftlootbot", "/stima"), "").Trim
-                If item = "" Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto dopo il comando: '/stima spada antimateria'").Result
-                    Exit Sub
-                End If
-                id = getItemId(item)
-
-                If id <> -1 Then
-                    If Not isCraftable(id) Then
-                        a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto inserito deve essere craftabile").Result
-                        Exit Sub
-                    End If
-                    Dim builder As New Text.StringBuilder
-                    Dim rarity = ItemIds(id).rarity
-                    Dim s_tot As Integer = If(rarity_value.ContainsKey(rarity), rarity_value(rarity), 0)
-                    Dim pc_tot As Integer = If(rarity_craft.ContainsKey(rarity), rarity_craft(rarity), 0)
-                    Dim costoBase As Integer = 0
-                    Dim oggBase As Integer = 0
-                    Dim costoScrigni As Integer = 0
-                    api.SendChatActionAsync(message.Chat.Id, ChatAction.Typing)
-                    zainoDic = getZaino(message.From.Id)
-                    Dim zainoDic_copy = zainoDic
-                    getNeededItemsList(id, CraftList, zainoDic_copy, gia_possiedi, spesa, punti_craft)
-                    If rarity_value.ContainsKey(ItemIds.Item(id).rarity) Then spesa += rarity_value.Item(ItemIds.Item(id).rarity)
-                    If rarity_craft.ContainsKey(ItemIds.Item(id).rarity) Then punti_craft += rarity_craft.Item(ItemIds.Item(id).rarity)
-
                     Dim prezzi_dic As Dictionary(Of Item, Integer)
                     Dim prezzi As String
                     If IO.File.Exists("prezzi/" + message.From.Id.ToString + ".txt") Then
                         prezzi = IO.File.ReadAllText("prezzi/" + message.From.Id.ToString + ".txt")
                         prezzi_dic = parsePrezzoNegozi(prezzi)
                     End If
-                    ItemIds(id).contaCosto(id, s_tot, pc_tot, costoBase, oggBase, costoScrigni, prezzi_dic)
-                    builder.AppendLine(ItemIds(id).name + ":").AppendLine()
-                    builder.Append("Punti craft mancanti / totali: ").AppendLine(punti_craft.ToString + "/" + pc_tot.ToString)
-                    builder.Append("Costo craft mancante / totale: ").AppendLine(prettyCurrency(spesa) + "/" + prettyCurrency(s_tot))
-                    builder.Append("Valore stimato con i prezzi salvati: ").AppendLine(prettyCurrency(costoBase))
-                    builder.Append("Valore scrigni degli oggetti base + costo craft: ").AppendLine(prettyCurrency(spesa + costoScrigni))
-                    builder.Append("Valore corrente stimato: ").AppendLine(prettyCurrency(ItemIds(id).estimate))
-                    builder.Append("Totale oggetti base necessario al craft: ").AppendLine(oggBase)
-                    a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString).Result
-                Else
-                    a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
-                End If
+                    Dim negozi = getNegoziText(result, prezzi_dic, filter)
+                    For Each negozio In negozi
+                        a = api.SendTextMessageAsync(message.Chat.Id, negozio).Result
+                    Next
+                    a = api.SendTextMessageAsync(message.Chat.Id, "/privacy tutti").Result
 #End Region
-            ElseIf message.Text.StartsWith("/creabili") Then
-#Region "/creabili"
-                Dim params = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/creabili" + "@craftlootbot", "/creabili"), "").Trim
-                Dim param_array = params.Split(" ")
-                Dim rarity = If(param_array.Length > 1, param_array(0).Trim, "")
-                Dim offset As Integer
-                If Not Integer.TryParse(If(param_array.Length = 1, param_array(0).Trim, param_array(1).Trim), offset) Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci un numero valido dopo la rarità").Result
-                End If
-                Dim reg As New Regex("^(C|NC|R|UR|L|E|UE|U|S|X){1}", RegexOptions.IgnoreCase)
-                Dim fil = Nothing
-                If reg.IsMatch(rarity) Then fil = reg.Match(params).Value.Trim.ToUpper
-                Dim filtered_items = ItemIds.Where(Function(i) isCraftable(i.Value.id) AndAlso If(IsNothing(fil), True, i.Value.rarity = fil))
-                Dim limit = filtered_items.Count
-                Dim Tasks(limit) As Task(Of KeyValuePair(Of String, Integer))
-                Dim ct As New Threading.CancellationTokenSource
-                For i = 0 To limit - 1
-                    Dim ite As Item = filtered_items(i).Value
-                    'If Not isCraftable(ite.id) Then Continue For
-                    Tasks(i) = Task.Factory.StartNew(Function() As KeyValuePair(Of String, Integer)
-                                                         Return task_getMessageText(ite, message.From.Id, ct.Token)
-                                                     End Function)
-                Next
-                Dim builder As New Text.StringBuilder
-                For i = 0 To limit - 1
-                    If Tasks(i) Is Nothing Then Continue For
-                    Dim result = Tasks(i).Result
-                    If result.Value >= 0 And result.Value <= offset Then
-                        If result.Value = 0 Then
-                            builder.AppendLine("`/craft " + filtered_items(i).Value.name + "`")
-                        Else
-                            builder.Append("`/lista " + filtered_items(i).Value.name + "` ").AppendLine(result.Value.ToString + " mancanti")
+                ElseIf message.Text.ToLower.StartsWith("/ottieniprezzi") Then
+#Region "ottieniprezzi"
+                    If IO.File.Exists("prezzi/" + message.From.Id.ToString + ".txt") Then
+                        Dim prezzi_text = IO.File.ReadAllText("prezzi/" + message.From.Id.ToString + ".txt")
+                        Dim link = checkLink(prezzi_text)
+                        If Not isPrezziNegozi(prezzi_text) AndAlso Not IsNothing(link) Then
+                            prezzi_text = "I prezzi sono scaricati autonomamente dal link:" + vbCrLf + link.AbsoluteUri + vbCrLf + vbCrLf + "Il contenuto è:"
+                            a = api.SendTextMessageAsync(message.Chat.Id, prezzi_text, , True).Result
+                            prezzi_text = getPrezziStringFromURL(link)
                         End If
 
-                    End If
-                Next
-                If builder.ToString = "" Then builder.AppendLine("Nessun oggetto craftabile con l'offset specificato")
-                answerLongMessage(builder.ToString, message.Chat.Id)
-#End Region
-            ElseIf message.Text.ToLower.StartsWith("/xml") Then
-#Region "/XML"
-                item = message.Text.ToLower.Replace(If(message.Text.Contains("@craftlootbot"), "/xml" + "@craftlootbot", "/xml"), "").Trim
-                If item = "" Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto che vuoi ottenere").Result
-                    Exit Sub
-                End If
-                id = getItemId(item)
-                If id <> -1 Then
-                    api.SendChatActionAsync(message.Chat.Id, ChatAction.UploadDocument)
-                    Dim name As String = getFileName()
-                    Dim xml As String = "<?xml version='1.0' encoding='UTF-8'?>" + vbNewLine + ItemToXML(id)
-                    a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, xml, item, ".xml"),,, message.MessageId).Result
-                    IO.File.Delete(name)
-                Else
-                    a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
-                End If
-#End Region
-            ElseIf message.Text.ToLower.StartsWith("/html") Then
-#Region "/HTML"
-                item = message.Text.ToLower.Replace(If(message.Text.Contains("@craftlootbot"), "/html" + "@craftlootbot", "/html"), "").Trim
-                If item = "" Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto che vuoi ottenere").Result
-                    Exit Sub
-                End If
-                Dim Header As String = "<head><style>body{padding:20px}div{margin-bottom:5px;margin-left:8px;border-left:1px solid #000;padding:5px}label.leaf{border:none;cursor: default;font-weight: normal}input:checked+label+div{display:none}input:checked+label:before{content:'+ '}input+label:before{content:'- '}label{font-size:16px;padding:2px 5px;cursor:pointer;display:block;font-weight:700}</style></head>"
-                id = getItemId(item)
-                If id <> -1 Then
-                    api.SendChatActionAsync(message.Chat.Id, ChatAction.UploadDocument)
-                    Dim name As String = getFileName()
-                    Dim counter = 0
-                    Dim html As String = Header + vbNewLine + ItemToHTML(id, counter) + "</body>"
-                    a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, html, item, ".html"),,, message.MessageId).Result
-                    IO.File.Delete(name)
-                Else
-                    a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
-                End If
-#End Region
-            ElseIf message.Text.ToLower.StartsWith("/setprezzi") Then
-#Region "/setprezzi"
-                api.SendChatActionAsync(message.Chat.Id, ChatAction.Typing)
-                'Dim link '= message.Text.Replace(If(message.Text.ToLower.Contains("@craftlootbot"), "/setprezzi" + "@craftlootbot", "/setprezzi"), "").Trim
-                Dim args = message.Text.Split(" ")
-                If args.Length <= 1 Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci un link.").Result
-                    Exit Sub
-                End If
-                Dim URLPrezzi = checkLink(args(1))
-                If IsNothing(URLPrezzi) Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Il link inserito non è valido").Result
-                Else
-                    If getPrezziStringFromURL(URLPrezzi) <> "" Then
-                        IO.File.WriteAllText("prezzi/" + message.From.Id.ToString + ".txt", URLPrezzi.ToString)
-                        Console.WriteLine("Salvato link prezzi di ID: " + message.From.Id.ToString)
-                        a = api.SendTextMessageAsync(message.Chat.Id, "Il link è stato salvato!").Result
+                        If prezzi_text.Split(vbLf).Length > 15 Then
+                            'invio file
+                            Dim name As String = getFileName()
+                            a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, prezzi_text, "Prezzi")).Result
+                            IO.File.Delete(name)
+                        Else
+                            answerLongMessage(prezzi_text, message.Chat.Id)
+                        End If
+
+
                     Else
-                        a = api.SendTextMessageAsync(message.Chat.Id, "Non ho trovato prezzi validi al link specificato.").Result
+                        a = api.SendTextMessageAsync(message.Chat.Id, "Non hai prezzi salvati al momento").Result
                     End If
-                End If
 #End Region
-            ElseIf message.Text.ToLower.StartsWith("/setequip") Then
-#Region "/setequip"
-                Dim message_text = message.Text.ToLower.Trim
-                Dim comando = "/setequip"
-                Dim items = message_text.Replace(If(message_text.Contains("@craftlootbot"), comando + "@craftlootbot", comando), "").Split(",").Where(Function(p) p <> "").ToList
-                Dim item_ids As New List(Of Integer)
-                If items.Count = 0 Then
-                    If HasEquip(message.From.Id) Then
-                        IO.File.Delete("equip/" + message.From.Id.ToString + ".txt")
-                        a = api.SendTextMessageAsync(message.Chat.Id, "Equipaggiamento eliminato").Result
+                ElseIf message.Text.ToLower.StartsWith("/start") Then
+#Region "start"
+                    If message.Text.Contains("inline_") Then
+                        If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 100)) _
+                            Or stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) Then
+                            stati.Remove(message.From.Id)  'entro nello stato 10, ovvero salvataggio zaino
+                            confronti.Remove(message.From.Id)
+                        End If
+                        'Proviene da inline propongo zaino
+                        If Not stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) Then
+                            stati.Add(message.From.Id, 10) 'entro nello stato 10, ovvero salvataggio zaino
+                            If Not zaini.TryAdd(message.From.Id, "") Then Console.WriteLine("Impossibile creare elemento in dictionary zaini, l'elemento esiste già.")
+                        End If
+                        If Not from_inline_query.ContainsKey(message.From.Id) Then
+                            from_inline_query.Add(message.From.Id, message.Text.ToLower.Trim.Replace("/start inline_", "").Replace("-", " "))
+                        Else
+                            from_inline_query(message.From.Id) = message.Text.ToLower.Trim.Replace("/start inline_", "").Replace("-", " ")
+                        End If
+                        a = api.SendTextMessageAsync(message.From.Id, "Inoltra o incolla di seguito il tuo zaino, può essere in più messaggi." + vbCrLf + "Premi 'Salva' quando hai terminato, o 'Annulla' per non salvare.",,,,, creaZainoKeyboard).Result
                     Else
-                        a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto o gli oggetti che vuoi impostare equipaggiati, al momento non hai impostato nulla").Result
+                        'Avvio normale
+                        Dim builder As New Text.StringBuilder()
+                        builder.AppendLine("Benvenuto in Craft Lootbot!")
+                        builder.AppendLine("Questo bot permette di riceve la lista dei materiali necessari al craft, l'albero dei craft di un oggetto e molto altro.")
+                        builder.AppendLine("Usa /help per la guida ai comandi.")
+                        builder.AppendLine("Segui il canale @CraftLootBotNews per le news e aggiornamenti, contatta @AlexCortinovis per malfunzionamenti o dubbi")
+                        builder.AppendLine("Provami! Non ti deluderò!")
+                        a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString).Result
                     End If
-                    Exit Sub
-                End If
-                For Each i In items
-                    i = i.Trim
-                    Dim temp_id = getItemId(i)
-                    If temp_id = -1 Then
-                        a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto " + i + " non è stato riconosciuto, verrà saltato.").Result
-                        Continue For
+#End Region
+                ElseIf message.Text.ToLower.StartsWith(If(message.Chat.Type = ChatType.Private, "/help", "/help@craftlootbot")) Then
+                    a = api.SendTextMessageAsync(message.Chat.Id, help_builder.ToString, ParseMode.Markdown, True,,, creaHelpKeyboard).Result
+                ElseIf message.Text.ToLower.StartsWith("/stats") Then
+#Region "stats"
+                    Dim builder As New Text.StringBuilder("*STATISTICHE COMPLESSIVE:*")
+                    builder.AppendLine().AppendLine()
+                    stats.Item("zaini") = New Tuple(Of String, ULong)(stats.Item("zaini").Item1, IO.Directory.GetFiles("zaini/").Length)
+                    For Each stat In stats
+                        builder.Append("*" + stat.Value.Item1 + ":* " + stat.Value.Item2.ToString).Append(vbCrLf)
+                    Next
+                    builder.AppendLine().AppendLine("*Negli ultimi " + stat_timeout.ToString + " minuti:*")
+                    For Each delta_stat In delta_stats
+                        builder.Append("*" + delta_stat.Value.Item1 + ":* " + delta_stat.Value.Item2.ToString).Append(vbCrLf)
+                    Next
+                    a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString, ParseMode.Markdown).Result
+#End Region
+                ElseIf message.Text.ToLower.StartsWith("/db") Then
+#Region "Aggiorno DB"
+                    Dim builder As New Text.StringBuilder
+                    builder.AppendLine(download_items())
+                    builder.AppendLine(download_crafts())
+                    builder.AppendLine(Leggo_Items())
+                    builder.AppendLine(Leggo_Crafts())
+                    a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString).Result
+#End Region
+                ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/classifica") Then
+                    StampaClassificaUtilizzoBot()
+                ElseIf message.Text.ToLower.StartsWith("/info") Then
+#Region "/info"
+                    item = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/info" + "@craftlootbot", "/info"), "").Trim
+                    If item = "" Then
+                        a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto su cui avere informazioni").Result
+                        Exit Sub
                     End If
-                    If ItemIds(temp_id).getEquipType < 0 Then
-                        Dim e = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto " + i + " non è equipaggiabile, verrà saltato.").Result
-                        Continue For
+                    id = getItemId(item)
+                    If id <> -1 Then
+                        Dim builder As New Text.StringBuilder
+                        Dim related = ItemIds(id).getRelatedItemsIDs
+                        builder.AppendLine(ItemIds(id).ToString)
+                        a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString, ParseMode.Markdown,,,, If(IsNothing(related), Nothing, creaInfoKeyboard(related))).Result
+                    Else
+                        a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
                     End If
-                    item_ids.Add(temp_id)
-                Next
-                If item_ids.Count = 0 Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Nessuno degli oggetti inseriti è valido, riprova.").Result
-                    Exit Sub
-                End If
+#End Region
+                ElseIf message.Text.ToLower.StartsWith("/stima") Then
+#Region "/stima"
+                    item = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/stima" + "@craftlootbot", "/stima"), "").Trim
+                    If item = "" Then
+                        a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto dopo il comando: '/stima spada antimateria'").Result
+                        Exit Sub
+                    End If
+                    id = getItemId(item)
 
-                'ora posso salvare
-                saveEquip(item_ids, message.From.Id)
-                a = api.SendTextMessageAsync(message.Chat.Id, "Equipaggiamento salvato").Result
-#End Region
-            ElseIf message.Text.ToLower.StartsWith("/aggiungialias") Then
-#Region "/aggiungialias"
-                Dim split() = message.Text.Split({"=="}, StringSplitOptions.RemoveEmptyEntries)
-                Dim keyword As String = split(0).Remove(0, split(0).Split(" ")(0).Length).Trim 'split(0).Replace(If(message.Text.ToLower.Contains("@craftlootbot"), "/aggiungialias" + "@craftlootbot", "/aggiungialias"), "").Trim
-                If keyword = "" Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "L'alias non può essere vuoto.").Result
-                    Exit Sub
-                End If
-                If Not split.Length = 2 Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "L'alias " + keyword + " non è inserito nel formato corretto.").Result
-                    Exit Sub
-                End If
-
-                Dim items As New List(Of Integer)
-                checkInputItems(split(1), message.Chat.Id, message.From.Id, "/aggiungialias", items)
-                If items.Count = 0 Then Exit Sub
-                Dim result = AddPersonalAlias(message.From.Id, keyword, ItemIdListToInputString(items))
-                If result <> "OK" Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, result).Result
-                Else
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Alias " + keyword + " aggiunto!").Result
-                End If
-#End Region
-            ElseIf message.Text.ToLower.StartsWith("/elencaalias") Then
-#Region "/elencaalias"
-                Dim PersonalAlias = getPersonalAlias(message.From.Id)
-                Dim GlobalAlias = getGlobalAlias()
-                Dim builder As New Text.StringBuilder("*I tuoi alias salvati sono:*")
-                builder.AppendLine()
-                If PersonalAlias.Count = 0 Then builder.Clear.AppendLine("Non hai alias salvati al momento.")
-                For Each PA In PersonalAlias
-                    builder.AppendLine("`" + PA.Key + "` == " + PA.Value)
-                Next
-                builder.AppendLine.AppendLine("*Alias Globali:*")
-                For Each GA In GlobalAlias
-                    builder.AppendLine("`" + GA.Key + "` == " + GA.Value)
-                Next
-                answerTooEntities(builder.ToString, message.Chat.Id, ParseMode.Markdown)
-#End Region
-            ElseIf message.Text.ToLower.StartsWith("/cancellaalias") Then
-#Region "/cancellaalias"
-                Dim input = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/cancellaalias" + "@craftlootbot", "/cancellaalias"), "").Trim
-                Dim result = DeletePersonalAlias(message.From.Id, input)
-                If result <> "OK" Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, result).Result
-                Else
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Alias " + input + " rimosso!").Result
-                End If
-#End Region
-            ElseIf team_members.Contains(message.From.Username) AndAlso message.Text.StartsWith("/dungeon") Then
-#Region "Dungeon"
-                Dim input = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/dungeon" + "@craftlootbot", "/dungeon"), "").Trim
-                input = input.Replace(" ", "")
-                If input = "" Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci il pattern dopo il comando. Es: '/dungeon S _ _ _ _ - _ _ _ _ _ e'").Result
-                    Exit Sub
-                End If
-                Dim o As String = ""
-                Dim matching = getDungeonItems(input)
-                If matching.Count = 0 Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Nessun risultato trovato :(").Result
-                    Exit Sub
-                ElseIf matching.Count > 15 Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Troppi risultati, affina la ricerca").Result
-                    Exit Sub
-                End If
-                For Each i In matching
-                    o &= "`" + i.Value.name + "`" + vbCrLf
-                Next
-                answerLongMessage(o, message.Chat.Id)
-#End Region
-
-            ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/addmember") Then
-#Region "/addmember"
-                Dim member = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/addmember" + "@craftlootbot", "/addmember"), "").Trim
-                If member = "" Then
-                    If Not IsNothing(message.ReplyToMessage) Then
-                        If team_members.Contains(message.ReplyToMessage.From.Username) Then
-                            a = api.SendTextMessageAsync(message.Chat.Id, "Il giocatore " + message.ReplyToMessage.From.Username + "  è già nel team!").Result
+                    If id <> -1 Then
+                        If Not isCraftable(id) Then
+                            a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto inserito deve essere craftabile").Result
                             Exit Sub
                         End If
-                        If checkPlayer(message.ReplyToMessage.From.Username) Then
-                            team_members.Add(message.ReplyToMessage.From.Username)
-                            a = api.SendTextMessageAsync(message.Chat.Id, "Il giocatore " + message.ReplyToMessage.From.Username + "  è stato aggiunto!").Result
-                        Else
-                            a = api.SendTextMessageAsync(message.Chat.Id, "Il giocatore " + message.ReplyToMessage.From.Username + " non è un giocatore di Loot bot!").Result
+                        Dim builder As New Text.StringBuilder
+                        Dim rarity = ItemIds(id).rarity
+                        Dim s_tot As Integer = If(rarity_value.ContainsKey(rarity), rarity_value(rarity), 0)
+                        Dim pc_tot As Integer = If(rarity_craft.ContainsKey(rarity), rarity_craft(rarity), 0)
+                        Dim costoBase As Integer = 0
+                        Dim oggBase As Integer = 0
+                        Dim costoScrigni As Integer = 0
+                        api.SendChatActionAsync(message.Chat.Id, ChatAction.Typing)
+                        zainoDic = getZaino(message.From.Id)
+                        Dim zainoDic_copy = zainoDic
+                        getNeededItemsList(id, CraftList, zainoDic_copy, gia_possiedi, spesa, punti_craft)
+                        If rarity_value.ContainsKey(ItemIds.Item(id).rarity) Then spesa += rarity_value.Item(ItemIds.Item(id).rarity)
+                        If rarity_craft.ContainsKey(ItemIds.Item(id).rarity) Then punti_craft += rarity_craft.Item(ItemIds.Item(id).rarity)
+
+                        Dim prezzi_dic As Dictionary(Of Item, Integer)
+                        Dim prezzi As String
+                        If IO.File.Exists("prezzi/" + message.From.Id.ToString + ".txt") Then
+                            prezzi = IO.File.ReadAllText("prezzi/" + message.From.Id.ToString + ".txt")
+                            prezzi_dic = parsePrezzoNegozi(prezzi)
                         End If
+                        ItemIds(id).contaCosto(id, s_tot, pc_tot, costoBase, oggBase, costoScrigni, prezzi_dic)
+                        builder.AppendLine(ItemIds(id).name + ":").AppendLine()
+                        builder.Append("Punti craft mancanti / totali: ").AppendLine(punti_craft.ToString + "/" + pc_tot.ToString)
+                        builder.Append("Costo craft mancante / totale: ").AppendLine(prettyCurrency(spesa) + "/" + prettyCurrency(s_tot))
+                        builder.Append("Valore stimato con i prezzi salvati: ").AppendLine(prettyCurrency(costoBase))
+                        builder.Append("Valore scrigni degli oggetti base + costo craft: ").AppendLine(prettyCurrency(spesa + costoScrigni))
+                        builder.Append("Valore corrente stimato: ").AppendLine(prettyCurrency(ItemIds(id).estimate))
+                        builder.Append("Totale oggetti base necessario al craft: ").AppendLine(oggBase)
+                        a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString).Result
                     Else
-                        a = api.SendTextMessageAsync(message.Chat.Id, "Rispondi a un messaggio o specifica un username").Result
+                        a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
                     End If
-                Else
-                    Dim lines() = member.Split(vbLf)
-                    Dim reply As String = ""
-                    For Each m In lines
-                        If team_members.Contains(m) Then
-                            reply += "Già presente: " + m + vbCrLf
+#End Region
+                ElseIf message.Text.StartsWith("/creabili") Then
+#Region "/creabili"
+                    Dim params = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/creabili" + "@craftlootbot", "/creabili"), "").Trim
+                    Dim param_array = params.Split(" ")
+                    Dim rarity = If(param_array.Length > 1, param_array(0).Trim, "")
+                    Dim offset As Integer
+                    If Not Integer.TryParse(If(param_array.Length = 1, param_array(0).Trim, param_array(1).Trim), offset) Then
+                        a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci un numero valido dopo la rarità").Result
+                    End If
+                    Dim reg As New Regex("^(C|NC|R|UR|L|E|UE|U|S|X){1}", RegexOptions.IgnoreCase)
+                    Dim fil = Nothing
+                    If reg.IsMatch(rarity) Then fil = reg.Match(params).Value.Trim.ToUpper
+                    Dim filtered_items = ItemIds.Where(Function(i) isCraftable(i.Value.id) AndAlso If(IsNothing(fil), True, i.Value.rarity = fil))
+                    Dim limit = filtered_items.Count
+                    Dim Tasks(limit) As Task(Of KeyValuePair(Of String, Integer))
+                    Dim ct As New Threading.CancellationTokenSource
+                    For i = 0 To limit - 1
+                        Dim ite As Item = filtered_items(i).Value
+                        'If Not isCraftable(ite.id) Then Continue For
+                        Tasks(i) = Task.Factory.StartNew(Function() As KeyValuePair(Of String, Integer)
+                                                             Return task_getMessageText(ite, message.From.Id, ct.Token)
+                                                         End Function)
+                    Next
+                    Dim builder As New Text.StringBuilder
+                    For i = 0 To limit - 1
+                        If Tasks(i) Is Nothing Then Continue For
+                        Dim result = Tasks(i).Result
+                        If result.Value >= 0 And result.Value <= offset Then
+                            If result.Value = 0 Then
+                                builder.AppendLine("`/craft " + filtered_items(i).Value.name + "`")
+                            Else
+                                builder.Append("`/lista " + filtered_items(i).Value.name + "` ").AppendLine(result.Value.ToString + " mancanti")
+                            End If
+
+                        End If
+                    Next
+                    If builder.ToString = "" Then builder.AppendLine("Nessun oggetto craftabile con l'offset specificato")
+                    answerLongMessage(builder.ToString, message.Chat.Id)
+#End Region
+                ElseIf message.Text.ToLower.StartsWith("/xml") Then
+#Region "/XML"
+                    item = message.Text.ToLower.Replace(If(message.Text.Contains("@craftlootbot"), "/xml" + "@craftlootbot", "/xml"), "").Trim
+                    If item = "" Then
+                        a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto che vuoi ottenere").Result
+                        Exit Sub
+                    End If
+                    id = getItemId(item)
+                    If id <> -1 Then
+                        api.SendChatActionAsync(message.Chat.Id, ChatAction.UploadDocument)
+                        Dim name As String = getFileName()
+                        Dim xml As String = "<?xml version='1.0' encoding='UTF-8'?>" + vbNewLine + ItemToXML(id)
+                        a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, xml, item, ".xml"),,, message.MessageId).Result
+                        IO.File.Delete(name)
+                    Else
+                        a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
+                    End If
+#End Region
+                ElseIf message.Text.ToLower.StartsWith("/html") Then
+#Region "/HTML"
+                    item = message.Text.ToLower.Replace(If(message.Text.Contains("@craftlootbot"), "/html" + "@craftlootbot", "/html"), "").Trim
+                    If item = "" Then
+                        a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto che vuoi ottenere").Result
+                        Exit Sub
+                    End If
+                    Dim Header As String = "<head><style>body{padding:20px}div{margin-bottom:5px;margin-left:8px;border-left:1px solid #000;padding:5px}label.leaf{border:none;cursor: default;font-weight: normal}input:checked+label+div{display:none}input:checked+label:before{content:'+ '}input+label:before{content:'- '}label{font-size:16px;padding:2px 5px;cursor:pointer;display:block;font-weight:700}</style></head>"
+                    id = getItemId(item)
+                    If id <> -1 Then
+                        api.SendChatActionAsync(message.Chat.Id, ChatAction.UploadDocument)
+                        Dim name As String = getFileName()
+                        Dim counter = 0
+                        Dim html As String = Header + vbNewLine + ItemToHTML(id, counter) + "</body>"
+                        a = api.SendDocumentAsync(message.Chat.Id, prepareFile(name, html, item, ".html"),,, message.MessageId).Result
+                        IO.File.Delete(name)
+                    Else
+                        a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
+                    End If
+#End Region
+                ElseIf message.Text.ToLower.StartsWith("/setprezzi") Then
+#Region "/setprezzi"
+                    api.SendChatActionAsync(message.Chat.Id, ChatAction.Typing)
+                    'Dim link '= message.Text.Replace(If(message.Text.ToLower.Contains("@craftlootbot"), "/setprezzi" + "@craftlootbot", "/setprezzi"), "").Trim
+                    Dim args = message.Text.Split(" ")
+                    If args.Length <= 1 Then
+                        a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci un link.").Result
+                        Exit Sub
+                    End If
+                    Dim URLPrezzi = checkLink(args(1))
+                    If IsNothing(URLPrezzi) Then
+                        a = api.SendTextMessageAsync(message.Chat.Id, "Il link inserito non è valido").Result
+                    Else
+                        If getPrezziStringFromURL(URLPrezzi) <> "" Then
+                            IO.File.WriteAllText("prezzi/" + message.From.Id.ToString + ".txt", URLPrezzi.ToString)
+                            Console.WriteLine("Salvato link prezzi di ID: " + message.From.Id.ToString)
+                            a = api.SendTextMessageAsync(message.Chat.Id, "Il link è stato salvato!").Result
+                        Else
+                            a = api.SendTextMessageAsync(message.Chat.Id, "Non ho trovato prezzi validi al link specificato.").Result
+                        End If
+                    End If
+#End Region
+                ElseIf message.Text.ToLower.StartsWith("/setequip") Then
+#Region "/setequip"
+                    Dim message_text = message.Text.ToLower.Trim
+                    Dim comando = "/setequip"
+                    Dim items = message_text.Replace(If(message_text.Contains("@craftlootbot"), comando + "@craftlootbot", comando), "").Split(",").Where(Function(p) p <> "").ToList
+                    Dim item_ids As New List(Of Integer)
+                    If items.Count = 0 Then
+                        If HasEquip(message.From.Id) Then
+                            IO.File.Delete("equip/" + message.From.Id.ToString + ".txt")
+                            a = api.SendTextMessageAsync(message.Chat.Id, "Equipaggiamento eliminato").Result
+                        Else
+                            a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci l'oggetto o gli oggetti che vuoi impostare equipaggiati, al momento non hai impostato nulla").Result
+                        End If
+                        Exit Sub
+                    End If
+                    For Each i In items
+                        i = i.Trim
+                        Dim temp_id = getItemId(i)
+                        If temp_id = -1 Then
+                            a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto " + i + " non è stato riconosciuto, verrà saltato.").Result
                             Continue For
                         End If
-                        If checkPlayer(m) Then
-                            team_members.Add(m)
-                            reply += "Aggiunto: " + m + vbCrLf
-                        Else
-                            reply += m + " non è un giocatore di Loot bot" + vbCrLf
+                        If ItemIds(temp_id).getEquipType < 0 Then
+                            Dim e = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto " + i + " non è equipaggiabile, verrà saltato.").Result
+                            Continue For
                         End If
+                        item_ids.Add(temp_id)
                     Next
-                    a = api.SendTextMessageAsync(message.Chat.Id, reply).Result
-                End If
-                saveTeamMembers()
-#End Region
-            ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/removemember") Then
-#Region "/removemember"
-                Dim member = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/removemember" + "@craftlootbot", "/removemember"), "").Trim
-                If member = "" Then
-                    If Not IsNothing(message.ReplyToMessage) Then
-                        If team_members.Contains(message.ReplyToMessage.From.Username) Then
-                            team_members.Remove(message.ReplyToMessage.From.Username)
-                            a = api.SendTextMessageAsync(message.Chat.Id, "Il giocatore " + message.ReplyToMessage.From.Username + "  è stato rimosso!").Result
-                        Else
-                            a = api.SendTextMessageAsync(message.Chat.Id, "Il giocatore " + message.ReplyToMessage.From.Username + " non è del team!").Result
-                        End If
-                    Else
-                        a = api.SendTextMessageAsync(message.Chat.Id, "Rispondi a un messaggio o specifica un username").Result
+                    If item_ids.Count = 0 Then
+                        a = api.SendTextMessageAsync(message.Chat.Id, "Nessuno degli oggetti inseriti è valido, riprova.").Result
+                        Exit Sub
                     End If
-                Else
-                    Dim lines() = member.Split(vbCrLf)
-                    Dim reply As String = ""
-                    For Each m In lines
-                        If team_members.Contains(m) Then
-                            team_members.Remove(m)
-                            reply += "Rimosso: " + m + vbCrLf
-                        Else
-                            reply += m + " non è un membro del team" + vbCrLf
-                        End If
-                    Next
-                    a = api.SendTextMessageAsync(message.Chat.Id, reply).Result
-                End If
-                saveTeamMembers()
+
+                    'ora posso salvare
+                    saveEquip(item_ids, message.From.Id)
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Equipaggiamento salvato").Result
 #End Region
-            ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/getmembers") Then
-#Region "/getmembers"
-                Dim res As String = ""
-                For Each member In team_members
-                    res &= member + vbCrLf
-                Next
-                a = api.SendTextMessageAsync(message.Chat.Id, res).Result
+                ElseIf message.Text.ToLower.StartsWith("/aggiungialias") Then
+#Region "/aggiungialias"
+                    Dim split() = message.Text.Split({"=="}, StringSplitOptions.RemoveEmptyEntries)
+                    Dim keyword As String = split(0).Remove(0, split(0).Split(" ")(0).Length).Trim 'split(0).Replace(If(message.Text.ToLower.Contains("@craftlootbot"), "/aggiungialias" + "@craftlootbot", "/aggiungialias"), "").Trim
+                    If keyword = "" Then
+                        a = api.SendTextMessageAsync(message.Chat.Id, "L'alias non può essere vuoto.").Result
+                        Exit Sub
+                    End If
+                    If Not split.Length = 2 Then
+                        a = api.SendTextMessageAsync(message.Chat.Id, "L'alias " + keyword + " non è inserito nel formato corretto.").Result
+                        Exit Sub
+                    End If
+
+                    Dim items As New List(Of Integer)
+                    checkInputItems(split(1), message.Chat.Id, message.From.Id, "/aggiungialias", items)
+                    If items.Count = 0 Then Exit Sub
+                    Dim result = AddPersonalAlias(message.From.Id, keyword, ItemIdListToInputString(items))
+                    If result <> "OK" Then
+                        a = api.SendTextMessageAsync(message.Chat.Id, result).Result
+                    Else
+                        a = api.SendTextMessageAsync(message.Chat.Id, "Alias " + keyword + " aggiunto!").Result
+                    End If
+#End Region
+                ElseIf message.Text.ToLower.StartsWith("/elencaalias") Then
+#Region "/elencaalias"
+                    Dim PersonalAlias = getPersonalAlias(message.From.Id)
+                    Dim GlobalAlias = getGlobalAlias()
+                    Dim builder As New Text.StringBuilder("*I tuoi alias salvati sono:*")
+                    builder.AppendLine()
+                    If PersonalAlias.Count = 0 Then builder.Clear.AppendLine("Non hai alias salvati al momento.")
+                    For Each PA In PersonalAlias
+                        builder.AppendLine("`" + PA.Key + "` == " + PA.Value)
+                    Next
+                    builder.AppendLine.AppendLine("*Alias Globali:*")
+                    For Each GA In GlobalAlias
+                        builder.AppendLine("`" + GA.Key + "` == " + GA.Value)
+                    Next
+                    answerTooEntities(builder.ToString, message.Chat.Id, ParseMode.Markdown)
+#End Region
+                ElseIf message.Text.ToLower.StartsWith("/cancellaalias") Then
+#Region "/cancellaalias"
+                    Dim input = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/cancellaalias" + "@craftlootbot", "/cancellaalias"), "").Trim
+                    Dim result = DeletePersonalAlias(message.From.Id, input)
+                    If result <> "OK" Then
+                        a = api.SendTextMessageAsync(message.Chat.Id, result).Result
+                    Else
+                        a = api.SendTextMessageAsync(message.Chat.Id, "Alias " + input + " rimosso!").Result
+                    End If
+#End Region
+                ElseIf team_members.Contains(message.From.Username) AndAlso message.Text.StartsWith("/dungeon") Then
+#Region "Dungeon"
+                    Dim input = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/dungeon" + "@craftlootbot", "/dungeon"), "").Trim
+                    input = input.Replace(" ", "")
+                    If input = "" Then
+                        a = api.SendTextMessageAsync(message.Chat.Id, "Inserisci il pattern dopo il comando. Es: '/dungeon S _ _ _ _ - _ _ _ _ _ e'").Result
+                        Exit Sub
+                    End If
+                    Dim o As String = ""
+                    Dim matching = getDungeonItems(input)
+                    If matching.Count = 0 Then
+                        a = api.SendTextMessageAsync(message.Chat.Id, "Nessun risultato trovato :(").Result
+                        Exit Sub
+                    ElseIf matching.Count > 15 Then
+                        a = api.SendTextMessageAsync(message.Chat.Id, "Troppi risultati, affina la ricerca").Result
+                        Exit Sub
+                    End If
+                    For Each i In matching
+                        o &= "`" + i.Value.name + "`" + vbCrLf
+                    Next
+                    answerLongMessage(o, message.Chat.Id)
 #End Region
 
-            ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/ripristino") Then
-#Region "/ripristino"
-                Dim member = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/ripristino" + "@craftlootbot", "/ripristino"), "").Trim
-                Dim userID As Integer = Integer.Parse(member)
-                If Not zaini.TryRemove(userID, "") Then Console.WriteLine("Impossibile eliminare elemento da dictionary zaini")
-                If stati.ContainsKey(userID) Then stati.Remove(userID)
-                If confronti.ContainsKey(userID) Then confronti.Remove(userID)
-                If IO.File.Exists("zaini/" + userID.ToString + ".txt") Then IO.File.Delete("zaini/" + userID.ToString + ".txt")
-                If IO.File.Exists("equip/" + userID.ToString + ".txt") Then IO.File.Delete("equip/" + userID.ToString + ".txt")
-                If IO.File.Exists("prezzi/" + userID.ToString + ".txt") Then IO.File.Delete("prezzi/" + userID.ToString + ".txt")
-                If IO.File.Exists("alias/" + userID.ToString + ".txt") Then IO.File.Delete("alias/" + userID.ToString + ".txt")
-                For Each file In IO.Directory.GetFiles("crafts")
-                    Dim info As New IO.FileInfo(file)
-                    If info.Name.StartsWith(userID) Then IO.File.Delete(file)
-                Next
+                ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/addmember") Then
+#Region "/addmember"
+                    Dim member = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/addmember" + "@craftlootbot", "/addmember"), "").Trim
+                    If member = "" Then
+                        If Not IsNothing(message.ReplyToMessage) Then
+                            If team_members.Contains(message.ReplyToMessage.From.Username) Then
+                                a = api.SendTextMessageAsync(message.Chat.Id, "Il giocatore " + message.ReplyToMessage.From.Username + "  è già nel team!").Result
+                                Exit Sub
+                            End If
+                            If checkPlayer(message.ReplyToMessage.From.Username) Then
+                                team_members.Add(message.ReplyToMessage.From.Username)
+                                a = api.SendTextMessageAsync(message.Chat.Id, "Il giocatore " + message.ReplyToMessage.From.Username + "  è stato aggiunto!").Result
+                            Else
+                                a = api.SendTextMessageAsync(message.Chat.Id, "Il giocatore " + message.ReplyToMessage.From.Username + " non è un giocatore di Loot bot!").Result
+                            End If
+                        Else
+                            a = api.SendTextMessageAsync(message.Chat.Id, "Rispondi a un messaggio o specifica un username").Result
+                        End If
+                    Else
+                        Dim lines() = member.Split(vbLf)
+                        Dim reply As String = ""
+                        For Each m In lines
+                            If team_members.Contains(m) Then
+                                reply += "Già presente: " + m + vbCrLf
+                                Continue For
+                            End If
+                            If checkPlayer(m) Then
+                                team_members.Add(m)
+                                reply += "Aggiunto: " + m + vbCrLf
+                            Else
+                                reply += m + " non è un giocatore di Loot bot" + vbCrLf
+                            End If
+                        Next
+                        a = api.SendTextMessageAsync(message.Chat.Id, reply).Result
+                    End If
+                    saveTeamMembers()
 #End Region
-            ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/kill") Then
-                kill = True
+                ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/removemember") Then
+#Region "/removemember"
+                    Dim member = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/removemember" + "@craftlootbot", "/removemember"), "").Trim
+                    If member = "" Then
+                        If Not IsNothing(message.ReplyToMessage) Then
+                            If team_members.Contains(message.ReplyToMessage.From.Username) Then
+                                team_members.Remove(message.ReplyToMessage.From.Username)
+                                a = api.SendTextMessageAsync(message.Chat.Id, "Il giocatore " + message.ReplyToMessage.From.Username + "  è stato rimosso!").Result
+                            Else
+                                a = api.SendTextMessageAsync(message.Chat.Id, "Il giocatore " + message.ReplyToMessage.From.Username + " non è del team!").Result
+                            End If
+                        Else
+                            a = api.SendTextMessageAsync(message.Chat.Id, "Rispondi a un messaggio o specifica un username").Result
+                        End If
+                    Else
+                        Dim lines() = member.Split(vbCrLf)
+                        Dim reply As String = ""
+                        For Each m In lines
+                            If team_members.Contains(m) Then
+                                team_members.Remove(m)
+                                reply += "Rimosso: " + m + vbCrLf
+                            Else
+                                reply += m + " non è un membro del team" + vbCrLf
+                            End If
+                        Next
+                        a = api.SendTextMessageAsync(message.Chat.Id, reply).Result
+                    End If
+                    saveTeamMembers()
+#End Region
+                ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/getmembers") Then
+#Region "/getmembers"
+                    Dim res As String = ""
+                    For Each member In team_members
+                        res &= member + vbCrLf
+                    Next
+                    a = api.SendTextMessageAsync(message.Chat.Id, res).Result
+#End Region
+
+                ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/ripristino") Then
+#Region "/ripristino"
+                    Dim member = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/ripristino" + "@craftlootbot", "/ripristino"), "").Trim
+                    Dim userID As Integer = Integer.Parse(member)
+                    If Not zaini.TryRemove(userID, "") Then Console.WriteLine("Impossibile eliminare elemento da dictionary zaini")
+                    If stati.ContainsKey(userID) Then stati.Remove(userID)
+                    If confronti.ContainsKey(userID) Then confronti.Remove(userID)
+                    If IO.File.Exists("zaini/" + userID.ToString + ".txt") Then IO.File.Delete("zaini/" + userID.ToString + ".txt")
+                    If IO.File.Exists("equip/" + userID.ToString + ".txt") Then IO.File.Delete("equip/" + userID.ToString + ".txt")
+                    If IO.File.Exists("prezzi/" + userID.ToString + ".txt") Then IO.File.Delete("prezzi/" + userID.ToString + ".txt")
+                    If IO.File.Exists("alias/" + userID.ToString + ".txt") Then IO.File.Delete("alias/" + userID.ToString + ".txt")
+                    For Each file In IO.Directory.GetFiles("crafts")
+                        Dim info As New IO.FileInfo(file)
+                        If info.Name.StartsWith(userID) Then IO.File.Delete(file)
+                    Next
+#End Region
+                ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/kill") Then
+                    kill = True
                 Dim ex As New Exception("PROCESSO TERMINATO SU RICHIESTA")
                 Throw ex
             End If
@@ -1677,11 +1686,16 @@ Module Module1
     End Function
 
     'testo /creanegozi
-    Function getNegoziText(zaino As Dictionary(Of Item, Integer), prezzi As Dictionary(Of Item, Integer)) As List(Of String)
+    Function getNegoziText(zaino As Dictionary(Of Item, Integer), prezzi As Dictionary(Of Item, Integer), filter As Match) As List(Of String)
         Dim res As New List(Of String)
         Dim builder As New Text.StringBuilder("/negozio ")
         Dim i_counter = 1
-        Dim Filtro_zaino = zaino.Where(Function(p) prezzoScrigni.ContainsKey(p.Key.rarity) AndAlso Not isCraftable(p.Key.id))
+        Dim Filtro_zaino As Dictionary(Of Item, Integer) = zaino
+        If Not IsNothing(filter) Then
+            If filter.Groups(1).Value <> "" Then Filtro_zaino = Filtro_zaino.Where(Function(p) p.Key.rarity.Equals(filter.Groups(1).Value)).ToDictionary(Function(x) x.Key, Function(x) x.Value)
+            If filter.Groups(2).Value <> "" Then Filtro_zaino = Filtro_zaino.Where(Function(p) isCraftable(p.Key.id)).ToDictionary(Function(x) x.Key, Function(x) x.Value)
+        End If
+        'zaino.Where(Function(p) prezzoScrigni.ContainsKey(p.Key.rarity) AndAlso Not isCraftable(p.Key.id))
         If Filtro_zaino.Count = 0 Then
             builder.Clear.Append("Nessun oggetto può essere venduto.")
             res.Add(builder.ToString)
@@ -1951,7 +1965,8 @@ Module Module1
 
     'Controllo oggetti/quantità/alias in input
     Sub checkInputItems(message_text As String, chat_id As Long, user_id As Long, comando As String, ByRef item_ids As List(Of Integer), Optional checkCraftable As Boolean = True)
-        Dim items = message_text.Replace(If(message_text.ToLower.Contains("@craftlootbot"), comando + "@craftlootbot", comando), "").Split(",").Where(Function(p) p <> "").ToList
+        Dim items_string = message_text.Replace(If(message_text.ToLower.Contains("@craftlootbot"), comando + "@craftlootbot", comando), "")
+        Dim items = items_string.Split(",").Where(Function(p) p <> "").ToList
         Dim a
         If items.Count = 0 Then
             If comando <> "/creanegozi" Then a = api.SendTextMessageAsync(chat_id, "Inserisci l'oggetto o gli oggetti che vuoi ottenere").Result
