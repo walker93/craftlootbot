@@ -6,6 +6,10 @@
     Public rarity_value As New Dictionary(Of String, Integer)
     Public rarity_craft As New Dictionary(Of String, Integer)
     Public settings_file As String = "settings.dat"
+    Public PrezzoScrigni_file As String = "PrezzoScrigni.dat"
+    Public Punticraft_file As String = "PuntiCraft.dat"
+    Public Prezzocraft_file As String = "PrezzoCraft.dat"
+
     Public debug As Boolean
     Public update_db_timeout As Integer = 3 'ore
     Public inline_message_row_limit As Integer = 15 'righe massime messaggio risposta query inline
@@ -77,42 +81,68 @@
 
     'inizializza prezzo scrigni
     Sub init_prezzoscrigni()
-        prezzoScrigni.Add("C", 1200)
-        prezzoScrigni.Add("NC", 2400)
-        prezzoScrigni.Add("R", 4800)
-        prezzoScrigni.Add("UR", 7200)
-        prezzoScrigni.Add("L", 14000)
-        prezzoScrigni.Add("E", 30000)
+        If Not IO.File.Exists(PrezzoScrigni_file) Then IO.File.WriteAllText(PrezzoScrigni_file, "")
+        Dim pScrigni As String() = IO.File.ReadAllLines(PrezzoScrigni_file)
+        For Each line In pScrigni
+            Dim split As String() = line.Split("=")
+            prezzoScrigni.Add(split(0), Integer.Parse(split(1)))
+        Next
+        If prezzoScrigni.Count = 0 Then
+            prezzoScrigni.Add("C", 2500)
+            prezzoScrigni.Add("NC", 5000)
+            prezzoScrigni.Add("R", 10000)
+            prezzoScrigni.Add("UR", 15000)
+            prezzoScrigni.Add("L", 30000)
+            prezzoScrigni.Add("E", 50000)
+        End If
     End Sub
 
     'inizializza punti craft rarità
     Sub init_rarity_craft()
-        rarity_craft.Add("R", 1)
-        rarity_craft.Add("UR", 2)
-        rarity_craft.Add("L", 3)
-        rarity_craft.Add("E", 5)
-        rarity_craft.Add("UE", 25)
-        rarity_craft.Add("U", 35)
-        rarity_craft.Add("X", 50)
+        If Not IO.File.Exists(Punticraft_file) Then IO.File.WriteAllText(Punticraft_file, "")
+        Dim pCraft As String() = IO.File.ReadAllLines(Punticraft_file)
+        For Each line In pCraft
+            Dim split As String() = line.Split("=")
+            rarity_craft.Add(split(0), Integer.Parse(split(1)))
+        Next
+        If rarity_craft.Count = 0 Then
+            rarity_craft.Add("R", 1)
+            rarity_craft.Add("UR", 2)
+            rarity_craft.Add("L", 3)
+            rarity_craft.Add("E", 5)
+            rarity_craft.Add("UE", 25)
+            rarity_craft.Add("U", 35)
+            rarity_craft.Add("S", 15)
+            rarity_craft.Add("X", 50)
+        End If
     End Sub
 
     'Inizializza costo craft rarità
     Sub init_rarity_value()
-        rarity_value.Add("C", 1000)
-        rarity_value.Add("NC", 2000)
-        rarity_value.Add("R", 3000)
-        rarity_value.Add("UR", 5000)
-        rarity_value.Add("L", 7500)
-        rarity_value.Add("E", 10000)
-        rarity_value.Add("UE", 100000)
-        rarity_value.Add("S", 0)
-        rarity_value.Add("U", 250000)
-        rarity_value.Add("X", 1000000)
-        rarity_value.Add("RF2", 1500) 'Rifugio 2
-        rarity_value.Add("RF3", 3000) 'Rifugio 3
-        rarity_value.Add("RF4", 4500) '  ...
-        rarity_value.Add("RF5", 7000)
-        rarity_value.Add("RF6", 10000)
+        If Not IO.File.Exists(Prezzocraft_file) Then IO.File.WriteAllText(Prezzocraft_file, "")
+        Dim pCraft As String() = IO.File.ReadAllLines(Prezzocraft_file)
+        For Each line In pCraft
+            Dim split As String() = line.Split("=")
+            rarity_value.Add(split(0), Integer.Parse(split(1)))
+        Next
+        If rarity_value.Count = 0 Then
+            rarity_value.Add("C", 1000)
+            rarity_value.Add("NC", 2000)
+            rarity_value.Add("R", 3000)
+            rarity_value.Add("UR", 5000)
+            rarity_value.Add("L", 7500)
+            rarity_value.Add("E", 10000)
+            rarity_value.Add("UE", 100000)
+            rarity_value.Add("S", 50000)
+            rarity_value.Add("U", 250000)
+            rarity_value.Add("X", 1000000)
+            rarity_value.Add("RF2", 1500) 'Rifugio 2
+            rarity_value.Add("RF3", 3000) 'Rifugio 3
+            rarity_value.Add("RF4", 4500) '  ...
+            rarity_value.Add("RF5", 7000)
+            rarity_value.Add("RF6", 10000)
+        End If
+
     End Sub
 
     'inizializza stringa riconoscimento rifugi
