@@ -33,6 +33,7 @@ Module Module1
         api = New TelegramBotClient(token.token)
         'test token
         Try
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Ssl3 Or SecurityProtocolType.Tls12
             Dim bot = api.GetMeAsync.Result
             Console.WriteLine(bot.Username & ": " & bot.Id)
         Catch ex As AggregateException
