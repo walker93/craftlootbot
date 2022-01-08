@@ -106,7 +106,7 @@ Module Module1
                 Dim i As Integer = Integer.Parse(callback.Data.Replace("info_", ""))
                 Dim result As String = ItemIds(i).ToString
                 Dim related = ItemIds(i).getRelatedItemsIDs
-                Dim e = api.EditMessageTextAsync(callback.Message.Chat.Id, callback.Message.MessageId, result, ParseMode.Markdown,, If(IsNothing(related), Nothing, creaInfoKeyboard(related))).Result
+                Dim e = api.EditMessageTextAsync(callback.Message.Chat.Id, callback.Message.MessageId, result, ParseMode.Markdown,,, If(IsNothing(related), Nothing, creaInfoKeyboard(related))).Result
                 Await api.AnswerCallbackQueryAsync(callback.Id,,,, 0)
 
             ElseIf callback.Data.StartsWith("craftF_") Then
@@ -188,14 +188,14 @@ Module Module1
                     If info.Name.StartsWith(userID) Then IO.File.Delete(file) : report.AppendLine("File '" + info.Name + "' cancellato!")
                 Next
                 Await api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId)
-                Await api.SendTextMessageAsync(callback.Message.Chat.Id, report.ToString,,,,, creaNULLKeyboard)
+                Await api.SendTextMessageAsync(callback.Message.Chat.Id, report.ToString,,,,, ,, creaNULLKeyboard)
 #End Region
             ElseIf callback.Data = "DelMess" Then
                 Await api.DeleteMessageAsync(callback.Message.Chat.Id, callback.Message.MessageId)
             Else
                 'gestione tastiera Help
                 Dim result As String = process_help(callback.Data)
-                Dim e = api.EditMessageTextAsync(callback.Message.Chat.Id, callback.Message.MessageId, result, ParseMode.Markdown, True, creaHelpKeyboard()).Result
+                Dim e = api.EditMessageTextAsync(callback.Message.Chat.Id, callback.Message.MessageId, result, ParseMode.Markdown,, True, creaHelpKeyboard()).Result
                 Await api.AnswerCallbackQueryAsync(callback.Id,,,, 0)
             End If
         Catch e As AggregateException
@@ -218,7 +218,7 @@ Module Module1
         Dim query_text As String
         Dim path As String = "zaini/" + InlineQuery.From.Id.ToString + ".txt"
         Dim hasZaino As Boolean = IO.File.Exists(path)
-        Dim results As New List(Of InlineQueryResults.InlineQueryResultBase)
+        Dim results As New List(Of InlineQueryResults.InlineQueryResult)
         Dim user_history() As KeyValuePair(Of String, Integer) = getUserHistory(InlineQuery.From.Id)
         Try
             Dim reg As New Regex("^(C|NC|R|UR|L|E|UE|U){1} ", RegexOptions.IgnoreCase)
@@ -528,7 +528,7 @@ Module Module1
                     Dim cercotext = parseCerca(confronti.Item(message.From.Id))
                     If cercotext.Count = 0 Then cercotext = parseListaoVendi(confronti(message.From.Id))
                     Dim result = ConfrontaDizionariItem(zaino, cercotext)
-                    a = api.SendTextMessageAsync(message.Chat.Id, getConfrontoText(cercotext, result),,,,, creaNULLKeyboard).Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, getConfrontoText(cercotext, result),,,,, ,, creaNULLKeyboard).Result
                     stati.Remove(message.From.Id)
                     confronti.Remove(message.From.Id)
                 Else
@@ -549,13 +549,13 @@ Module Module1
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 100)) AndAlso message.Chat.Type = ChatType.Private Then
                     confronti.Item(message.From.Id) = message.Text
                     stati.Item(message.From.Id) = 110
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Invia ora lo zaino o il /vendi nel quale cercare gli oggetti che stai cercando." + vbCrLf + "Se ne hai uno salvato, puoi toccare 'Utilizza il mio zaino' per utilizzarlo.",,,,, creaConfrontaKeyboard(True)).Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Invia ora lo zaino o il /vendi nel quale cercare gli oggetti che stai cercando." + vbCrLf + "Se ne hai uno salvato, puoi toccare 'Utilizza il mio zaino' per utilizzarlo.",,,,, ,, creaConfrontaKeyboard(True)).Result
                 ElseIf stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) AndAlso message.Chat.Type = ChatType.Private Then
                     Dim VendiDic = parseListaoVendi(message.Text)
                     Dim ListaDic = parseListaoVendi(confronti(message.From.Id))
                     If ListaDic.Count = 0 Then ListaDic = parseCerca(confronti(message.From.Id))
                     Dim result = ConfrontaDizionariItem(VendiDic, ListaDic)
-                    a = api.SendTextMessageAsync(message.Chat.Id, getConfrontoText(ListaDic, result),,,,, creaNULLKeyboard).Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, getConfrontoText(ListaDic, result),,,,, ,, creaNULLKeyboard).Result
                     stati.Remove(message.From.Id)
                     confronti.Remove(message.From.Id)
                 End If
@@ -565,13 +565,13 @@ Module Module1
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 100)) AndAlso message.Chat.Type = ChatType.Private Then
                     confronti.Item(message.From.Id) = message.Text
                     stati.Item(message.From.Id) = 110
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Invia ora lo zaino o il /vendi nel quale cercare gli oggetti che stai cercando." + vbCrLf + "Se hai uno zaino salvato, puoi toccare 'Utilizza il mio zaino' per utilizzarlo.",,,, , creaConfrontaKeyboard(True)).Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Invia ora lo zaino o il /vendi nel quale cercare gli oggetti che stai cercando." + vbCrLf + "Se hai uno zaino salvato, puoi toccare 'Utilizza il mio zaino' per utilizzarlo.",,,, , ,, creaConfrontaKeyboard(True)).Result
                 ElseIf stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) AndAlso message.Chat.Type = ChatType.Private Then
                     Dim VendiDic = parseListaoVendi(message.Text)
                     Dim ListaDic = parseListaoVendi(confronti(message.From.Id))
                     If ListaDic.Count = 0 Then ListaDic = parseCerca(confronti(message.From.Id))
                     Dim result = ConfrontaDizionariItem(VendiDic, ListaDic)
-                    a = api.SendTextMessageAsync(message.Chat.Id, getConfrontoText(ListaDic, result),,,,, creaNULLKeyboard).Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, getConfrontoText(ListaDic, result),,,,, ,, creaNULLKeyboard).Result
                     stati.Remove(message.From.Id)
                     confronti.Remove(message.From.Id)
                 Else
@@ -603,11 +603,11 @@ Module Module1
                     Dim cercotext = parseCerca(confronti.Item(message.From.Id))
                     If cercotext.Count = 0 Then cercotext = parseListaoVendi(confronti(message.From.Id))
                     Dim result = ConfrontaDizionariItem(zainoDic, cercotext)
-                    a = api.SendTextMessageAsync(message.Chat.Id, getConfrontoText(cercotext, result),,,,, creaNULLKeyboard).Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, getConfrontoText(cercotext, result),,,,, ,, creaNULLKeyboard).Result
                     stati.Remove(message.From.Id)
                     confronti.Remove(message.From.Id)
                 Else
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Non stai effettuando il confronto.",,,, , creaNULLKeyboard).Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Non stai effettuando il confronto.",,,, , ,, creaNULLKeyboard).Result
                 End If
 #End Region
             ElseIf isAperturaScrigno(message.Text) Then
@@ -656,32 +656,32 @@ Module Module1
                 If message.Chat.Type = ChatType.Group Or message.Chat.Type = ChatType.Supergroup Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Inoltra i messaggi in privato").Result
                 End If
-                a = api.SendTextMessageAsync(message.From.Id, "Inoltra di seguito il tuo zaino diviso in più messaggi. " + vbCrLf + "Premi 'Salva' quando hai terminato, o 'Annulla' per non salvare.",,,,, creaZainoKeyboard).Result
+                a = api.SendTextMessageAsync(message.From.Id, "Inoltra di seguito il tuo zaino diviso in più messaggi. " + vbCrLf + "Premi 'Salva' quando hai terminato, o 'Annulla' per non salvare.",,,,, ,, creaZainoKeyboard).Result
             ElseIf message.Text.ToLower.Equals("salva") Then
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) AndAlso zaini.ContainsKey(message.From.Id) Then
                     IO.File.WriteAllText("zaini/" + message.From.Id.ToString + ".txt", zaini.Item(message.From.Id))
                     stati.Remove(message.From.Id)
                     If Not zaini.TryRemove(message.From.Id, "") Then Console.WriteLine("Impossibile eliminare l'elemento dal dictionary zaini.")
                     If from_inline_query.ContainsKey(message.From.Id) Then
-                        a = api.SendTextMessageAsync(message.Chat.Id, "Il tuo zaino è stato salvato!",,,, , creaInlineKeyboard(from_inline_query.Item(message.From.Id))).Result
+                        a = api.SendTextMessageAsync(message.Chat.Id, "Il tuo zaino è stato salvato!",,,, , ,, creaInlineKeyboard(from_inline_query.Item(message.From.Id))).Result
                         from_inline_query.Remove(message.From.Id)
                     Else
-                        a = api.SendTextMessageAsync(message.Chat.Id, "Il tuo zaino è stato salvato!",,,, , creaNULLKeyboard).Result
+                        a = api.SendTextMessageAsync(message.Chat.Id, "Il tuo zaino è stato salvato!",,,, , ,, creaNULLKeyboard).Result
                     End If
                 Else
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Non stai salvando uno zaino, utilizza /salvazaino per iniziare il salvataggio.",,,,, creaNULLKeyboard).Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Non stai salvando uno zaino, utilizza /salvazaino per iniziare il salvataggio.",,,,, ,, creaNULLKeyboard).Result
                 End If
             ElseIf message.Text.ToLower.Equals("annulla") Then
                 If stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 10)) AndAlso zaini.ContainsKey(message.From.Id) Then
                     stati.Remove(message.From.Id)
                     If Not zaini.TryRemove(message.From.Id, "") Then Console.WriteLine("Impossibile eliminare l'elemento dal dictionary zaini.")
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Hai annullato il salvataggio dello zaino",,,, , creaNULLKeyboard).Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Hai annullato il salvataggio dello zaino",,,, , ,, creaNULLKeyboard).Result
                 ElseIf stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 100)) Or stati.Contains(New KeyValuePair(Of ULong, Integer)(message.From.Id, 110)) Then
                     stati.Remove(message.From.Id)
                     confronti.Remove(message.From.Id)
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Hai annullato il confronto.",,,,, creaNULLKeyboard).Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Hai annullato il confronto.",,,,, ,, creaNULLKeyboard).Result
                 Else
-                    a = api.SendTextMessageAsync(message.Chat.Id, "Non hai azioni in sospeso.",,,,, creaNULLKeyboard).Result
+                    a = api.SendTextMessageAsync(message.Chat.Id, "Non hai azioni in sospeso.",,,,, ,, creaNULLKeyboard).Result
                 End If
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/base") Then
@@ -710,7 +710,7 @@ Module Module1
                 If message.Chat.Type = ChatType.Group Or message.Chat.Type = ChatType.Supergroup Then
                     a = api.SendTextMessageAsync(message.Chat.Id, "Inoltra i messaggi in privato").Result
                 End If
-                a = api.SendTextMessageAsync(message.From.Id, "Invia l'elenco 'Cerco:' generato dal comando inline del bot o la lista degli oggetti necessari generata dal comando /lista.",,,,, creaConfrontaKeyboard).Result
+                a = api.SendTextMessageAsync(message.From.Id, "Invia l'elenco 'Cerco:' generato dal comando inline del bot o la lista degli oggetti necessari generata dal comando /lista.",,,,, ,, creaConfrontaKeyboard).Result
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/lista") Then
 #Region "lista"
@@ -764,7 +764,7 @@ Module Module1
                 If item_ids.Count = 0 Then Exit Sub
                 Dim prof As Integer = -1
 
-                a = api.SendTextMessageAsync(message.Chat.Id, "Scegli come ottenere la lista craft:",,,,, creaCraftKeyboard(item_ids.ToArray, message.From.Id)).Result
+                a = api.SendTextMessageAsync(message.Chat.Id, "Scegli come ottenere la lista craft:",,,,, ,, creaCraftKeyboard(item_ids.ToArray, message.From.Id)).Result
 #End Region
             ElseIf message.Text.ToLower.StartsWith("/vendi") Then
 #Region "vendi"
@@ -855,8 +855,8 @@ Module Module1
                         Dim link = checkLink(prezzi_text)
                         If Not isPrezziNegozi(prezzi_text) AndAlso Not IsNothing(link) Then
                             prezzi_text = "I prezzi sono scaricati autonomamente dal link:" + vbCrLf + link.AbsoluteUri + vbCrLf + vbCrLf + "Il contenuto è:"
-                            a = api.SendTextMessageAsync(message.Chat.Id, prezzi_text, , True).Result
-                            prezzi_text = getPrezziStringFromURL(link)
+                        a = api.SendTextMessageAsync(message.Chat.Id, prezzi_text, , ,, True).Result
+                        prezzi_text = getPrezziStringFromURL(link)
                         End If
 
                         If prezzi_text.Split(vbLf).Length > 15 Then
@@ -891,8 +891,8 @@ Module Module1
                         Else
                             from_inline_query(message.From.Id) = message.Text.ToLower.Trim.Replace("/start inline_", "").Replace("-", " ")
                         End If
-                        a = api.SendTextMessageAsync(message.From.Id, "Inoltra o incolla di seguito il tuo zaino, può essere in più messaggi." + vbCrLf + "Premi 'Salva' quando hai terminato, o 'Annulla' per non salvare.",,,,, creaZainoKeyboard).Result
-                    Else
+                    a = api.SendTextMessageAsync(message.From.Id, "Inoltra o incolla di seguito il tuo zaino, può essere in più messaggi." + vbCrLf + "Premi 'Salva' quando hai terminato, o 'Annulla' per non salvare.",,,,, ,, creaZainoKeyboard).Result
+                Else
                         'Avvio normale
                         Dim builder As New Text.StringBuilder()
                         builder.AppendLine("Benvenuto in Craft Lootbot!")
@@ -904,8 +904,8 @@ Module Module1
                     End If
 #End Region
                 ElseIf message.Text.ToLower.StartsWith(If(message.Chat.Type = ChatType.Private, "/help", "/help@craftlootbot")) Then
-                    a = api.SendTextMessageAsync(message.Chat.Id, help_builder.ToString, ParseMode.Markdown, True,,, creaHelpKeyboard).Result
-                ElseIf message.Text.ToLower.StartsWith("/stats") Then
+                a = api.SendTextMessageAsync(message.Chat.Id, help_builder.ToString, ParseMode.Markdown,,, True,,, creaHelpKeyboard).Result
+            ElseIf message.Text.ToLower.StartsWith("/stats") Then
 #Region "stats"
                     Dim builder As New Text.StringBuilder("*STATISTICHE COMPLESSIVE:*")
                     builder.AppendLine().AppendLine()
@@ -942,8 +942,8 @@ Module Module1
                         Dim builder As New Text.StringBuilder
                         Dim related = ItemIds(id).getRelatedItemsIDs
                         builder.AppendLine(ItemIds(id).ToString)
-                        a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString, ParseMode.Markdown,,,, If(IsNothing(related), Nothing, creaInfoKeyboard(related))).Result
-                    Else
+                    a = api.SendTextMessageAsync(message.Chat.Id, builder.ToString, ParseMode.Markdown,,,, ,, If(IsNothing(related), Nothing, creaInfoKeyboard(related))).Result
+                Else
                         a = api.SendTextMessageAsync(message.Chat.Id, "L'oggetto specificato non è stato riconosciuto").Result
                     End If
 #End Region
@@ -1336,7 +1336,7 @@ Module Module1
                 mess_err += "Una segnalazione è stata inviata automaticamente allo sviluppatore, potrebbe contattarti per avere più informazioni." + vbCrLf
                 mess_err += "Se l'errore persiste, può essere utile ripristinare i tuoi dati. Perderai tutti i tuoi dati salvati su craftlootbot, assicurati di poterli reperire nuovamente." + vbCrLf
                 mess_err += "Ripristinare?"
-                a = api.SendTextMessageAsync(message.Chat.Id, mess_err,,,, , creaErrorInlineKeyboard).Result
+                a = api.SendTextMessageAsync(message.Chat.Id, mess_err,,,, , ,, creaErrorInlineKeyboard).Result
             Catch
             End Try
         End Try
@@ -1903,7 +1903,7 @@ Module Module1
             .AppendLine("Eccezione: " + ex.Message)
             .AppendLine("Inner Exception: " + If(IsNothing(ex.InnerException), "Nessuna", ex.InnerException.Message))
         End With
-        Dim a = api.SendTextMessageAsync(1265775, reportBuilder.ToString,, True).Result
+        Dim a = api.SendTextMessageAsync(1265775, reportBuilder.ToString,, ,, True).Result
     End Sub
     'invio report di errore allo sviluppatore
     Sub sendReport(ex As Exception, query As InlineQuery)
@@ -1917,7 +1917,7 @@ Module Module1
             .AppendLine("Metodo: " + If(ex.TargetSite.Name, "Sconosciuto") + ", " + If(ex.Source, "Sconosciuta"))
             .AppendLine("Eccezione: " + ex.Message)
         End With
-        Dim a = api.SendTextMessageAsync(1265775, reportBuilder.ToString,, True).Result
+        Dim a = api.SendTextMessageAsync(1265775, reportBuilder.ToString,, ,, True).Result
     End Sub
 
     'Invia messaggi multipli se messaggio troppo lungo
@@ -1939,7 +1939,7 @@ Module Module1
             Loop While result <> "" And result <> Environment.NewLine
 
         Else
-            a = api.SendTextMessageAsync(chatID, result, parse,,,, replyMarckup).Result
+            a = api.SendTextMessageAsync(chatID, result, parse,,,,,, replyMarckup).Result
         End If
 
         Return a
@@ -1958,7 +1958,7 @@ Module Module1
                 answerLongMessage(sublines(0), chatID, parse, replymarckup)
                 text = String.Join("", sublines.Skip(1).Take(99)).ToString
             End If
-            a = api.SendTextMessageAsync(chatID, text, parse,,,, replymarckup).Result
+            a = api.SendTextMessageAsync(chatID, text, parse,,,,,, replymarckup).Result
             iterations += 1
         Loop Until sublines.Count < 99
         Return a
@@ -2025,7 +2025,7 @@ Module Module1
             builder.AppendLine(i.ToString + "° " + user.Key + ": " + user.Value.ToString)
             i += 1
         Next
-        answerLongMessage("La classifica è: " + builder.ToString, 1265775, ParseMode.Default)
+        answerLongMessage("La classifica è: " + builder.ToString, 1265775, ParseMode.MarkdownV2)
     End Sub
 
     'creazione testo XML

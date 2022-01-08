@@ -211,20 +211,20 @@ Module help
 
     Function creaHelpKeyboard() As ReplyMarkups.InlineKeyboardMarkup
 
-        Dim lista_button As New InlineKeyboardButton() With {.Text = "📜 Lista 📜", .CallbackData = "lista"}
-        Dim albero_button As New InlineKeyboardButton() With {.Text = "🌲 Albero 🌲", .CallbackData = "albero"}
-        Dim inline_button As New InlineKeyboardButton() With {.Text = "🔍 Inline 🔍", .CallbackData = "inline"}
-        Dim zaino_button As New InlineKeyboardButton() With {.Text = "🎒 Zaino 🎒", .CallbackData = "zaino"}
-        Dim craft_button As New InlineKeyboardButton() With {.Text = "🛠 Craft 🛠", .CallbackData = "craft"}
-        Dim confronta_button As New InlineKeyboardButton() With {.Text = "📊 Confronta 📊", .CallbackData = "confronta"}
-        Dim base_button As New InlineKeyboardButton() With {.Text = "🔤 Base 🔤", .CallbackData = "base"}
-        Dim vendi_button As New InlineKeyboardButton() With {.Text = "🏪 Vendi 🏪", .CallbackData = "vendi"}
-        Dim creanegozi_button As New InlineKeyboardButton() With {.Text = "💸 CreaNegozi 💸", .CallbackData = "creanegozi"}
-        Dim info_button As New InlineKeyboardButton() With {.Text = "ℹ️ Info ℹ️", .CallbackData = "info"}
-        Dim stima_button As New InlineKeyboardButton() With {.Text = "📈 Stima 📈", .CallbackData = "stima"}
-        Dim xmlHtml_button As New InlineKeyboardButton() With {.Text = "🌐 XML / HTML 🌐", .CallbackData = "html-xml"}
-        Dim setequip_button As New InlineKeyboardButton() With {.Text = "🗡 SetEquip 🗡", .CallbackData = "setequip"}
-        Dim riepilogo_button As New InlineKeyboardButton() With {.Text = "⬅️ Riepilogo ⬅️", .CallbackData = "riepilogo"}
+        Dim lista_button As New InlineKeyboardButton("📜 Lista 📜") With {.CallbackData = "lista"}
+        Dim albero_button As New InlineKeyboardButton("🌲 Albero 🌲") With {.CallbackData = "albero"}
+        Dim inline_button As New InlineKeyboardButton("🔍 Inline 🔍") With {.CallbackData = "inline"}
+        Dim zaino_button As New InlineKeyboardButton("🎒 Zaino 🎒") With {.CallbackData = "zaino"}
+        Dim craft_button As New InlineKeyboardButton("🛠 Craft 🛠") With {.CallbackData = "craft"}
+        Dim confronta_button As New InlineKeyboardButton("📊 Confronta 📊") With {.CallbackData = "confronta"}
+        Dim base_button As New InlineKeyboardButton("🔤 Base 🔤") With {.CallbackData = "base"}
+        Dim vendi_button As New InlineKeyboardButton("🏪 Vendi 🏪") With {.CallbackData = "vendi"}
+        Dim creanegozi_button As New InlineKeyboardButton("💸 CreaNegozi 💸") With {.CallbackData = "creanegozi"}
+        Dim info_button As New InlineKeyboardButton("ℹ️ Info ℹ️") With {.CallbackData = "info"}
+        Dim stima_button As New InlineKeyboardButton("📈 Stima 📈") With {.CallbackData = "stima"}
+        Dim xmlHtml_button As New InlineKeyboardButton("🌐 XML / HTML 🌐") With {.CallbackData = "html-xml"}
+        Dim setequip_button As New InlineKeyboardButton("🗡 SetEquip 🗡") With {.CallbackData = "setequip"}
+        Dim riepilogo_button As New InlineKeyboardButton("⬅️ Riepilogo ⬅️") With {.CallbackData = "riepilogo"}
 
         Dim row1() As InlineKeyboardButton
         Dim row2() As InlineKeyboardButton
