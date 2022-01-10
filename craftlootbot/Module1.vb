@@ -172,7 +172,7 @@ Module Module1
 #End Region
             ElseIf callback.Data = "err_reset" Then
 #Region "Ripristino dati"
-                Dim userID As Integer = callback.From.Id
+                Dim UserID As Long = callback.From.Id
                 Console.WriteLine("Ripristino richiesto per l'utente {0}", userID)
                 Dim report As New Text.StringBuilder("Ripristino eseguito!")
                 report.AppendLine()
@@ -1280,8 +1280,8 @@ Module Module1
                 ElseIf message.From.Id = 1265775 AndAlso message.Text.ToLower.StartsWith("/ripristino") Then
 #Region "/ripristino"
                     Dim member = message.Text.Replace(If(message.Text.Contains("@craftlootbot"), "/ripristino" + "@craftlootbot", "/ripristino"), "").Trim
-                    Dim userID As Integer = Integer.Parse(member)
-                    If Not zaini.TryRemove(userID, "") Then Console.WriteLine("Impossibile eliminare elemento da dictionary zaini")
+                Dim userID As ULong = ULong.Parse(member)
+                If Not zaini.TryRemove(userID, "") Then Console.WriteLine("Impossibile eliminare elemento da dictionary zaini")
                     If stati.ContainsKey(userID) Then stati.Remove(userID)
                     If confronti.ContainsKey(userID) Then confronti.Remove(userID)
                     If IO.File.Exists("zaini/" + userID.ToString + ".txt") Then IO.File.Delete("zaini/" + userID.ToString + ".txt")
@@ -2025,7 +2025,7 @@ Module Module1
             builder.AppendLine(i.ToString + "° " + user.Key + ": " + user.Value.ToString)
             i += 1
         Next
-        answerLongMessage("La classifica è: " + builder.ToString, 1265775, ParseMode.MarkdownV2)
+        answerLongMessage("La classifica è: " + builder.ToString, 1265775, ParseMode.Html)
     End Sub
 
     'creazione testo XML

@@ -15,7 +15,7 @@ Module UserData
     End Sub
 
     'Ottiene equipaggiamento
-    Function getEquip(UserID As Integer) As Integer()
+    Function getEquip(UserID As Long) As Integer()
         Dim path = "equip/" + UserID.ToString + ".txt"
         Dim lines = IO.File.ReadAllLines(path)
         Dim res As Integer()
@@ -26,21 +26,21 @@ Module UserData
     End Function
 
     'Controllo se possiede equip
-    Function HasEquip(UserID As Integer) As Boolean
+    Function HasEquip(UserID As Long) As Boolean
         Dim path = "equip/" + UserID.ToString + ".txt"
         If IO.File.Exists(path) Then Return True
         Return False
     End Function
 
     'controllo se possiede zaino
-    Function HasZaino(UserID As Integer) As Boolean
+    Function HasZaino(UserID As Long) As Boolean
         Dim path = "zaini/" + UserID.ToString + ".txt"
         If IO.File.Exists(path) Then Return True
         Return False
     End Function
 
     'ottengo zaino e aggiungo l'equipaggiamento
-    Function getZaino(UserID As Integer) As Dictionary(Of Item, Integer)
+    Function getZaino(UserID As Long) As Dictionary(Of Item, Integer)
         Dim Zaino_path As String = "zaini/" + UserID.ToString + ".txt"
         Dim Equip_path As String = "equip/" + UserID.ToString + ".txt"
         Dim zaino As String = ""
@@ -64,7 +64,7 @@ Module UserData
     End Function
 
     'ottengo gli alias personali dell'utente
-    Function getPersonalAlias(UserID As Integer) As Dictionary(Of String, String)
+    Function getPersonalAlias(UserID As Long) As Dictionary(Of String, String)
         Dim alias_path As String = "alias/" + UserID.ToString + ".txt"
         Dim PersonalAlias As New Dictionary(Of String, String)
         If IO.File.Exists(alias_path) Then
@@ -77,7 +77,7 @@ Module UserData
     End Function
 
     'Aggiunge un alias personale 
-    Function AddPersonalAlias(UserID As Integer, keyword As String, items As String) As String
+    Function AddPersonalAlias(UserID As Long, keyword As String, items As String) As String
         Dim alias_path As String = "alias/" + UserID.ToString + ".txt"
         Dim PersonalAlias As Dictionary(Of String, String) = getPersonalAlias(UserID)
         Dim GlobalAlias = getGlobalAlias()
@@ -89,7 +89,7 @@ Module UserData
     End Function
 
     'Rimuove un alias personale 
-    Function DeletePersonalAlias(UserID As Integer, keyword As String) As String
+    Function DeletePersonalAlias(UserID As Long, keyword As String) As String
         Dim alias_path As String = "alias/" + UserID.ToString + ".txt"
         Dim PersonalAlias As Dictionary(Of String, String) = getPersonalAlias(UserID)
         Dim result As String = "OK"
